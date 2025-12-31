@@ -1,0 +1,9 @@
+﻿{
+  "name": "UI",
+  "references": [
+    "GUID:604b460800cb4cfe8ff97cbdd65f17f8",
+    "GUID:01db9ef2fbec68a4e9a6c1f78b322600",
+    "GUID:75469ad4d38634e559750d17036d5f7c"
+  ],
+  "autoReferenced": true
+}
