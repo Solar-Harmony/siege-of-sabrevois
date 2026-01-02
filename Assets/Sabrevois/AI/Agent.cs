@@ -1,0 +1,50 @@
+﻿using System;
+using System.Linq;
+using ArtificeToolkit.Attributes;
+using Sabrevois.AI.Actions;
+using UnityEngine;
+using VContainer;
+
+namespace Sabrevois.AI
+{
+    public class Agent : MonoBehaviour
+    {
+        [SerializeField, PreviewScriptable] 
+        private Archetype _archetype;
+        
+        [SerializeField]
+        private bool _useCustomInterval = false;
+        
+        [SerializeField] [EnableIf(nameof(_useCustomInterval))] 
+        private float _decisionMakingInterval = 1f;
+
+        [SerializeField]
+        private ActionCandidate[] _perAgentActions;
+
+        private ActionCandidate[] _actions;
+        private ActionContext _ctx;
+        
+        private DecisionMakingService.ActionChoice _currentAction;
+        
+        [Inject]
+        private DecisionMakingService _decisionMakingService;
+        
+        private void Start()
+        {
+            _actions = _archetype.Actions.Concat(_perAgentActions).ToArray();
+            _ctx = new ActionContext(gameObject);
+            float interval = _useCustomInterval ? _decisionMakingInterval : _archetype.DecisionMakingInterval;
+            InvokeRepeating(nameof(UpdateCurrentAction), 0f, interval);
+        }
+
+        private void Update()
+        {
+            _currentAction?.Action.Execute(_ctx, _currentAction.Config);
+        }
+
+        private void UpdateCurrentAction()
+        {
+            _currentAction = _decisionMakingService.ChooseAction(_actions, _ctx);
+        }
+    }
+}
