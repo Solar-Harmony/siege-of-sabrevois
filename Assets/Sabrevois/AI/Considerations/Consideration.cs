@@ -7,7 +7,7 @@ namespace Sabrevois.AI.Considerations
     [Serializable]
     public abstract class Consideration
     {
-        [SerializeReference]
+        [SerializeReference] [Required]
         public IConsiderationSource Source;
         
         public abstract float Evaluate(GameObject agent);

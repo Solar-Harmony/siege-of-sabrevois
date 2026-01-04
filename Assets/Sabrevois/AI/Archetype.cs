@@ -1,4 +1,5 @@
 ﻿using System;
+using ArtificeToolkit.Attributes;
 using Sabrevois.AI.Actions;
 using UnityEngine;
 
@@ -10,10 +11,9 @@ namespace Sabrevois.AI
     [CreateAssetMenu(menuName = "Sabrevois/AI Archetype")]
     public class Archetype : ScriptableObject
     {
-        [field: SerializeField] 
-        public ActionCandidate[] Actions { get; private set; }
+        [InfoBox("If multiple actions have the same desirability score, the first one will be chosen as per order in the list.")]
+        public ActionCandidate[] Actions;
         
-        [field: SerializeField]
-        public float DecisionMakingInterval { get; private set; } = 1f;
+        public float DecisionMakingInterval = 1f;
     }
 }

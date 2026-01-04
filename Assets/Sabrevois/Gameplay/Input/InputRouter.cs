@@ -9,6 +9,7 @@ namespace Sabrevois.Level
         public Vector2 MoveAxis => _actions.Player.Move.ReadValue<Vector2>();
         public Vector2 LookAxis => _actions.Player.Look.ReadValue<Vector2>();
         public bool JumpPressed => _actions.Player.Jump.triggered;
+        public bool AttackPressed => _actions.Player.Attack.triggered;
         
         private void Awake()
         {

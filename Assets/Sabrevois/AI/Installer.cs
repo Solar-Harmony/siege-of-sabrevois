@@ -1,5 +1,4 @@
-﻿using Sabrevois.AI.Actions;
-using VContainer;
+﻿using VContainer;
 using VContainer.Unity;
 
 namespace Sabrevois.AI
@@ -8,7 +7,7 @@ namespace Sabrevois.AI
     {
         public static void Configure(IContainerBuilder builder)
         {
-            builder.RegisterEntryPoint<DecisionMakingService>();
+            builder.Register<DecisionMakingService>(Lifetime.Singleton);
         }
     }
 }

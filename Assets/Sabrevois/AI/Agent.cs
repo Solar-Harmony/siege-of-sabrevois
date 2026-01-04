@@ -24,11 +24,14 @@ namespace Sabrevois.AI
         private ActionCandidate[] _actions;
         private ActionContext _ctx;
         
-        private DecisionMakingService.ActionChoice _currentAction;
+        private IAction _currentAction;
         
         [Inject]
         private DecisionMakingService _decisionMakingService;
-        
+
+        [Inject]
+        private IObjectResolver _resolver;
+
         private void Start()
         {
             _actions = archetype.Actions.Concat(_perAgentActions).ToArray();
@@ -39,7 +42,11 @@ namespace Sabrevois.AI
 
         private void Update()
         {
-            _currentAction?.Action.Execute(_ctx, _currentAction.Config);
+            if (_currentAction != null)
+            {
+                _resolver.Inject(_currentAction);
+                _currentAction.Execute(_ctx);
+            }
         }
 
         private void UpdateCurrentAction()

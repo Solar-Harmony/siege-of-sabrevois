@@ -6,13 +6,13 @@ using UnityEngine;
 namespace Sabrevois.Gameplay.AI.DataSources
 {
     [Serializable]
-    public class HealthSource : IConsiderationSource
+    public class HealthPercentageSource : IConsiderationSource
     {
         public float GetValue(GameObject agent)
         {
             agent.GetComponentChecked(out Health health);
             
-            return health.CurrentHealth;
+            return health.CurrentHealth01;
         }
     }
 }

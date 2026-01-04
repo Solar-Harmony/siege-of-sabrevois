@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 910b391e0f2d42e9ad5d9fa080510876, type: 3}
+  m_Name: AI_Retard
+  m_EditorClassIdentifier: AI::Sabrevois.AI.Archetype
+  Actions:
+  - Action:
+      rid: 6057649467727020162
+    Preconditions: []
+    Considerations:
+    - Source:
+        rid: 6057649467727020164
+      Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0.5067838
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0.33333334
+        - serializedVersion: 3
+          time: 1
+          value: 0.5067838
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0.33333334
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  - Action:
+      rid: 6057649467727020163
+    Preconditions: []
+    Considerations:
+    - Source:
+        rid: 6057649467727020159
+      Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: -0.0051813126
+          value: 0.9936153
+          inSlope: -0.6804924
+          outSlope: -0.6804924
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 1
+        - serializedVersion: 3
+          time: 1.027202
+          value: -0.014365509
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  DecisionMakingInterval: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: 6057649467727020159
+      type: {class: HealthPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 6057649467727020162
+      type: {class: ConverseAction, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
+      data: 
+    - rid: 6057649467727020163
+      type: {class: WhineAction, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
+      data: 
+    - rid: 6057649467727020164
+      type: {class: HealthPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 

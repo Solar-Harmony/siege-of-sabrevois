@@ -7,18 +7,12 @@ using VContainer;
 namespace Sabrevois.Gameplay.AI.Actions
 {
     [Serializable]
-    public class WhineActionConfig : IActionConfig
-    {
-        public Type ActionType { get; } = typeof(WhineAction);
-    }
-    
-    [Serializable]
-    public class WhineAction : IAction<WhineActionConfig>
+    public class WhineAction : IAction
     {
         [Inject] 
         private ConversationService _conversations;
         
-        public void Execute(ActionContext ctx, WhineActionConfig config)
+        public void Execute(ActionContext ctx)
         {
             Debug.Log(_conversations.GetReactionHurt());
         }

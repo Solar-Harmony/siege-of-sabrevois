@@ -1,11 +1,10 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Sabrevois.AI.Considerations
+namespace Sabrevois.Gameplay
 {
     public class Health : MonoBehaviour
     {
-        [Min(1)]
+        [Min(1.0f)]
         public float MaxHealth;
         
         public float CurrentHealth { get; private set; }

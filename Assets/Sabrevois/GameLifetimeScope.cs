@@ -8,6 +8,7 @@ namespace Sabrevois
         protected override void Configure(IContainerBuilder builder)
         {
             AI.Installer.Configure(builder);
+            Gameplay.Installer.Configure(builder);
         }
     }
 }
