@@ -1,4 +1,5 @@
-﻿using Sabrevois.AI.Actions;
+﻿using System;
+using Sabrevois.AI.Actions;
 using UnityEngine;
 
 namespace Sabrevois.AI
@@ -13,6 +14,6 @@ namespace Sabrevois.AI
         public ActionCandidate[] Actions { get; private set; }
         
         [field: SerializeField]
-        public float DecisionMakingInterval { get; private set; } = 1f; 
+        public float DecisionMakingInterval { get; private set; } = 1f;
     }
 }

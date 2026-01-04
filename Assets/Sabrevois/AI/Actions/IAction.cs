@@ -1,17 +1,25 @@
-﻿namespace Sabrevois.AI.Actions
+﻿using System;
+
+namespace Sabrevois.AI.Actions
 {
-    public interface IAction
+    public interface IActionConfig
     {
-        void Execute(ActionContext ctx, object config);
+        Type ActionType { get; }
     }
     
-    public interface IAction<in TConfig> : IAction where TConfig : class
+    public interface IActionConfig<T> : IActionConfig where T : IAction
     {
-        void IAction.Execute(ActionContext ctx, object config)
-        {
-            Execute(ctx, config as TConfig);
-        }
-        
-        void Execute(ActionContext ctx, TConfig config);
+        Type IActionConfig.ActionType => typeof(T);
+    }
+    
+    public interface IAction
+    {
+        void Execute(ActionContext ctx, IActionConfig config);
+    }
+
+    public interface IAction<in T> : IAction where T : class, IActionConfig
+    {
+        void Execute(ActionContext ctx, T config);
+        void IAction.Execute(ActionContext ctx, IActionConfig config) => Execute(ctx, config as T);
     }
 }

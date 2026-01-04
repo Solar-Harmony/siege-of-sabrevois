@@ -1,4 +1,5 @@
-﻿using Sabrevois.AI;
+﻿using System;
+using Sabrevois.AI;
 using Sabrevois.AI.Actions;
 using Sabrevois.Gameplay.Dialogue;
 using UnityEngine;
@@ -6,12 +7,14 @@ using VContainer;
 
 namespace Sabrevois.Gameplay.AI.Actions
 {
-    [System.Serializable]
-    public class ConverseActionConfig
+    [Serializable]
+    public class ConverseActionConfig : IActionConfig
     {
+        public string Name;
+        public Type ActionType { get; } = typeof(ConverseAction);
     }
     
-    public class ConverseAction : IAction<ConverseActionConfig>
+    public sealed class ConverseAction : IAction<ConverseActionConfig>
     {
         [Inject] 
         private ConversationService _conversations;

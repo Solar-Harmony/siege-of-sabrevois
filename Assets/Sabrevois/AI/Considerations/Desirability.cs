@@ -1,4 +1,5 @@
 ﻿using System;
+using ArtificeToolkit.Attributes;
 using UnityEngine;
 
 namespace Sabrevois.AI.Considerations
@@ -9,7 +10,7 @@ namespace Sabrevois.AI.Considerations
         public float MinValue = 0f;
         public float MaxValue = 1f;
         public AnimationCurve Curve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
-
+        
         public override float Evaluate(GameObject obj)
         {
             float value = Source.GetValue(obj);

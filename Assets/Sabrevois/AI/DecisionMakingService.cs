@@ -8,9 +8,10 @@ namespace Sabrevois.AI
 {
     public class DecisionMakingService
     {
-        [Inject] private Dictionary<Type, IAction> _actions;
+        [Inject] 
+        private Dictionary<Type, IAction> _actions;
         
-        public record ActionChoice(IAction Action, object Config);
+        public record ActionChoice(IAction Action, IActionConfig Config);
         
         /// <summary>
         /// Chooses the best action from the candidates.
@@ -49,8 +50,8 @@ namespace Sabrevois.AI
 
             if (bestCandidate == null)
                 return null;
-            
-            return new ActionChoice(_actions[bestCandidate.ActionType], bestCandidate.Config);
+
+            return new ActionChoice(_actions[bestCandidate.ActionConfig.ActionType], bestCandidate.ActionConfig);
         }
     }
 }

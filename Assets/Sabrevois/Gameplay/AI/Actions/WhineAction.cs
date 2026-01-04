@@ -7,10 +7,12 @@ using VContainer;
 namespace Sabrevois.Gameplay.AI.Actions
 {
     [Serializable]
-    public class WhineActionConfig
+    public class WhineActionConfig : IActionConfig
     {
+        public Type ActionType { get; } = typeof(WhineAction);
     }
     
+    [Serializable]
     public class WhineAction : IAction<WhineActionConfig>
     {
         [Inject] 

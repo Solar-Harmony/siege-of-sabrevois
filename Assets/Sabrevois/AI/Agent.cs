@@ -9,8 +9,8 @@ namespace Sabrevois.AI
 {
     public class Agent : MonoBehaviour
     {
-        [SerializeField, PreviewScriptable] 
-        private Archetype _archetype;
+        [SerializeField] [PreviewScriptable] 
+        public Archetype archetype;
         
         [SerializeField]
         private bool _useCustomInterval = false;
@@ -31,9 +31,9 @@ namespace Sabrevois.AI
         
         private void Start()
         {
-            _actions = _archetype.Actions.Concat(_perAgentActions).ToArray();
+            _actions = archetype.Actions.Concat(_perAgentActions).ToArray();
             _ctx = new ActionContext(gameObject);
-            float interval = _useCustomInterval ? _decisionMakingInterval : _archetype.DecisionMakingInterval;
+            float interval = _useCustomInterval ? _decisionMakingInterval : archetype.DecisionMakingInterval;
             InvokeRepeating(nameof(UpdateCurrentAction), 0f, interval);
         }
 
