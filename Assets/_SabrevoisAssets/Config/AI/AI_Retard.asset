@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: AI_Retard
   m_EditorClassIdentifier: AI::Sabrevois.AI.Archetype
   Actions:
-  - Action:
-      rid: 6057649467727020162
+  - ActionConfig:
+      rid: 6057649479391379524
     Preconditions: []
     Considerations:
     - Source:
@@ -43,8 +43,8 @@ MonoBehaviour:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 4
-  - Action:
-      rid: 6057649467727020163
+  - ActionConfig:
+      rid: 6057649479391379525
     Preconditions: []
     Considerations:
     - Source:
@@ -80,12 +80,12 @@ MonoBehaviour:
     - rid: 6057649467727020159
       type: {class: HealthPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 
-    - rid: 6057649467727020162
-      type: {class: ConverseAction, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
-      data: 
-    - rid: 6057649467727020163
-      type: {class: WhineAction, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
-      data: 
     - rid: 6057649467727020164
       type: {class: HealthPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 6057649479391379524
+      type: {class: ConverseActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
+      data: 
+    - rid: 6057649479391379525
+      type: {class: WhineActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
       data: 

@@ -1,17 +1,26 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Sabrevois.AI.Actions;
 
 namespace Sabrevois.AI
 {
     public class DecisionMakingService
     {
-        public IAction ChooseAction(ActionCandidate[] candidates, ActionContext ctx)
+        private readonly Dictionary<Type, IAction> _actions;
+
+        public DecisionMakingService(IEnumerable<IAction> actions)
+        {
+            _actions = actions.ToDictionary(a => a.GetType(), a => a);
+        }
+        
+        public (IAction, IActionConfig) ChooseAction(ActionCandidate[] candidates, ActionContext ctx)
         {
             if (candidates.Length == 0)
-                return null;
+                return (null, null);
             
             float bestScore = float.NegativeInfinity;
-            IAction bestAction = null;
+            IActionConfig bestActionConfig = null;
 
             foreach (var candidate in candidates)
             {
@@ -27,11 +36,14 @@ namespace Sabrevois.AI
                 if (utility > bestScore)
                 {
                     bestScore = utility;
-                    bestAction = candidate.Action;
+                    bestActionConfig = candidate.ActionConfig;
                 }
             }
 
-            return bestAction;
+            if (bestActionConfig == null)
+                return (null, null);
+            
+            return (_actions[bestActionConfig.ActionType], bestActionConfig);
         }
     }
 }

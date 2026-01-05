@@ -1,4 +1,6 @@
-﻿using Sabrevois.Gameplay.Dialogue;
+﻿using Sabrevois.AI.Actions;
+using Sabrevois.Gameplay.AI.Actions;
+using Sabrevois.Gameplay.Dialogue;
 using VContainer;
 
 namespace Sabrevois.Gameplay
@@ -8,6 +10,8 @@ namespace Sabrevois.Gameplay
         public static void Configure(IContainerBuilder builder)
         {
             builder.Register<ConversationService>(Lifetime.Singleton);
+            builder.Register<WhineAction>(Lifetime.Singleton).As<IAction>();
+            builder.Register<ConverseAction>(Lifetime.Singleton).As<IAction>();
         }
     }
 }

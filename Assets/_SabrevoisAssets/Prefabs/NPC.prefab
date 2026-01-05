@@ -132,13 +132,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c596c6cf3d53417d8077c0978717cb90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: AI::Sabrevois.AI.Agent
-  archetype: {fileID: 11400000, guid: a3a2720518a45904bbbb22947b314d50, type: 2}
+  Archetype: {fileID: 11400000, guid: a3a2720518a45904bbbb22947b314d50, type: 2}
   _useCustomInterval: 0
   _decisionMakingInterval: 1
-  _perAgentActions: []
-  references:
-    version: 2
-    RefIds: []
 --- !u!136 &6153419840484802571
 CapsuleCollider:
   m_ObjectHideFlags: 0

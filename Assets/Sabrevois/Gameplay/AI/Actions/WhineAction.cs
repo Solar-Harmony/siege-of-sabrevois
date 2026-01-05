@@ -7,14 +7,17 @@ using VContainer;
 namespace Sabrevois.Gameplay.AI.Actions
 {
     [Serializable]
-    public class WhineAction : IAction
+    public class WhineActionConfig : IActionConfig<WhineAction>
     {
-        [Inject] 
-        private ConversationService _conversations;
-        
-        public void Execute(ActionContext ctx)
+    }
+    
+    public record WhineAction(ConversationService Conversations) : IAction<WhineActionConfig>
+    {
+        public Interruptible Interruptible => Interruptible.ExceptSelf;
+        public bool Execute(ActionContext ctx, WhineActionConfig config)
         {
-            Debug.Log(_conversations.GetReactionHurt());
+            Debug.Log(Conversations.GetReactionHurt());
+            return true;
         }
     }
 }

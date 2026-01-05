@@ -10,12 +10,10 @@ namespace Sabrevois.AI.Actions
     public class ActionCandidate
     {
         [SerializeReference] [Required]
-        public IAction Action;
+        public IActionConfig ActionConfig;
         
-        // [Tooltip("Conditions that must be met for the action to be considered.")]
         public List<Precondition> Preconditions;
         
-        // [Tooltip("Factors that influence the action's desirability.")]
         public List<Desirability> Considerations;
     }
 }
