@@ -10,8 +10,6 @@ namespace Sabrevois.Gameplay
         public static void Configure(IContainerBuilder builder)
         {
             builder.Register<ConversationService>(Lifetime.Singleton);
-            builder.Register<WhineAction>(Lifetime.Singleton).As<IAction>();
-            builder.Register<ConverseAction>(Lifetime.Singleton).As<IAction>();
         }
     }
 }

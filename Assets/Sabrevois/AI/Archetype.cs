@@ -15,5 +15,8 @@ namespace Sabrevois.AI
         public ActionCandidate[] Actions;
         
         public float DecisionMakingInterval = 1f;
+        
+        [Tooltip("When two actions have similar scores, this value prevents frequent switching between them.")]
+        public float Hysteresis = 0.1f;
     }
 }

@@ -6,32 +6,32 @@ using UnityEngine;
 namespace Sabrevois.Gameplay.AI.Actions
 {
     [Serializable]
-    public class ConverseActionConfig : IActionConfig<ConverseAction, ConverseActionState>
+    public class ReactHurtActionConfig : IActionConfig<ReactHurtAction, ReactHurtActionState>
     {
         public float Interval = 2.0f;
     }
 
-    public class ConverseActionState : IActionState
+    public class ReactHurtActionState : IActionState
     {
         public float Timer;
     }
     
-    public record ConverseAction(ConversationService Conversation) : IAction<ConverseActionConfig, ConverseActionState>
+    public record ReactHurtAction(ConversationService Conversation) : IAction<ReactHurtActionConfig, ReactHurtActionState>
     {
         public Interruptible Interruptible => Interruptible.ExceptSelf;
 
-        public ActionStatus Begin(ActionContext ctx, ConverseActionConfig config, ConverseActionState state)
+        public ActionStatus Begin(ActionContext ctx, ReactHurtActionConfig config, ReactHurtActionState state)
         {
             state.Timer = config.Interval;
             return ActionStatus.Running;
         }
 
-        public ActionStatus Update(ActionContext ctx, ConverseActionConfig config, ConverseActionState state)
+        public ActionStatus Update(ActionContext ctx, ReactHurtActionConfig config, ReactHurtActionState state)
         {
             state.Timer -= Time.deltaTime;
             if (state.Timer <= 0f)
             {
-                Debug.Log(Conversation.GetText()); // dummy conversation
+                Debug.Log(Conversation.GetReactionHurt()); // dummy conversation
                 return ActionStatus.Done;
             }
             return ActionStatus.Running;

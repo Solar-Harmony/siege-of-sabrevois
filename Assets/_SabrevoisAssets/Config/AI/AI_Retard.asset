@@ -44,7 +44,7 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 4
   - ActionConfig:
-      rid: 6057649479391379525
+      rid: 6057649606450216960
     Preconditions: []
     Considerations:
     - Source:
@@ -74,6 +74,7 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 4
   DecisionMakingInterval: 1
+  Hysteresis: 0.1
   references:
     version: 2
     RefIds:
@@ -86,6 +87,6 @@ MonoBehaviour:
     - rid: 6057649479391379524
       type: {class: ConverseActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
       data: 
-    - rid: 6057649479391379525
-      type: {class: WhineActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
+    - rid: 6057649606450216960
+      type: {class: ReactHurtActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
       data: 

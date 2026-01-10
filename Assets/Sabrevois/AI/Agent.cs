@@ -13,50 +13,58 @@ namespace Sabrevois.AI
         [SerializeField] [PreviewScriptable] 
         public Archetype Archetype;
         
-        [SerializeField] [HorizontalGroup(nameof(_useCustomInterval))]
+        [SerializeField] 
         private bool _useCustomInterval = false;
         
-        [SerializeField] [EnableIf(nameof(_useCustomInterval))] [HorizontalGroup(nameof(_useCustomInterval))]
+        [SerializeField] [EnableIf(nameof(_useCustomInterval))]
         private float _decisionMakingInterval = 1f;
         
         [Inject]
         private DecisionMakingService _decisionMakingService;
         
         private ActionContext _ctx;
-        private (IAction action, IActionConfig config) _currentAction = (null, null);
+        private ActionInstance _actionInstance;
+        private float _interval;
+        private float _timer;
 
         private void Start()
         {
             _ctx = new ActionContext(gameObject);
-            float interval = _useCustomInterval ? _decisionMakingInterval : Archetype.DecisionMakingInterval;
-            InvokeRepeating(nameof(UpdateCurrentAction), 0f, interval);
+            _interval = _useCustomInterval ? _decisionMakingInterval : Archetype.DecisionMakingInterval;
+            _timer = _interval;
+            UpdateCurrentAction(isInterruption: false);
         }
-
+        
         private void Update()
         {
-            if (_currentAction.action.Execute(_ctx, _currentAction.config))
+            _timer -= Time.deltaTime;
+            if (_timer > 0f)
+                return;
+            
+            if (_actionInstance?.Update(_ctx) is ActionStatus.Done)
             {
-                UpdateCurrentAction();
+                UpdateCurrentAction(isInterruption: false);
+                _timer = _interval;
             }
         }
 
-        private void UpdateCurrentAction()
+        private void UpdateCurrentAction(bool isInterruption)
         {
-            (IAction action, IActionConfig) newAction = _decisionMakingService.ChooseAction(Archetype.Actions, _ctx);
-
-            if (_currentAction.action == null)
-            {
-                _currentAction = newAction;
+            ActionInstance newAction = _decisionMakingService.ChooseAction(Archetype.Actions, _ctx, _actionInstance, Archetype.Hysteresis);
+            if (newAction == null)
                 return;
+
+            bool sameAction = newAction.Config.ActionType == _actionInstance?.Config.ActionType;
+            switch (_actionInstance?.Action?.Interruptible)
+            {
+                case Interruptible.Never:
+                case Interruptible.ExceptSelf when sameAction && isInterruption:
+                    return;
             }
 
-            if (_currentAction.action.Interruptible == Interruptible.Never)
-                return;
-            
-            if (_currentAction.action.Interruptible == Interruptible.ExceptSelf && _currentAction == newAction)
-                return;
-
-            _currentAction = newAction;
+            _actionInstance?.End(_ctx);
+            _actionInstance = newAction;
+            _actionInstance.Begin(_ctx);
         }
     }
 }

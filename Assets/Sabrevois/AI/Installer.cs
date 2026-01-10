@@ -4,7 +4,6 @@ using System.Linq;
 using Sabrevois.AI.Actions;
 using UnityEngine;
 using VContainer;
-using VContainer.Unity;
 
 namespace Sabrevois.AI
 {
@@ -12,18 +11,20 @@ namespace Sabrevois.AI
     {
         public static void Configure(IContainerBuilder builder)
         {
-            // List<Type> actionTypes = AppDomain.CurrentDomain
-            //     .GetAssemblies()
-            //     .SelectMany(asm => asm.GetTypes())
-            //     .Where(t => typeof(IAction).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
-            //     .ToList();
-            //
-            // foreach (Type type in actionTypes)
-            // {
-            //     builder.Register(type, Lifetime.Singleton);
-            // }
-            //
-            // Debug.LogFormat("Registered {0} action types: {1}", actionTypes.Count, actionTypes);
+            List<Type> actionTypes = AppDomain.CurrentDomain
+                .GetAssemblies()
+                .SelectMany(asm => asm.GetTypes())
+                .Where(t => typeof(IAction).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                .ToList();
+            
+            foreach (Type type in actionTypes)
+            {
+                builder.Register(type, Lifetime.Singleton).AsImplementedInterfaces();
+            }
+            
+            string actionTypesStr = string.Join(", ", actionTypes.Select(t => t.Name));
+            Debug.LogFormat("Registered {0} action types: {1}", actionTypes.Count, actionTypesStr);
+            
             builder.Register<DecisionMakingService>(Lifetime.Singleton);
         }
     }
