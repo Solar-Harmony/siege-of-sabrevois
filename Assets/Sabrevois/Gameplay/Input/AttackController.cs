@@ -1,4 +1,5 @@
-﻿using Sabrevois.Level;
+﻿using Sabrevois.Gameplay.Tree;
+using Sabrevois.Level;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -27,12 +28,16 @@ namespace Sabrevois.Gameplay.Input
 
                 if (!Physics.Raycast(ray, out RaycastHit hitInfo, 100f))
                     return;
+
+                GameObject victim = hitInfo.collider.gameObject;
                 
-                hitInfo.collider.gameObject.TryGetComponent(out Health health);
-                if (!health)
-                    return;
-                
-                health.TakeDamage(10);
+                if (victim.TryGetComponent(out Health health))
+                    health.TakeDamage(10);
+
+                if (victim.TryGetComponent(out FellableTree tree))
+                {
+                    tree.Fell(ray.direction);
+                }
             }
         }
     }

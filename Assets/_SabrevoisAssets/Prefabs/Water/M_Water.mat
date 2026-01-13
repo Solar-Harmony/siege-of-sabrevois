@@ -25,11 +25,12 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _USE_FOAM
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 3000
   stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
@@ -37,6 +38,34 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _ParallaxOcclusionMapping_4284b5cda6d44d7dbbf15cc132635acb_Heightmap_2_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 1fe05f8138440ce42948734a3bf93ae3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxOcclusionMapping_854cda7754064dc7a005d09ca5354b7b_Heightmap_2_Texture2D:
+        m_Texture: {fileID: 2800000, guid: e24d007885662ae47b5fe67bf0410fc6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_1ccc9a02449a4256b9134599b5c67f7e_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 1fe05f8138440ce42948734a3bf93ae3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_323ff51c98784a368584ce7d5f3035cd_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 84629454e8d94d241842337c5cd67b5e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_63b1cf91ed75421aab0fcd0a2a85e912_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 1fe05f8138440ce42948734a3bf93ae3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_6742bf00ac5f49ee92dda2fc4e620a67_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 4c4bee20ce6c5b445811cbfbbb0f2958, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_6f2973448fe34ce694c07e9c0c898e87_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 1fe05f8138440ce42948734a3bf93ae3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -51,18 +80,53 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _Absorbtion_Distance: 36.02
+    - _DeepDepth: 0.3
+    - _FadeDIstance: 1000
     - _Float: 0
     - _Float_1: 1
-    - _Fresnel_Power: 0.3
+    - _FoamScale: 10
+    - _Foam_Coarse_Frequency: 0.01
+    - _Foam_Detail: 8.6
+    - _Foam_Detail_Frequency: 1.5
+    - _Foam_Detail_Scale: 0.02
+    - _Foam_Detail_Strength: 0.7
+    - _Foam_Fine_Detail: 0.45
+    - _Foam_Scale: 500
+    - _Foam_Scroll_Speed: 0.02
+    - _Foam_Speed: 0.1
+    - _Fresnel_Power: 3
+    - _MaxDepth: 5
+    - _MaxFoamWidth: 5
+    - _Max_Absorption_Depth: 40
+    - _Max_Foam_Width: 3
+    - _Max_Refraction_Depth: 2.5
+    - _Min_Foam_Width: 0
+    - _Opacity: 0.3
     - _QueueControl: 0
     - _QueueOffset: 0
     - _Reflectivity: 1
-    - _Refraction_Strength: 0.3
+    - _Refraction_Strength: 0.15
+    - _Roughness: 0
+    - _Shoreline_Fade_Width: 0.2
     - _Shoreline_Width: 0.5
-    - _Waves_Scale: 0.1
-    - _Waves_Strength: 0.02
+    - _Test: 0.8
+    - _USE_FOAM: 1
+    - _Waves_Scale: 0.25
+    - _Waves_Speed: 0.05
+    - _Waves_Strength: 0.025
     m_Colors:
+    - _Absorption_Color: {r: 0.14999998, g: 0.059999965, b: 0.02, a: 1}
+    - _Base_Color: {r: 0.9, g: 0.96999997, b: 1, a: 1}
+    - _DeepTint: {r: 0.25844395, g: 0.31233567, b: 0.68733144, a: 1}
+    - _Deep_Color: {r: 0.061409697, g: 0.078862384, b: 0.30997294, a: 1}
+    - _Deep_Tint: {r: 0.15094697, g: 0.21883017, b: 0.46091622, a: 1}
     - _FoamColor: {r: 0.8760108, g: 0.8760108, b: 0.8760108, a: 1}
-    - _Tint: {r: 0.4970575, g: 0.7328435, b: 0.7897574, a: 1}
+    - _Foam_Color: {r: 1, g: 1, b: 1, a: 1}
+    - _ShallowTint: {r: 0.2943199, g: 0.55621666, b: 0.64420474, a: 1}
+    - _Shallow_Color: {r: 0.37417987, g: 0.67979354, b: 0.84905654, a: 1}
+    - _Shallow_Tint: {r: 0.23276123, g: 0.48517263, b: 0.62803227, a: 1}
+    - _Tint: {r: 0.31372547, g: 0.5038701, b: 0.65882355, a: 0.30980393}
+    - _Tint2: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -1,40 +1,35 @@
 ﻿using System;
 using Sabrevois.AI.Actions;
 using Sabrevois.Gameplay.Dialogue;
+using TMPro;
 using UnityEngine;
 
 namespace Sabrevois.Gameplay.AI.Actions
 {
     [Serializable]
-    public class ConverseActionConfig : IActionConfig<ConverseAction, ConverseActionState>
+    public class SaySomethingActionConfig : IActionConfig<SaySomethingAction, SaySomethingActionState>
     {
-        public float Interval = 2.0f;
     }
 
-    public class ConverseActionState : IActionState
+    public class SaySomethingActionState : IActionState
     {
-        public float Timer;
     }
     
-    public record ConverseAction(ConversationService Conversation) : IAction<ConverseActionConfig, ConverseActionState>
+    public record SaySomethingAction(ConversationService Conversation) : IAction<SaySomethingActionConfig, SaySomethingActionState>
     {
-        public Interruptible Interruptible => Interruptible.ExceptSelf;
+        public Interruptible Interruptible => Interruptible.Always;
 
-        public ActionStatus Begin(ActionContext ctx, ConverseActionConfig config, ConverseActionState state)
+        public ActionStatus Begin(ActionContext ctx, SaySomethingActionConfig config, SaySomethingActionState state)
         {
-            state.Timer = config.Interval;
-            return ActionStatus.Running;
+            ctx.Agent.GetComponentInChildren<TextMeshPro>().text = Conversation.GetText();
+            return ActionStatus.Done;
         }
 
-        public ActionStatus Update(ActionContext ctx, ConverseActionConfig config, ConverseActionState state)
+        // todo: make update optional ig lol
+        // todo: support a cooldown between actions of same type?
+        public ActionStatus Update(ActionContext ctx, SaySomethingActionConfig config, SaySomethingActionState state)
         {
-            state.Timer -= Time.deltaTime;
-            if (state.Timer <= 0f)
-            {
-                Debug.Log(Conversation.GetText()); // dummy conversation
-                return ActionStatus.Done;
-            }
-            return ActionStatus.Running;
+            return ActionStatus.Done;
         }
     }
 }
