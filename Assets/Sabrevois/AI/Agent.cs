@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using ArtificeToolkit.Attributes;
+﻿using ArtificeToolkit.Attributes;
 using Sabrevois.AI.Actions;
 using UnityEngine;
 using VContainer;
@@ -82,7 +79,7 @@ private void UpdateCurrentAction(bool isInterruption)
                 case Interruptible.ExceptSelf when sameAction && isInterruption:
                     return;
             }
-
+            
             _actionInstance?.End(_ctx);
             _actionInstance = newAction;
             _actionInstance.Begin(_ctx);
