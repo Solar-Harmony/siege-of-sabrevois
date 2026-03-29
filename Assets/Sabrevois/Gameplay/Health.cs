@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Sabrevois.Gameplay
 {
@@ -18,6 +19,14 @@ namespace Sabrevois.Gameplay
         public void TakeDamage(float damage)
         {
             CurrentHealth = Mathf.Max(CurrentHealth - damage, 0);
+            OnDamageTaken?.Invoke(damage);
+            
+            if (CurrentHealth <= 0)
+            {
+                Destroy(gameObject);
+            }
         }
+        
+        public event Action<float> OnDamageTaken;
     }
 }

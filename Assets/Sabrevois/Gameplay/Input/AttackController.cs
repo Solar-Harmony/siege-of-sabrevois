@@ -8,6 +8,8 @@ namespace Sabrevois.Gameplay.Input
     public class AttackController : MonoBehaviour
     {
         [SerializeField] private InputRouter _input;
+        [SerializeField] private int _damageAmount = 10;
+        [SerializeField] private int _attackRange = 100;
         private Camera _camera;
         
         private void Awake()
@@ -25,14 +27,17 @@ namespace Sabrevois.Gameplay.Input
                     Screen.height / 2f,
                     0f
                 ));
+                
+                Debug.DrawRay(ray.origin, ray.direction * _attackRange, Color.red, 1f);
 
-                if (!Physics.Raycast(ray, out RaycastHit hitInfo, 100f))
+                if (!Physics.Raycast(ray, out RaycastHit hitInfo, _attackRange))
                     return;
 
+                Debug.Log($"Je suis TOUCHE! {hitInfo.collider.gameObject.name}");
                 GameObject victim = hitInfo.collider.gameObject;
                 
                 if (victim.TryGetComponent(out Health health))
-                    health.TakeDamage(10);
+                    health.TakeDamage(_damageAmount);
 
                 if (victim.TryGetComponent(out FellableTree tree))
                 {

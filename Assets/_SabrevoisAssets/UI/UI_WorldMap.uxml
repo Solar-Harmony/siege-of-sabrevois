@@ -1,0 +1,7 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="root" style="flex-grow: 1; flex-direction: row; flex-basis: auto; justify-content: center; align-content: center;">
+        <ui:VisualElement name="map" style="flex-grow: 0; background-image: url(&quot;project://database/Assets/_SabrevoisAssets/UI/RT_WorldMap.renderTexture?fileID=8400000&amp;guid=939c637f5812a314eb85c8c9222efc50&amp;type=2#RT_WorldMap&quot;); -unity-background-scale-mode: scale-to-fit; background-position-x: right 0; background-position-y: bottom 0; -unity-slice-scale: 1px; background-size: 100% 100%; flex-shrink: 1; width: auto; height: 98%; justify-content: flex-start; align-items: auto; align-self: center; aspect-ratio: 1;">
+            <ui:VisualElement name="player-marker" style="flex-grow: 1; position: absolute; background-color: rgb(255, 0, 0); padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px; border-top-left-radius: 64px; border-top-right-radius: 64px; border-bottom-right-radius: 64px; border-bottom-left-radius: 64px; top: 0; left: 0; right: auto; bottom: auto; align-self: auto;"/>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
