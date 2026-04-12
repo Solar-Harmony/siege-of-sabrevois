@@ -1,6 +1,7 @@
-﻿using Sabrevois.AI.Actions;
+﻿using System.Diagnostics;
+using Sabrevois.AI.Actions;
 
 namespace Sabrevois.AI.Parallel
 {
-    public record ParallelResponse(int GameObjectId, ActionInstance ChosenAction);
+    public record ParallelResponse(int GameObjectId, ActionInstance ChosenAction, Stopwatch stopwatch);
 }

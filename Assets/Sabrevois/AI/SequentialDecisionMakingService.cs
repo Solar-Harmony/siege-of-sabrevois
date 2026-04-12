@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 using Sabrevois.AI.Actions;
@@ -10,6 +11,10 @@ namespace Sabrevois.AI
 {
     public class SequentialDecisionMakingService : IDecisionMakingService
     {
+        private float _averageChoosingTimeAccumulator = 0;
+        private int _nbChoicesTaken = 0;
+        private Stopwatch _startTime = new();
+        
         private readonly Dictionary<Type, IAction> _actions;
         private Dictionary<int, Agent> _idToAgent = new();
         
@@ -19,11 +24,25 @@ namespace Sabrevois.AI
         public SequentialDecisionMakingService(IEnumerable<IAction> actions)
         {
             _actions = actions.ToDictionary(a => a.GetType(), a => a);
+            _startTime.Start();
+        }
+
+        public float GetAverageChoosingTime()
+        {
+            return _averageChoosingTimeAccumulator / _nbChoicesTaken;
         }
         
+        public float GetAverageThroughput()
+        {
+            return _nbChoicesTaken / (_startTime.ElapsedMilliseconds / 1000f);
+        }
+
         [CanBeNull]
         public void ChooseAction(ActionCandidate[] candidates, ActionContext ctx, ActionInstance currentAction, float hysteresisBias = 0.1f)
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            
             int gameObjectId = ctx.Agent.GetInstanceID();
             if (!_idToAgent.ContainsKey(gameObjectId))
                 _idToAgent[gameObjectId] = ctx.Agent.GetComponent<Agent>();
@@ -69,7 +88,10 @@ namespace Sabrevois.AI
                 Config = bestActionConfig,
                 State = Activator.CreateInstance(bestActionConfig.StateType) as IActionState
             };
-            
+
+            stopwatch.Stop();
+            _averageChoosingTimeAccumulator += stopwatch.Elapsed.Milliseconds / 1000f;
+            _nbChoicesTaken++;
             // This is technically not needed, but it provides a unified interface for both the sequential and parallel
             // implementation
             _idToAgent[gameObjectId].ReceiveAction(chosenAction);
