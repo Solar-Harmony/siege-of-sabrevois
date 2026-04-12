@@ -2,7 +2,7 @@
 using ArtificeToolkit.Attributes;
 using Sabrevois.AI.Actions;
 using UnityEngine;
-using VContainer;
+using Zenject;
 
 namespace Sabrevois.AI
 {
@@ -51,25 +51,6 @@ namespace Sabrevois.AI
                 _timer = _interval;
             }
         }
-//
-//         private void OnGUI()
-//         {
-// #if UNITY_EDITOR
-//             var text = _actionInstance != null
-//                 ? _actionInstance.Config.ActionType.Name
-//                 : "No Action";
-//             
-//             GUIStyle style = new GUIStyle(GUI.skin.label)
-//             {
-//                 fontSize = 24,
-//                 normal = { textColor = Color.white }
-//             };
-//             
-//             var pos = Camera.main.WorldToScreenPoint(transform.position + Vector3.up * 2f);
-//             Vector2 size = style.CalcSize(new GUIContent(text));
-//             GUI.Label(new Rect(pos.x - size.x / 2, Screen.height - pos.y - size.y / 2, size.x, size.y), text, style);
-// #endif
-//         }
 
         private void UpdateCurrentAction(bool isInterruption)
         {
