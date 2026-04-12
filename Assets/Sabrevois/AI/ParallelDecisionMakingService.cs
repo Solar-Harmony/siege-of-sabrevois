@@ -27,9 +27,6 @@ namespace Sabrevois.AI
         public ParallelDecisionMakingService(IEnumerable<IAction> actions)
         {
             _actions = actions.ToDictionary(a => a.GetType(), a => a);
-            
-            // Do we wanna start at construction?
-            Start();
         }
 
         public void Start()
@@ -54,11 +51,19 @@ namespace Sabrevois.AI
         [CanBeNull]
         public void ChooseAction(ActionCandidate[] candidates, ActionContext ctx, ActionInstance currentAction, float hysteresisBias = 0.1f)
         {
+            if (!_started)
+                Start();
+            
             int gameObjectId = ctx.Agent.GetInstanceID();
             if (!_idToAgent.ContainsKey(gameObjectId))
                 _idToAgent[gameObjectId] = ctx.Agent.GetComponent<Agent>();
             
             _requests.Enqueue(new ParallelRequest(gameObjectId, candidates, ctx, currentAction?.Config?.ActionType, hysteresisBias)); 
+        }
+        
+        public void Tick()
+        {
+            Update();
         }
 
         public void Update()
@@ -73,7 +78,7 @@ namespace Sabrevois.AI
         }
         #endregion
 
-        #region Workes thread
+        #region Worker threads
         private void WorkerThreadLoop()
         {
             while (!_cancellationTokenSource.Token.IsCancellationRequested)
@@ -150,9 +155,5 @@ namespace Sabrevois.AI
         }
         #endregion
 
-        public void Tick()
-        {
-            Update();
-        }
     }
 }
