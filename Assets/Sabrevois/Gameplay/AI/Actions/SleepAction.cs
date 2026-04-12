@@ -18,7 +18,7 @@ namespace Sabrevois.Gameplay.AI.Actions
         public float sleepTimer;
     }
     
-    public record SleepAction(ConversationService Conversation) : IAction<SleepActionConfig, SleepActionState>
+    public record SleepAction : IAction<SleepActionConfig, SleepActionState>
     {
         public Interruptible Interruptible => Interruptible.ExceptSelf;
         

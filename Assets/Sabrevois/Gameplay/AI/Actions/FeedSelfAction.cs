@@ -18,7 +18,7 @@ namespace Sabrevois.Gameplay.AI.Actions
         public Food chosenFood;
     }
 
-    public record FeedSelfAction(ConversationService Conversation) : IAction<FeedSelfActionConfig,FeedSelfActionState>
+    public record FeedSelfAction : IAction<FeedSelfActionConfig,FeedSelfActionState>
     {
         public Interruptible Interruptible => Interruptible.ExceptSelf;
     
