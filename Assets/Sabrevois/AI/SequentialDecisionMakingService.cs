@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Sabrevois.AI.Actions;
-using Sabrevois.AI.Parallel;
+using Sabrevois.AI.DataSources;
+using Zenject;
 
 namespace Sabrevois.AI
 {
@@ -11,6 +12,9 @@ namespace Sabrevois.AI
     {
         private readonly Dictionary<Type, IAction> _actions;
         private Dictionary<int, Agent> _idToAgent = new();
+        
+        [Inject]
+        private AgentWorldService _agentWorldService;
 
         public SequentialDecisionMakingService(IEnumerable<IAction> actions)
         {
@@ -23,6 +27,7 @@ namespace Sabrevois.AI
             int gameObjectId = ctx.Agent.GetInstanceID();
             if (!_idToAgent.ContainsKey(gameObjectId))
                 _idToAgent[gameObjectId] = ctx.Agent.GetComponent<Agent>();
+            AgentWorldSnapshot snap = _agentWorldService.RequestDataSnapshot(_idToAgent[gameObjectId]);
             
             if (candidates.Length == 0)
             {
@@ -35,10 +40,10 @@ namespace Sabrevois.AI
 
             foreach (var candidate in candidates)
             {
-                if (candidate.Preconditions.Any(p => p.Evaluate(ctx.Agent) == 0f)) 
+                if (candidate.Preconditions.Any(p => p.Evaluate(snap.GetData(p.Source)) == 0f)) 
                     continue;
 
-                float utility = ComputeUtility(ctx, candidate);
+                float utility = ComputeUtility(snap, candidate);
 
                 if (currentAction?.Config?.ActionType == candidate.ActionConfig.ActionType)
                 {
@@ -70,12 +75,12 @@ namespace Sabrevois.AI
             _idToAgent[gameObjectId].ReceiveAction(chosenAction);
         }
 
-        private static float ComputeUtility(ActionContext ctx, ActionCandidate candidate)
+        private static float ComputeUtility(AgentWorldSnapshot ctx, ActionCandidate candidate)
         {
             float utility = 1f;
             foreach (var c in candidate.Considerations)
             {
-                utility *= c.Evaluate(ctx.Agent);
+                utility *= c.Evaluate(ctx.GetData(c.Source));
             }
 
             // geometric mean to normalize utility

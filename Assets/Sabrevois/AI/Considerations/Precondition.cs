@@ -24,9 +24,8 @@ namespace Sabrevois.AI.Considerations
         [HorizontalGroup(nameof(Operator))]
         public float Threshold;
         
-        public override float Evaluate(GameObject agent)
+        public override float Evaluate(float value)
         {
-            float value = Source.GetValue(agent);
             return Operator switch
             {
                 Comparison.Less           => value <  Threshold,

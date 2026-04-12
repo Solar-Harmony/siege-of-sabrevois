@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using JetBrains.Annotations;
 using Sabrevois.AI.Actions;
+using Sabrevois.AI.DataSources;
 using Sabrevois.AI.Parallel;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 using Zenject;
 
 namespace Sabrevois.AI
@@ -16,12 +15,14 @@ namespace Sabrevois.AI
     public class ParallelDecisionMakingService : IDecisionMakingService, ITickable
     {
         private readonly Dictionary<Type, IAction> _actions;
-        private CancellationTokenSource _cancellationTokenSource = new();
-
-        private Dictionary<int, Agent> _idToAgent = new();
-        private ConcurrentQueue<ParallelRequest> _requests = new();
-        private ConcurrentQueue<ParallelResponse> _responses = new();
+        private readonly CancellationTokenSource _cancellationTokenSource = new();
+        private readonly Dictionary<int, Agent> _idToAgent = new();
+        private readonly ConcurrentQueue<ParallelRequest> _requests = new();
+        private readonly ConcurrentQueue<ParallelResponse> _responses = new();
         private bool _started = false;
+        
+        [Inject]
+        private AgentWorldService _agentWorldService;
 
         #region Main thread
         public ParallelDecisionMakingService(IEnumerable<IAction> actions)
@@ -32,7 +33,7 @@ namespace Sabrevois.AI
         public void Start()
         {
             // Starting all the worker threads (One for each core - 1 to avoid starving the main thread)
-            for (int i = 0; i < System.Environment.ProcessorCount - 1; i++)
+            for (int i = 0; i < 1; i++)
             {
                 ThreadPool.QueueUserWorkItem(_ =>
                 {
@@ -48,7 +49,6 @@ namespace Sabrevois.AI
             _started = false;
         }
         
-        [CanBeNull]
         public void ChooseAction(ActionCandidate[] candidates, ActionContext ctx, ActionInstance currentAction, float hysteresisBias = 0.1f)
         {
             if (!_started)
@@ -57,16 +57,12 @@ namespace Sabrevois.AI
             int gameObjectId = ctx.Agent.GetInstanceID();
             if (!_idToAgent.ContainsKey(gameObjectId))
                 _idToAgent[gameObjectId] = ctx.Agent.GetComponent<Agent>();
-            
-            _requests.Enqueue(new ParallelRequest(gameObjectId, candidates, ctx, currentAction?.Config?.ActionType, hysteresisBias)); 
+
+            _requests.Enqueue(new ParallelRequest(gameObjectId, candidates, 
+                _agentWorldService.RequestDataSnapshot(_idToAgent[gameObjectId]), currentAction?.Config?.ActionType, hysteresisBias)); 
         }
         
         public void Tick()
-        {
-            Update();
-        }
-
-        public void Update()
         {
             while (_responses.TryDequeue(out var response))
             {
@@ -84,7 +80,10 @@ namespace Sabrevois.AI
             while (!_cancellationTokenSource.Token.IsCancellationRequested)
             {
                 if (!_requests.TryDequeue(out ParallelRequest request))
+                {
+                    Thread.Sleep(10);
                     continue;
+                }
                 
                 ActionInstance chosenAction = ThreadChooseAction(request.Candidates, request.Context,
                     request.CurrentActionType, request.Hysteresis);
@@ -95,7 +94,7 @@ namespace Sabrevois.AI
         
         
         [CanBeNull]
-        public ActionInstance ThreadChooseAction(ActionCandidate[] candidates, ActionContext ctx, Type actionType, float hysteresisBias = 0.1f)
+        public ActionInstance ThreadChooseAction(ActionCandidate[] candidates, AgentWorldSnapshot ctx, Type actionType, float hysteresisBias = 0.1f)
         {
             // Respect the challenges of parallelism!!! Maybe
             
@@ -117,11 +116,12 @@ namespace Sabrevois.AI
                 float utility = 1f;
                 
                 // Manage concurrent access correctly
-                if (candidate.Preconditions.Any(p => p.Evaluate(ctx.Agent) == 0f)) 
+                if (candidate.Preconditions.Any(p => p.Evaluate(ctx.GetData(p.Source)) == 0f)) 
                     continue;
+
                 foreach (var c in candidate.Considerations)
                 {
-                    utility *= c.Evaluate(ctx.Agent);
+                    utility *= c.Evaluate(ctx.GetData(c.Source));
                 }
 
                 // geometric mean to normalize utility

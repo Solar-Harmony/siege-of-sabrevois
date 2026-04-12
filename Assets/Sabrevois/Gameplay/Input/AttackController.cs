@@ -22,27 +22,38 @@ namespace Sabrevois.Gameplay.Input
         {
             if (_input.AttackPressed)
             {
-                Ray ray = _camera.ScreenPointToRay(new Vector3(
-                    Screen.width / 2f,
-                    Screen.height / 2f,
+                Ray ray = _camera.ViewportPointToRay(new Vector3(
+                    0.5f,
+                    0.5f,
                     0f
                 ));
                 
                 Debug.DrawRay(ray.origin, ray.direction * _attackRange, Color.red, 1f);
 
-                if (!Physics.Raycast(ray, out RaycastHit hitInfo, _attackRange))
-                    return;
+                RaycastHit[] hits = Physics.RaycastAll(ray, _attackRange, ~0, QueryTriggerInteraction.Ignore);
+                System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
-                Debug.Log($"Je suis TOUCHE! {hitInfo.collider.gameObject.name}");
-                GameObject victim = hitInfo.collider.gameObject;
-                
-                if (victim.TryGetComponent(out Health health))
-                    health.TakeDamage(_damageAmount);
-
-                if (victim.TryGetComponent(out FellableTree tree))
+                bool hitValid = false;
+                foreach (var hit in hits)
                 {
-                    tree.Fell(ray.direction);
+                    if (hit.collider.transform.root == transform.root) continue;
+
+                    Debug.Log($"Je suis TOUCHE! {hit.collider.gameObject.name}");
+                    GameObject victim = hit.collider.gameObject;
+                    
+                    if (victim.TryGetComponent(out Health health))
+                        health.TakeDamage(_damageAmount);
+
+                    if (victim.TryGetComponent(out FellableTree tree))
+                    {
+                        tree.Fell(ray.direction);
+                    }
+                    
+                    hitValid = true;
+                    break;
                 }
+
+                if (!hitValid) return;
             }
         }
     }

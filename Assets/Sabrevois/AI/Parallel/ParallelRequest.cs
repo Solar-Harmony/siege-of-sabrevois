@@ -1,7 +1,8 @@
 ﻿using System;
 using Sabrevois.AI.Actions;
+using Sabrevois.AI.DataSources;
 
 namespace Sabrevois.AI.Parallel
 {
-    public record ParallelRequest(int GameObjectId, ActionCandidate[] Candidates, ActionContext Context, Type CurrentActionType, float Hysteresis);
+    public record ParallelRequest(int GameObjectId, ActionCandidate[] Candidates, AgentWorldSnapshot Context, Type CurrentActionType, float Hysteresis);
 }
