@@ -6,9 +6,10 @@ using UnityEngine;
 namespace Sabrevois.Gameplay.AI.Actions
 {
     [Serializable]
-    public class ReactHurtActionConfig : IActionConfig<ReactHurtAction, ReactHurtActionState>
+    public class ReactHurtActionConfig : ActionConfigBase<ReactHurtAction, ReactHurtActionState>
     {
         public float Interval = 2.0f;
+        public float EnergyCost { get; }
     }
 
     public class ReactHurtActionState : IActionState
