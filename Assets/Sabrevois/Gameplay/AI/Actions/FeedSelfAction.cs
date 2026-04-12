@@ -59,14 +59,15 @@ namespace Sabrevois.Gameplay.AI.Actions
         public ActionStatus Update(ActionContext ctx, FeedSelfActionConfig config, FeedSelfActionState state)
         {
             var agent = ctx.Agent.GetComponent<NavMeshAgent>();
-            bool isPathing = agent.pathPending || agent.remainingDistance > agent.stoppingDistance;
-
-            if (isPathing)
-                return ActionStatus.Running;
             
             //Si quelqu'un d'autre a déja manger la food
             if(!state.chosenFood)
                 return ActionStatus.Done;
+            
+            bool isPathing = agent.pathPending || agent.remainingDistance > agent.stoppingDistance;
+            
+            if (isPathing)
+                return ActionStatus.Running;
             
             state.chosenFood.Eat(ctx.Agent);
         
