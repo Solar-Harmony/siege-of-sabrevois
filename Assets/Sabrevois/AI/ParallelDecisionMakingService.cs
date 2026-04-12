@@ -9,10 +9,11 @@ using Sabrevois.AI.Actions;
 using Sabrevois.AI.Parallel;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
+using Zenject;
 
 namespace Sabrevois.AI
 {
-    public class ParallelDecisionMakingService : IDecisionMakingService
+    public class ParallelDecisionMakingService : IDecisionMakingService, ITickable
     {
         private readonly Dictionary<Type, IAction> _actions;
         private CancellationTokenSource _cancellationTokenSource = new();
@@ -148,5 +149,10 @@ namespace Sabrevois.AI
             };
         }
         #endregion
+
+        public void Tick()
+        {
+            Update();
+        }
     }
 }
