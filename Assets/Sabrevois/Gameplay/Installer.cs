@@ -1,15 +1,13 @@
-﻿using Sabrevois.AI.Actions;
-using Sabrevois.Gameplay.AI.Actions;
-using Sabrevois.Gameplay.Dialogue;
-using VContainer;
+﻿using Sabrevois.Gameplay.Dialogue;
+using Zenject;
 
 namespace Sabrevois.Gameplay
 {
-    public static class Installer
+    public class GameplayInstaller : Installer<GameplayInstaller>
     {
-        public static void Configure(IContainerBuilder builder)
+        public override void InstallBindings()
         {
-            builder.Register<ConversationService>(Lifetime.Singleton);
+            Container.Bind<ConversationService>().AsSingle();
         }
     }
 }

@@ -3,13 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using Sabrevois.AI.Actions;
 using UnityEngine;
-using VContainer;
+using Zenject;
 
 namespace Sabrevois.AI
 {
-    public static class Installer
+    public class AIInstaller : Installer<AIInstaller>
     {
-        public static void Configure(IContainerBuilder builder)
+        public override void InstallBindings()
+        {
+            BindActionTypes();
+            Container.Bind<DecisionMakingService>().AsSingle();
+        }
+
+        private void BindActionTypes()
         {
             List<Type> actionTypes = AppDomain.CurrentDomain
                 .GetAssemblies()
@@ -19,13 +25,11 @@ namespace Sabrevois.AI
             
             foreach (Type type in actionTypes)
             {
-                builder.Register(type, Lifetime.Singleton).AsImplementedInterfaces();
+                Container.Bind<IAction>().To(type).AsSingle();
             }
             
             string actionTypesStr = string.Join(", ", actionTypes.Select(t => t.Name));
             Debug.LogFormat("Registered {0} action types: {1}", actionTypes.Count, actionTypesStr);
-            
-            builder.Register<DecisionMakingService>(Lifetime.Singleton);
         }
     }
 }
