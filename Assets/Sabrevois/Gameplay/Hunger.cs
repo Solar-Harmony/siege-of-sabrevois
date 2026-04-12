@@ -29,7 +29,6 @@ public class Hunger : MonoBehaviour
     public void IncreaseHunger(float amount)
     {
         CurrentHunger = Mathf.Min(CurrentHunger + amount, MaxHunger);
-        Debug.Log("Hunger increased: " + CurrentHunger);
     }
         
     public void ResetHunger()

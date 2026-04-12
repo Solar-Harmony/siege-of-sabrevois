@@ -8,7 +8,6 @@ public class Food : MonoBehaviour
 
     public void Eat(GameObject agent)
     {
-        Debug.Log("Food eaten!");
         agent.GetComponent<Hunger>().ReduceHunger(nutritionValue);
         Destroy(gameObject); 
     }
