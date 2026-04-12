@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: -984041389127934398}
   - component: {fileID: -1249085982329886884}
   - component: {fileID: 6153419840484802571}
+  - component: {fileID: 6702582381545169484}
   m_Layer: 0
   m_Name: NPC
   m_TagString: Untagged
@@ -158,6 +159,19 @@ CapsuleCollider:
   m_Height: 1.6
   m_Direction: 1
   m_Center: {x: 0, y: 0.8, z: 0}
+--- !u!114 &6702582381545169484
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1894504144756601435}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40d30295b91f3304a82441f24c301265, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Gameplay::Fatigue
+  MaxFatigue: 100
 --- !u!1 &2389312972207194853
 GameObject:
   m_ObjectHideFlags: 0
