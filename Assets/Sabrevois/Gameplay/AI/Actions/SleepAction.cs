@@ -22,8 +22,7 @@ namespace Sabrevois.Gameplay.AI.Actions
     {
         public Interruptible Interruptible => Interruptible.ExceptSelf;
         
-        private string _sleepSpotCategory = "SleepSpot";
-        
+        private WorldObjectCategory _sleepSpotCategory = WorldObjectCategory.House;
 
         public ActionStatus Begin(ActionContext ctx, SleepActionConfig config, SleepActionState state)
         {
@@ -31,18 +30,18 @@ namespace Sabrevois.Gameplay.AI.Actions
             state.sleepTimer = config.sleepDuration;
             
 
-            List<Transform> spots = WorldObjectRegistry.Instance.Get(_sleepSpotCategory);
+            List<GameObject> spots = WorldObjectRegistry.Instance.Get(_sleepSpotCategory);
 
             Transform closestSpot = null;
             float currentDistance = Mathf.Infinity;
 
-            foreach (Transform sleepSpot in spots)
+            foreach (GameObject sleepSpot in spots)
             {
-                float distance = Vector3.Distance(ctx.Agent.transform.position, sleepSpot.position);
+                float distance = Vector3.Distance(ctx.Agent.transform.position, sleepSpot.transform.position);
                 if (distance < currentDistance)
                 {
                     currentDistance = distance;
-                    closestSpot = sleepSpot;
+                    closestSpot = sleepSpot.transform;
                 }
             }
 
@@ -63,7 +62,6 @@ namespace Sabrevois.Gameplay.AI.Actions
             
             state.sleepTimer -= Time.deltaTime;
             
-            Debug.Log("Sleep timer remaining: " + state.sleepTimer);
             if (state.sleepTimer > 0f)
                 return ActionStatus.Running;
 

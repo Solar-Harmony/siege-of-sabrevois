@@ -5,16 +5,16 @@ namespace Sabrevois.Gameplay.AI
     public class WorldObjectRegistrant : MonoBehaviour
     {
         [SerializeField] 
-        private string category = "SleepSpot";
+        private WorldObjectCategory category = WorldObjectCategory.Food;
 
         private void OnEnable()
         {
-            WorldObjectRegistry.Instance.Register(category, transform);
+            WorldObjectRegistry.Instance.Register(category, gameObject);
         }
 
         private void OnDisable()
         {
-            WorldObjectRegistry.Instance.Unregister(category, transform);
+            WorldObjectRegistry.Instance.Unregister(category, gameObject);
         }
     }
 }

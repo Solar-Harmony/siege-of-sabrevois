@@ -89,3 +89,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2526a9f3aa071469ecbfabdcf1fab1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Gameplay::WorldObjectRegistrant
+  category: 1

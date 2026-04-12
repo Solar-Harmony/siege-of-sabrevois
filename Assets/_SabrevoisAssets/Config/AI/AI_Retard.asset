@@ -112,6 +112,44 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 4
   - ActionConfig:
+      rid: 4373529887694651467
+    Preconditions:
+    - Source:
+        rid: 4373529887694651465
+      Operator: 3
+      Threshold: 10
+    - Source:
+        rid: 4373529887694651468
+      Operator: 5
+      Threshold: 0
+    Considerations:
+    - Source:
+        rid: 4373529887694651464
+      Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  - ActionConfig:
       rid: 4373529886062543037
     Preconditions: []
     Considerations:
@@ -160,6 +198,20 @@ MonoBehaviour:
     - rid: 4373529887694651462
       type: {class: EnergyValueSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 
+    - rid: 4373529887694651464
+      type: {class: HungerPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 4373529887694651465
+      type: {class: EnergyValueSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 4373529887694651467
+      type: {class: FeedSelfActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
+      data:
+        EnergyCost: 10
+    - rid: 4373529887694651468
+      type: {class: WorldObjectQuantitySource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data:
+        objectCategory: 0
     - rid: 6057649467727020159
       type: {class: HealthPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 
