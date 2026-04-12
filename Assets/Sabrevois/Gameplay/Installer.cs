@@ -8,6 +8,7 @@ namespace Sabrevois.Gameplay
         public override void InstallBindings()
         {
             Container.Bind<ConversationService>().AsSingle();
+            Container.Bind<FuckYouService>().AsSingle();
         }
     }
 }

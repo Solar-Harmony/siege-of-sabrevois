@@ -3,6 +3,7 @@ using Sabrevois.AI.Actions;
 using Sabrevois.Gameplay.Dialogue;
 using TMPro;
 using UnityEngine;
+using Zenject;
 
 namespace Sabrevois.Gameplay.AI.Actions
 {

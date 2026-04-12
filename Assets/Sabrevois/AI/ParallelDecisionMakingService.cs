@@ -14,7 +14,7 @@ using Debug = UnityEngine.Debug;
 
 namespace Sabrevois.AI
 {
-    public class ParallelDecisionMakingService : IDecisionMakingService, ITickable
+    public partial class ParallelDecisionMakingService : IDecisionMakingService, ITickable
     {
         private float _averageChoosingTimeAccumulator = 0;
         private int _nbChoicesTaken = 0;
@@ -28,7 +28,13 @@ namespace Sabrevois.AI
         private readonly ConcurrentQueue<ParallelResponse> _responses = new();
         private static readonly ConcurrentDictionary<Type, Func<IActionState>> _stateFactories = new();
         private bool _started = false;
-        
+
+#if UNITY_EDITOR
+        partial void EditorInitThreadState(Thread thread);
+        partial void EditorBeginRequest(int threadId, ParallelRequest request, ref object reqInfoObj);
+        partial void EditorEndRequest(object reqInfoObj, ActionInstance chosenAction, Stopwatch sw);
+#endif
+
         [Inject]
         private AgentWorldService _agentWorldService;
 
@@ -67,12 +73,16 @@ namespace Sabrevois.AI
 
         public void Start()
         {
-            // Starting all the worker threads (One for each core - 1 to avoid starving the main thread)
-            for (int i = 0; i < 2; i++)
+            int threadCount = Math.Max(1, Environment.ProcessorCount - 1);
+            for (int i = 0; i < threadCount; i++)
             {
                 Thread thread = new Thread(WorkerThreadLoop) {
-                    IsBackground = true
+                    IsBackground = true,
+                    Name = $"AI Worker Default {i}"
                 };
+#if UNITY_EDITOR
+                EditorInitThreadState(thread);
+#endif
                 thread.Start();
             }
             _startTime.Start();
@@ -99,6 +109,7 @@ namespace Sabrevois.AI
 
             _requests.Enqueue(new ParallelRequest(
                 gameObjectId,
+                _idToAgent[gameObjectId].Name,
                 candidates,
                 _agentWorldService.RequestDataSnapshot(_idToAgent[gameObjectId]),
                 currentAction?.Config?.ActionType,
@@ -117,7 +128,10 @@ namespace Sabrevois.AI
                 {
                     response.stopwatch.Stop();
                     _nbChoicesTaken++;
-                    _averageChoosingTimeAccumulator += response.stopwatch.ElapsedMilliseconds / 1000f;
+                    long ticks = response.stopwatch.ElapsedTicks;
+                    long frequency = Stopwatch.Frequency;
+                    double elapsedNanoseconds = (double)ticks / frequency * 1_000_000_000;
+                    _averageChoosingTimeAccumulator += (float)(elapsedNanoseconds / 1000000000d);
                     agent.ReceiveAction(response.ChosenAction);
                 }
                 else
@@ -138,11 +152,23 @@ namespace Sabrevois.AI
                     if (!_requests.TryDequeue(out ParallelRequest request))
                         continue;
 
+#if UNITY_EDITOR
+                    var threadId = Thread.CurrentThread.ManagedThreadId;
+                    object reqInfoObj = null;
+                    EditorBeginRequest(threadId, request, ref reqInfoObj);
+                    Stopwatch sw = Stopwatch.StartNew();
+#endif
+
                     ActionInstance chosenAction = ThreadChooseAction(
                         request.Candidates,
                         request.Context,
                         request.CurrentActionType,
                         request.Hysteresis);
+
+#if UNITY_EDITOR
+                    sw.Stop();
+                    EditorEndRequest(reqInfoObj, chosenAction, sw);
+#endif
 
                     _responses.Enqueue(new ParallelResponse(request.GameObjectId, chosenAction, request.stopwatc));
                 }
@@ -171,8 +197,8 @@ namespace Sabrevois.AI
             
             // Due to the small size of our brains, we weren't able to come up with
             // a complex enough logic so we will artificially inflate the algorithmic complexity
-            System.Random random = new System.Random();
-            Thread.Sleep(random.Next(5, 20));
+            // System.Random random = new System.Random();
+            // Thread.Sleep(random.Next(5, 20));
             
             if (candidates.Length == 0)
                 return null;

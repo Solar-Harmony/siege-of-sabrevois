@@ -13,8 +13,8 @@ namespace Sabrevois.AI
         public override void InstallBindings()
         {
             BindActionTypes();
-            Container.BindInterfacesAndSelfTo<ParallelDecisionMakingService>().AsSingle();
             Container.Bind<AgentWorldService>().AsSingle();
+            Container.BindInterfacesAndSelfTo<ParallelDecisionMakingService>().AsSingle();
         }
 
         private void BindActionTypes()
