@@ -8,53 +8,67 @@ using UnityEngine.AI;
 namespace Sabrevois.Gameplay.AI.Actions
 {
     [Serializable]
-    public class SleepActionConfig : IActionConfig<SleepAction, SleepActionState>
+    public class SleepActionConfig : ActionConfigBase<SleepAction, SleepActionState>
     {
-        public List<GameObject> SleepSpots;
+        public float sleepDuration = 5f;
     }
     
     public class SleepActionState : IActionState
     {
-        
+        public float sleepTimer;
     }
     
     public record SleepAction(ConversationService Conversation) : IAction<SleepActionConfig, SleepActionState>
     {
         public Interruptible Interruptible => Interruptible.ExceptSelf;
-
-        private NavMeshAgent _agent;
+        
+        private string _sleepSpotCategory = "SleepSpot";
+        
 
         public ActionStatus Begin(ActionContext ctx, SleepActionConfig config, SleepActionState state)
         {
-            _agent = ctx.Agent.GetComponent<NavMeshAgent>();
+            NavMeshAgent agent = ctx.Agent.GetComponent<NavMeshAgent>();
+            state.sleepTimer = config.sleepDuration;
             
+
+            List<Transform> spots = WorldObjectRegistry.Instance.Get(_sleepSpotCategory);
+
             Transform closestSpot = null;
             float currentDistance = Mathf.Infinity;
-            
-            foreach (GameObject sleepSpot in config.SleepSpots)
+
+            foreach (Transform sleepSpot in spots)
             {
-                float distance = Vector3.Distance(ctx.Agent.transform.position, sleepSpot.transform.position);
-                
+                float distance = Vector3.Distance(ctx.Agent.transform.position, sleepSpot.position);
                 if (distance < currentDistance)
                 {
                     currentDistance = distance;
-                    closestSpot = sleepSpot.transform;
+                    closestSpot = sleepSpot;
                 }
             }
 
-            if (closestSpot != null) 
-                _agent.SetDestination(closestSpot.position);
+            if (closestSpot != null)
+                agent.SetDestination(closestSpot.position);
 
             return ActionStatus.Running;
         }
 
         public ActionStatus Update(ActionContext ctx, SleepActionConfig config, SleepActionState state)
         {
-            bool isPathing = _agent.pathPending || _agent.remainingDistance > _agent.stoppingDistance;
+            NavMeshAgent agent = ctx.Agent.GetComponent<NavMeshAgent>();
+
+            bool isPathing = agent.pathPending || agent.remainingDistance > agent.stoppingDistance;
 
             if (isPathing)
                 return ActionStatus.Running;
+            
+            state.sleepTimer -= Time.deltaTime;
+            
+            Debug.Log("Sleep timer remaining: " + state.sleepTimer);
+            if (state.sleepTimer > 0f)
+                return ActionStatus.Running;
 
+            ctx.Agent.GetComponent<Energy>().ResetEnergy();
+            
             return ActionStatus.Done;
         }
     }

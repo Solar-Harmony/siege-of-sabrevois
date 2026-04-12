@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Sabrevois.Gameplay
@@ -19,11 +20,17 @@ namespace Sabrevois.Gameplay
         {
             CurrentEnergy = Mathf.Max(CurrentEnergy - amount, 0);
             
+            Debug.Log(name + "Energy spent: " + amount + ", current energy: " + CurrentEnergy);
+            
             if (CurrentEnergy <= 0)
             {
                 //s'endort
             }
         }
         
+        public void ResetEnergy()
+        {
+            CurrentEnergy = MaxEnergy;
+        }
     }
 }

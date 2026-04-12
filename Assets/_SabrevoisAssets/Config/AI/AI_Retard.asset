@@ -15,7 +15,11 @@ MonoBehaviour:
   Actions:
   - ActionConfig:
       rid: 6057649637045567557
-    Preconditions: []
+    Preconditions:
+    - Source:
+        rid: 4373529887694651461
+      Operator: 3
+      Threshold: 10
     Considerations:
     - Source:
         rid: 6057649637045567559
@@ -45,7 +49,11 @@ MonoBehaviour:
         m_RotationOrder: 4
   - ActionConfig:
       rid: 6057649637045567560
-    Preconditions: []
+    Preconditions:
+    - Source:
+        rid: 4373529887694651462
+      Operator: 3
+      Threshold: 5
     Considerations:
     - Source:
         rid: 6057649637045567558
@@ -103,21 +111,67 @@ MonoBehaviour:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 4
+  - ActionConfig:
+      rid: 4373529886062543037
+    Preconditions: []
+    Considerations:
+    - Source:
+        rid: 4373529886062543039
+      Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: -0.0051813126
+          value: 0.9936153
+          inSlope: -0.6804924
+          outSlope: -0.6804924
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 1
+        - serializedVersion: 3
+          time: 1.027202
+          value: -0.014365509
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
   DecisionMakingInterval: 1
   Hysteresis: 0.1
   references:
     version: 2
     RefIds:
+    - rid: 4373529886062543037
+      type: {class: SleepActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
+      data:
+        EnergyCost: 0
+        sleepDuration: 5
+    - rid: 4373529886062543039
+      type: {class: EnergyPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 4373529887694651461
+      type: {class: EnergyValueSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 4373529887694651462
+      type: {class: EnergyValueSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
     - rid: 6057649467727020159
       type: {class: HealthPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 
     - rid: 6057649606450216960
       type: {class: ReactHurtActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
       data:
+        EnergyCost: 0
         Interval: 2
     - rid: 6057649637045567557
       type: {class: MoveRandomlyActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
       data:
+        EnergyCost: 3
         Radius: 5
     - rid: 6057649637045567558
       type: {class: RandomSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
@@ -127,4 +181,5 @@ MonoBehaviour:
       data: 
     - rid: 6057649637045567560
       type: {class: SaySomethingActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
-      data: 
+      data:
+        EnergyCost: 0.5

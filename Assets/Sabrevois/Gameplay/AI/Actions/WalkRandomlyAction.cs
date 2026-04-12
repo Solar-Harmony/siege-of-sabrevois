@@ -1,6 +1,7 @@
 ﻿using System;
 using Sabrevois.AI.Actions;
 using Sabrevois.Gameplay.Dialogue;
+using Sabrevois.Utils;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AI;
@@ -8,7 +9,7 @@ using UnityEngine.AI;
 namespace Sabrevois.Gameplay.AI.Actions
 {
     [Serializable]
-    public class MoveRandomlyActionConfig : IActionConfig<MoveRandomlyAction, MoveRandomlyActionState>
+    public class MoveRandomlyActionConfig : ActionConfigBase<MoveRandomlyAction, MoveRandomlyActionState>
     {
         [Min(1.0f)]
         public float Radius = 5f;
@@ -39,7 +40,8 @@ namespace Sabrevois.Gameplay.AI.Actions
 
             if (isPathing)
                 return ActionStatus.Running;
-
+            
+            ctx.Agent.GetComponent<Energy>().SpendEnergy(config.EnergyCost);
             return ActionStatus.Done;
         }
     }
