@@ -25,7 +25,7 @@ namespace Sabrevois.AI
             string actionTypesStr = string.Join(", ", actionTypes.Select(t => t.Name));
             Debug.LogFormat("Registered {0} action types: {1}", actionTypes.Count, actionTypesStr);
             
-            builder.Register<DecisionMakingService>(Lifetime.Singleton);
+            builder.Register<IDecisionMakingService, SequentialDecisionMakingService>(Lifetime.Singleton);
         }
     }
 }

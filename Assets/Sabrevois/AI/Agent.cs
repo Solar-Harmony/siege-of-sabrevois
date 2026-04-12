@@ -1,4 +1,5 @@
-﻿using ArtificeToolkit.Attributes;
+﻿using System;
+using ArtificeToolkit.Attributes;
 using Sabrevois.AI.Actions;
 using UnityEngine;
 using VContainer;
@@ -17,12 +18,14 @@ namespace Sabrevois.AI
         private float _decisionMakingInterval = 1f;
         
         [Inject]
-        private DecisionMakingService _decisionMakingService;
+        private IDecisionMakingService _decisionMakingService;
         
         private ActionContext _ctx;
         private ActionInstance _actionInstance;
         private float _interval;
         private float _timer;
+        private bool _isInterruption = false;
+        private bool _hasRequestedAction = false;
 
         private void Start()
         {
@@ -34,6 +37,10 @@ namespace Sabrevois.AI
         
         private void Update()
         {
+            // If we are waiting for an action, let's freeze
+            if (_hasRequestedAction)
+                return;
+            
             _timer -= Time.deltaTime;
             if (_timer > 0f)
                 return;
@@ -43,8 +50,6 @@ namespace Sabrevois.AI
                 UpdateCurrentAction(isInterruption: false);
                 _timer = _interval;
             }
-            
-            
         }
 //
 //         private void OnGUI()
@@ -66,9 +71,17 @@ namespace Sabrevois.AI
 // #endif
 //         }
 
-private void UpdateCurrentAction(bool isInterruption)
+        private void UpdateCurrentAction(bool isInterruption)
         {
-            ActionInstance newAction = _decisionMakingService.ChooseAction(Archetype.Actions, _ctx, _actionInstance, Archetype.Hysteresis);
+            _hasRequestedAction = true;
+            _isInterruption = isInterruption;
+            _decisionMakingService.ChooseAction(Archetype.Actions, _ctx, _actionInstance, Archetype.Hysteresis);
+        }
+
+        public void ReceiveAction(ActionInstance newAction)
+        {
+            _hasRequestedAction = false;
+            
             if (newAction == null)
                 return;
 
@@ -76,7 +89,7 @@ private void UpdateCurrentAction(bool isInterruption)
             switch (_actionInstance?.Action?.Interruptible)
             {
                 case Interruptible.Never:
-                case Interruptible.ExceptSelf when sameAction && isInterruption:
+                case Interruptible.ExceptSelf when sameAction && _isInterruption:
                     return;
             }
             
