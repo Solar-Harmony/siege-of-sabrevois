@@ -6,20 +6,18 @@ public class House : MonoBehaviour
     private int maxAmountOfOccupants = 4;
     
     [SerializeField]
-    private Renderer houseRenderer;
-
-    [SerializeField]
     private Color fullColor = Color.red;
 
+    private Renderer _houseRenderer;
     private Color _defaultColor;
     private int _currentAmountOfOccupants;
 
     private void Start()
     {
-        if (houseRenderer == null)
-            houseRenderer = GetComponent<Renderer>();
+        if (_houseRenderer == null)
+            _houseRenderer = GetComponent<Renderer>();
 
-        _defaultColor = houseRenderer.material.color;
+        _defaultColor = _houseRenderer.material.color;
     }
     
    public void AddOccupant()
@@ -48,6 +46,6 @@ public class House : MonoBehaviour
    
    private void UpdateColor()
    {
-       houseRenderer.material.color = IsFull() ? fullColor : _defaultColor;
+       _houseRenderer.material.color = IsFull() ? fullColor : _defaultColor;
    }
 }
