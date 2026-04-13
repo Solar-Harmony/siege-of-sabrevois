@@ -14,6 +14,7 @@ namespace Sabrevois.AI
         private float _averageChoosingTimeAccumulator = 0;
         private int _nbChoicesTaken = 0;
         private Stopwatch _startTime = new();
+        private int currentMetricResetDelay = 10;
         
         private readonly Dictionary<Type, IAction> _actions;
         private Dictionary<int, Agent> _idToAgent = new();
@@ -49,6 +50,14 @@ namespace Sabrevois.AI
         [CanBeNull]
         public void ChooseAction(ActionCandidate[] candidates, ActionContext ctx, ActionInstance currentAction, float hysteresisBias = 0.1f)
         {
+            if (_startTime.Elapsed.Seconds > currentMetricResetDelay)
+            {
+                currentMetricResetDelay *= 10;
+                _startTime.Restart();
+                _averageChoosingTimeAccumulator = 0;
+                _nbChoicesTaken = 0;
+            }
+            
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
             
