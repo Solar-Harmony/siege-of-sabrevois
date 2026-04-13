@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Sabrevois.AI.DataSources;
 using UnityEngine;
 

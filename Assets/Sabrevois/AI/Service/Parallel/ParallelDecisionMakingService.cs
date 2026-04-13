@@ -14,7 +14,7 @@ using Debug = UnityEngine.Debug;
 
 namespace Sabrevois.AI
 {
-    public partial class ParallelDecisionMakingService : IDecisionMakingService, ITickable
+    public partial class ParallelDecisionMakingService : IDecisionMakingService, ITickable, IDisposable
     {
         private float _averageChoosingTimeAccumulator = 0;
         private int _nbChoicesTaken = 0;
@@ -40,6 +40,11 @@ namespace Sabrevois.AI
         private AgentWorldService _agentWorldService;
 
         #region Main thread
+        public void Dispose()
+        {
+            Stop();
+        }
+        
         public ParallelDecisionMakingService(IEnumerable<IAction> actions)
         {
             _actions = actions.ToDictionary(a => a.GetType(), a => a);
@@ -264,5 +269,6 @@ namespace Sabrevois.AI
             return utility;
         }
         #endregion
+
     }
 }
