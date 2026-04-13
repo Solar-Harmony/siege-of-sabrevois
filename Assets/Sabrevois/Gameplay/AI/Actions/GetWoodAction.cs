@@ -12,7 +12,8 @@ namespace Sabrevois.Gameplay.AI.Actions
     [Serializable]
     public class GetWoodActionConfig : ActionConfigBase<GetWoodAction, GetWoodActionState>
     {
-        public float gatheringDuration = 5f;
+        public float gatheringDuration = 10f;
+        public float woodQuantity = 10f; //TODO : Fellable Trees, remove
     }
 
     public class GetWoodActionState : IActionState
@@ -24,7 +25,6 @@ namespace Sabrevois.Gameplay.AI.Actions
     {
         public Interruptible Interruptible => Interruptible.ExceptSelf;
 
-        private WorldObjectCategory _woodStorageCategory = WorldObjectCategory.House;
         private WorldObjectCategory _woodLocationCategory = WorldObjectCategory.Tree;
 
         public ActionStatus Begin(ActionContext ctx, GetWoodActionConfig config, GetWoodActionState state)
@@ -33,24 +33,27 @@ namespace Sabrevois.Gameplay.AI.Actions
             state.gatheringTimer = config.gatheringDuration;
 
 
-            List<GameObject> possibleDepositSpots = WorldObjectRegistry.Instance.Get(_woodStorageCategory);
+            List<GameObject> possibleGatheringSpots = WorldObjectRegistry.Instance.Get(_woodLocationCategory);
 
-            Transform closestHouse = null;
+            Transform closestTree = null;
             float currentDistance = Mathf.Infinity;
 
-            foreach (GameObject houseSpot in possibleDepositSpots)
+            foreach (GameObject treeSpot in possibleGatheringSpots)
             {
-                float distance = Vector3.Distance(ctx.Agent.transform.position, houseSpot.transform.position);
-                Wood houseWood = houseSpot.GetComponent<Wood>();
-                if (distance < currentDistance && (houseWood.CurrentWood + 5f) < houseWood.MaxWood)
+                float distance = Vector3.Distance(ctx.Agent.transform.position, treeSpot.transform.position);
+                //TODO Fellable Trees
+                //Wood treeWood = treeSpot.GetComponent<Wood>();
+                Wood agentWood = agent.GetComponent<Wood>();
+                if (distance < currentDistance &&
+                    agentWood.CurrentWood > 0)
                 {
                     currentDistance = distance;
-                    closestHouse = houseSpot.transform;
+                    closestTree = treeSpot.transform;
                 }
             }
 
-            if (closestHouse != null)
-                agent.SetDestination(closestHouse.position);
+            if (closestTree != null)
+                agent.SetDestination(closestTree.position);
 
             return ActionStatus.Running;
         }
@@ -69,10 +72,16 @@ namespace Sabrevois.Gameplay.AI.Actions
             if (state.gatheringTimer > 0f)
                 return ActionStatus.Running;
 
+
+            Wood agentWood = ctx.Agent.GetComponent<Wood>();
+            float gatheredWood = Mathf.Min(
+                config.woodQuantity,
+                agentWood.MaxWood - agentWood.CurrentWood);
+
+            agentWood.AddWood(gatheredWood);
             ctx.Agent.GetComponent<Energy>().SpendEnergy(config.EnergyCost);
 
             return ActionStatus.Done;
         }
     }
 }
-
