@@ -3,6 +3,7 @@ using Sabrevois.AI.Actions;
 using Sabrevois.Gameplay.Dialogue;
 using TMPro;
 using UnityEngine;
+using Zenject;
 
 namespace Sabrevois.Gameplay.AI.Actions
 {
@@ -14,6 +15,7 @@ namespace Sabrevois.Gameplay.AI.Actions
 
     public class SaySomethingActionState : IActionState
     {
+        public TextMeshPro Text;
     }
     
     public record SaySomethingAction(ConversationService Conversation) : IAction<SaySomethingActionConfig, SaySomethingActionState>
@@ -22,7 +24,8 @@ namespace Sabrevois.Gameplay.AI.Actions
 
         public ActionStatus Begin(ActionContext ctx, SaySomethingActionConfig config, SaySomethingActionState state)
         {
-            ctx.Agent.GetComponentInChildren<TextMeshPro>().text = Conversation.GetText();
+            state.Text = ctx.Agent.GetComponentInChildren<TextMeshPro>();
+            state.Text.text = Conversation.GetText();
             ctx.Agent.GetComponent<Energy>().SpendEnergy(config.EnergyCost);
             return ActionStatus.Done;
         }
@@ -32,6 +35,11 @@ namespace Sabrevois.Gameplay.AI.Actions
         public ActionStatus Update(ActionContext ctx, SaySomethingActionConfig config, SaySomethingActionState state)
         {
             return ActionStatus.Done;
+        }
+
+        public void End(ActionContext ctx, SaySomethingActionConfig config, SaySomethingActionState state)
+        {
+            state.Text.text = "";
         }
     }
 }

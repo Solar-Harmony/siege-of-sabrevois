@@ -22,6 +22,8 @@ MonoBehaviour:
       Value: 1
     - Key: Sabrevois
       Value: 1
+    - Key: 30ecd477-080d-48b1-a5a5-7328897ad02b
+      Value: 1
   validatorTypesMap:
     list:
     - Key: Artifice_ValidatorModule_ScriptableObject_NullReferenceChecker

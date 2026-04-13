@@ -1,5 +1,6 @@
 ﻿using System;
 using ArtificeToolkit.Attributes;
+using Sabrevois.AI.DataSources;
 using UnityEngine;
 
 namespace Sabrevois.AI.Considerations
@@ -8,8 +9,8 @@ namespace Sabrevois.AI.Considerations
     public abstract class Consideration
     {
         [SerializeReference] [Required]
-        public IConsiderationSource Source;
+        public IDataSource Source;
         
-        public abstract float Evaluate(GameObject agent);
+        public abstract float Evaluate(float value);
     }
 }

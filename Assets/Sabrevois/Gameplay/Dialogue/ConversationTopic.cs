@@ -1,5 +1,6 @@
 ﻿using System;
 using Sabrevois.AI.Considerations;
+using Sabrevois.AI.DataSources;
 using UnityEngine;
 
 namespace Sabrevois.Gameplay.Dialogue
@@ -14,6 +15,6 @@ namespace Sabrevois.Gameplay.Dialogue
         public string[] FollowUps;
 
         [SerializeReference] 
-        public IConsiderationSource Condition;
+        public IDataSource Condition;
     }
 }

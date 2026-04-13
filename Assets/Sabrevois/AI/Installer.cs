@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Sabrevois.AI.Actions;
+using Sabrevois.AI.DataSources;
 using UnityEngine;
 using Zenject;
 
@@ -12,7 +13,28 @@ namespace Sabrevois.AI
         public override void InstallBindings()
         {
             BindActionTypes();
-            Container.Bind<DecisionMakingService>().AsSingle();
+            BindCoreService();
+            Container.Bind<AgentWorldService>().AsSingle();
+        }
+
+        private void BindCoreService()
+        {
+            var settings = Resources.Load("AISettings") as AISettings;
+            Container.BindInstance(settings);
+            if (settings == null)
+            {
+                Debug.LogError("AI Settings not found");
+                return;
+            }
+
+            if (settings.ProcessorCount == 1)
+            {
+                Container.BindInterfacesAndSelfTo<SequentialDecisionMakingService>().AsSingle();
+            }
+            else
+            {
+                Container.BindInterfacesAndSelfTo<ParallelDecisionMakingService>().AsSingle();
+            }
         }
 
         private void BindActionTypes()

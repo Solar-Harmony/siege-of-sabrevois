@@ -19,7 +19,7 @@ namespace Sabrevois.Gameplay.AI.Actions
     {
     }
     
-    public record MoveRandomlyAction(ConversationService Conversation) : IAction<MoveRandomlyActionConfig, MoveRandomlyActionState>
+    public record MoveRandomlyAction : IAction<MoveRandomlyActionConfig, MoveRandomlyActionState>
     {
         public Interruptible Interruptible => Interruptible.ExceptSelf;
 
@@ -29,13 +29,21 @@ namespace Sabrevois.Gameplay.AI.Actions
             randomDirection += ctx.Agent.transform.position;
             NavMesh.SamplePosition(randomDirection, out NavMeshHit hit, 5f, 1);
             Vector3 finalPosition = hit.position;
-            ctx.Agent.GetComponent<NavMeshAgent>().SetDestination(finalPosition);
+                
+            var a = ctx.Agent.GetComponent<NavMeshAgent>();
+            if (!a.isOnNavMesh)
+                return ActionStatus.Done;
+                    
+            a.SetDestination(finalPosition);
             return ActionStatus.Running;
         }
 
         public ActionStatus Update(ActionContext ctx, MoveRandomlyActionConfig config, MoveRandomlyActionState state)
         {
             var agent = ctx.Agent.GetComponent<NavMeshAgent>();
+            if (!agent.isOnNavMesh)
+                return ActionStatus.Done;
+            
             bool isPathing = agent.pathPending || agent.remainingDistance > agent.stoppingDistance;
 
             if (isPathing)

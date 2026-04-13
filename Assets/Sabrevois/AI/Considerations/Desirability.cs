@@ -10,9 +10,8 @@ namespace Sabrevois.AI.Considerations
         [Tooltip("Non normalized curve. Maps source value to action desirability score.")]
         public AnimationCurve Curve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
         
-        public override float Evaluate(GameObject obj)
+        public override float Evaluate(float value)
         {
-            float value = Source.GetValue(obj);
             return Curve.Evaluate(value);
         }
     }

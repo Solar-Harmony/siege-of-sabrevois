@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using Sabrevois.AI.Considerations;
+using Sabrevois.AI.DataSources;
 using UnityEngine;
 
 namespace Sabrevois.Gameplay.AI.DataSources
 {
     [Serializable]
-    public class WorldObjectQuantitySource : IConsiderationSource
+    public class WorldObjectQuantitySource : IDataSource
     {
         public WorldObjectCategory objectCategory;
         

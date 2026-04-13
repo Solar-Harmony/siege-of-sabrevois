@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace Sabrevois.AI.Considerations
+namespace Sabrevois.AI.DataSources
 {
-    public interface IConsiderationSource
+    public interface IDataSource
     {
         public float GetValue(GameObject agent);
     }

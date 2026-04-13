@@ -1,0 +1,13 @@
+﻿<Solution>
+  <Project Path="Dreamteck.Splines.csproj" />
+  <Project Path="Dreamteck.Splines.Editor.csproj" />
+  <Project Path="Gameplay.csproj" />
+  <Project Path="Dreamteck.Utilities.Editor.csproj" />
+  <Project Path="Dreamteck.Utilities.csproj" />
+  <Project Path="AI.csproj" />
+  <Project Path="Utils.csproj" />
+  <Project Path="UI.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="sc.utilities.selectionhistory.editor.csproj" />
+  <Project Path="Level.csproj" />
+</Solution>
