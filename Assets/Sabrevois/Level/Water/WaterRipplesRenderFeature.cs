@@ -30,9 +30,9 @@ namespace Sabrevois.Level.Water
             {
                 if (rt0 == null)
                 {
-                    rt0 = RTHandles.Alloc(resolution, resolution, colorFormat: UnityEngine.Experimental.Rendering.GraphicsFormat.R16_SFloat, filterMode: FilterMode.Bilinear, enableRandomWrite: true, name: "WaterRipplesRT0");
-                    rt1 = RTHandles.Alloc(resolution, resolution, colorFormat: UnityEngine.Experimental.Rendering.GraphicsFormat.R16_SFloat, filterMode: FilterMode.Bilinear, enableRandomWrite: true, name: "WaterRipplesRT1");
-                    rt2 = RTHandles.Alloc(resolution, resolution, colorFormat: UnityEngine.Experimental.Rendering.GraphicsFormat.R16_SFloat, filterMode: FilterMode.Bilinear, enableRandomWrite: true, name: "WaterRipplesRT2");
+                    rt0 = RTHandles.Alloc(resolution, resolution, colorFormat: UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_SFloat, filterMode: FilterMode.Bilinear, enableRandomWrite: true, name: "WaterRipplesRT0");
+                    rt1 = RTHandles.Alloc(resolution, resolution, colorFormat: UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_SFloat, filterMode: FilterMode.Bilinear, enableRandomWrite: true, name: "WaterRipplesRT1");
+                    rt2 = RTHandles.Alloc(resolution, resolution, colorFormat: UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_SFloat, filterMode: FilterMode.Bilinear, enableRandomWrite: true, name: "WaterRipplesRT2");
                     state = 0;
                 }
             }
@@ -82,6 +82,7 @@ namespace Sabrevois.Level.Water
                 }
 
                 cmd.SetComputeFloatParam(computeShader, "Dampening", dampening);
+                cmd.SetComputeFloatParam(computeShader, "AreaSize", areaSize);
                 
                 cmd.SetComputeTextureParam(computeShader, kernelMain, "PrevState", rts[prevStateIndex]);
                 cmd.SetComputeTextureParam(computeShader, kernelMain, "CurrentState", rts[currStateIndex]);
@@ -171,6 +172,7 @@ namespace Sabrevois.Level.Water
                         }
 
                         cmd.SetComputeFloatParam(data.compute, "Dampening", data.damp);
+                        cmd.SetComputeFloatParam(data.compute, "AreaSize", data.areaSize);
                         
                         cmd.SetComputeTextureParam(data.compute, kernelMain, "PrevState", rts[prevStateIndex]);
                         cmd.SetComputeTextureParam(data.compute, kernelMain, "CurrentState", rts[currStateIndex]);

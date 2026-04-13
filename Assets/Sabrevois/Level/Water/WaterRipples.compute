@@ -1,7 +1,15 @@
 ﻿#pragma kernel CSMain
 #pragma kernel CSInit
 
-RWTexture2D<float> ResultInit;
+RWTexture2D<float4> ResultInit;
+
+// Global variables shared by kernels
+float Dampening;
+float AreaSize;
+float2 DisturbPos;
+float2 WaterOrigin;
+float DisturbRadius;
+float DisturbStrength;
 
 [numthreads(8,8,1)]
 void CSInit (uint3 id : SV_DispatchThreadID)
@@ -10,17 +18,15 @@ void CSInit (uint3 id : SV_DispatchThreadID)
     ResultInit.GetDimensions(width, height);
     if (id.x < width && id.y < height)
     {
-        ResultInit[id.xy] = 0.0;
+        // Emit true raw normal (0, 0, 1) directly, no packing required since it's an SFloat texture!
+        ResultInit[id.xy] = float4(0.0, 0.0, 1.0, 0.0);
     }
 }
 
-RWTexture2D<float> Result;
-Texture2D<float> PrevState;
-Texture2D<float> CurrentState;
+RWTexture2D<float4> Result;
+Texture2D<float4> PrevState;
+Texture2D<float4> CurrentState;
 SamplerState sampler_CurrentState;
-
-float Dampening;
-float PropagationSpeed;
 
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
@@ -32,31 +38,51 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     if (id.x <= 0 || id.x >= width - 1 || id.y <= 0 || id.y >= height - 1)
         return;
 
-    // Read neighboring pixels from current state
-    // Multiply by Dampening specifically BEFORE adding cross-axis data
-    float left = CurrentState[id.xy + int2(-1, 0)];
-    float right = CurrentState[id.xy + int2(1, 0)];
-    float up = CurrentState[id.xy + int2(0, 1)];
-    float down = CurrentState[id.xy + int2(0, -1)];
+    // Read the 3x3 neighborhood
+    float left = CurrentState[id.xy + int2(-1, 0)].a;
+    float right = CurrentState[id.xy + int2(1, 0)].a;
+    float up = CurrentState[id.xy + int2(0, 1)].a;
+    float down = CurrentState[id.xy + int2(0, -1)].a;
+    
+    // Read diagonals
+    float tl = CurrentState[id.xy + int2(-1, 1)].a;
+    float tr = CurrentState[id.xy + int2(1, 1)].a;
+    float bl = CurrentState[id.xy + int2(-1, -1)].a;
+    float br = CurrentState[id.xy + int2(1, -1)].a;
 
-    float current = CurrentState[id.xy];
-    float prev = PrevState[id.xy];
+    float current = CurrentState[id.xy].a;
+    float prev = PrevState[id.xy].a;
 
-    // standard height calculation optimized for floating point buffers
-    float newHeight = (current * 2.0 - prev) + ((left + right + up + down - (4.0 * current)) * 0.25);
+    // 9-tap Isotropic Laplacian.
+    // The standard 5-tap (left+right+up+down) creates SQUARE / DIAMOND blocky waves because 
+    // it propagates unevenly. The 9-tap completely fixes grid alignment artifacts.
+    float laplacian = (left + right + up + down) * 0.20 + 
+                      (tl + tr + bl + br) * 0.05 - 
+                      current;
+
+    // Standard wave propagation: current * 2 - prev + laplacian * speed^2
+    // laplacian sum here is bounded so a scale of 1.0 (implied) is robust.
+    float newHeight = (current * 2.0 - prev) + laplacian;
     newHeight *= Dampening;
 
     // Hard clamp to prevent buffer explosion
-    Result[id.xy] = clamp(newHeight, -100.0, 100.0);
+    newHeight = clamp(newHeight, -100.0, 100.0);
+
+    // Compute smoothed normal using Sobel operator from the 3x3 neighborhood
+    // This gives drastically smoother curves than purely doing (left-right)
+    float normX = (tr + 2.0*right + br) - (tl + 2.0*left + bl);
+    float normY = (tl + 2.0*up + tr) - (bl + 2.0*down + br);
+    
+    // Proper Z scaling based on world grid size prevents flat/saturated blocky normals
+    float dx = AreaSize / (float)width;
+    float3 normal = normalize(float3(-normX, -normY, 4.0 * max(0.01, dx))); 
+    
+    // We are using R16G16B16A16_SFloat, so we DO NOT need to pack into [0,1]! 
+    // We can confidently store raw negative ranges directly into the RGB channels.
+    Result[id.xy] = float4(normal.x, normal.y, normal.z, newHeight);
 }
 
 #pragma kernel CSDisturb
-
-float2 DisturbPos;
-float2 WaterOrigin;
-float DisturbRadius;
-float DisturbStrength;
-float AreaSize;
 
 [numthreads(8,8,1)]
 void CSDisturb (uint3 id : SV_DispatchThreadID)
@@ -64,27 +90,22 @@ void CSDisturb (uint3 id : SV_DispatchThreadID)
     uint width, height;
     Result.GetDimensions(width, height);
 
-    // Convert from pixel ID space to world space to match the hit coordinates.
-    // Ensure float division!
     float2 uv = float2((float)id.x / (float)width, (float)id.y / (float)height);
-    
-    // Map UV (0 to 1) to world space. Assuming the water mesh is centered at WaterOrigin.
-    // E.g., if AreaSize is 50, uv=0 maps to -25, uv=1 maps to +25, etc.
     float2 worldPos = (uv - 0.5) * AreaSize + WaterOrigin;
 
     float dist = distance(worldPos, DisturbPos);
 
-    // Calculate minimum pixel size to prevent the ripple from falling between pixels at massive scales
     float pixelSize = AreaSize / (float)width;
     float effectiveRadius = max(DisturbRadius, pixelSize * 1.5);
 
     if (dist < effectiveRadius)
     {
-        // Smooth falloff prevents sharp "grid" aliasing artifacts when moving
         float falloff = 1.0 - smoothstep(0.0, effectiveRadius, dist);
         
-        // Clamp the strength so we don't blow up R16_SFloat to Infinity
-        Result[id.xy] += DisturbStrength * falloff;
-        Result[id.xy] = clamp(Result[id.xy], -10.0, 10.0);
+        float4 currentVal = Result[id.xy];
+        currentVal.a += DisturbStrength * falloff;
+        currentVal.a = clamp(currentVal.a, -10.0, 10.0);
+        
+        Result[id.xy] = currentVal;
     }
 }

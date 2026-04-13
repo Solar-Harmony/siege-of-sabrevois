@@ -114,7 +114,7 @@ namespace Sabrevois.Level.Water
             {
                 GUI.color = Color.white;
                 // Making the debug view much larger
-                GUI.DrawTexture(new Rect(10, 10, 512, 512), tex, ScaleMode.ScaleToFit, false);
+                GUI.DrawTexture(new Rect(10, 10, 1024, 1024), tex, ScaleMode.ScaleToFit, false);
                 GUI.Label(new Rect(10, 530, 512, 20), "Water Ripples Debug");
             }
             else
