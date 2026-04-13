@@ -19,13 +19,12 @@ namespace Sabrevois.Gameplay.AI.Actions
     {
     }
     
-    public record MoveRandomlyAction(FuckYouService Service) : IAction<MoveRandomlyActionConfig, MoveRandomlyActionState>
+    public record MoveRandomlyAction : IAction<MoveRandomlyActionConfig, MoveRandomlyActionState>
     {
         public Interruptible Interruptible => Interruptible.ExceptSelf;
 
         public ActionStatus Begin(ActionContext ctx, MoveRandomlyActionConfig config, MoveRandomlyActionState state)
         {
-            Service.GetTest();
             Vector3 randomDirection = UnityEngine.Random.insideUnitSphere * config.Radius;
             randomDirection += ctx.Agent.transform.position;
             NavMesh.SamplePosition(randomDirection, out NavMeshHit hit, 5f, 1);
