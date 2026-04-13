@@ -71,6 +71,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c830f5becf4e92a4a803479065ff2269, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6318830214189002110}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c830f5becf4e92a4a803479065ff2269, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -5967221438711071889}
   m_SourcePrefab: {fileID: 100100000, guid: c830f5becf4e92a4a803479065ff2269, type: 3}
 --- !u!1 &5060824312953376276 stripped
 GameObject:
@@ -90,3 +93,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Gameplay::WorldObjectRegistrant
   category: 1
+--- !u!114 &-5967221438711071889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5060824312953376276}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c73cc66d4fb4b914dae4e8f05dfb76f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Gameplay::Sabrevois.Gameplay.Wood
+  MaxWood: 0
