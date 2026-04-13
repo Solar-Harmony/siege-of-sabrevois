@@ -18,6 +18,8 @@ MonoBehaviour:
   customBatchingValue: 0
   scenesMap:
     list:
+    - Key: 
+      Value: 1
     - Key: Sabrevois
       Value: 1
   validatorTypesMap:
