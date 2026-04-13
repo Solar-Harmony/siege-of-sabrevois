@@ -26,6 +26,11 @@ namespace Sabrevois.Gameplay
             }
         }
         
+        public void GainEnergy(float amount)
+        {
+            CurrentEnergy = Mathf.Min(CurrentEnergy + amount, MaxEnergy);
+        }
+        
         public void ResetEnergy()
         {
             CurrentEnergy = MaxEnergy;

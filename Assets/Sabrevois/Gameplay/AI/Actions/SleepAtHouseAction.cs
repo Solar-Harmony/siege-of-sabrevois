@@ -8,23 +8,24 @@ using UnityEngine.AI;
 namespace Sabrevois.Gameplay.AI.Actions
 {
     [Serializable]
-    public class SleepActionConfig : ActionConfigBase<SleepAction, SleepActionState>
+    public class SleepAtHouseActionConfig : ActionConfigBase<SleepAtHouseAction, SleepAtHouseActionState>
     {
         public float sleepDuration = 5f;
     }
     
-    public class SleepActionState : IActionState
+    public class SleepAtHouseActionState : IActionState
     {
         public float sleepTimer;
+        public House chosenHouse;
     }
     
-    public record SleepAction : IAction<SleepActionConfig, SleepActionState>
+    public record SleepAtHouseAction : IAction<SleepAtHouseActionConfig, SleepAtHouseActionState>
     {
         public Interruptible Interruptible => Interruptible.ExceptSelf;
         
         private WorldObjectCategory _sleepSpotCategory = WorldObjectCategory.House;
 
-        public ActionStatus Begin(ActionContext ctx, SleepActionConfig config, SleepActionState state)
+        public ActionStatus Begin(ActionContext ctx, SleepAtHouseActionConfig config, SleepAtHouseActionState state)
         {
             NavMeshAgent agent = ctx.Agent.GetComponent<NavMeshAgent>();
             state.sleepTimer = config.sleepDuration;
@@ -45,13 +46,17 @@ namespace Sabrevois.Gameplay.AI.Actions
                 }
             }
 
-            if (closestSpot != null)
-                agent.SetDestination(closestSpot.position);
-
+            if (closestSpot == null)
+                return ActionStatus.Done;
+            
+            agent.SetDestination(closestSpot.position);
+            state.chosenHouse = closestSpot.GetComponent<House>();
+            state.chosenHouse.AddOccupant();
+            
             return ActionStatus.Running;
         }
 
-        public ActionStatus Update(ActionContext ctx, SleepActionConfig config, SleepActionState state)
+        public ActionStatus Update(ActionContext ctx,SleepAtHouseActionConfig config, SleepAtHouseActionState state)
         {
             NavMeshAgent agent = ctx.Agent.GetComponent<NavMeshAgent>();
 
@@ -64,7 +69,10 @@ namespace Sabrevois.Gameplay.AI.Actions
             
             if (state.sleepTimer > 0f)
                 return ActionStatus.Running;
-
+            
+            if(state.chosenHouse != null)
+                state.chosenHouse.RemoveOccupant();
+            
             ctx.Agent.GetComponent<Energy>().ResetEnergy();
             
             return ActionStatus.Done;

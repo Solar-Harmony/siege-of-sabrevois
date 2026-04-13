@@ -9,7 +9,6 @@ namespace Sabrevois.Gameplay.AI.Actions
     public class ReactHurtActionConfig : ActionConfigBase<ReactHurtAction, ReactHurtActionState>
     {
         public float Interval = 2.0f;
-        public float EnergyCost { get; }
     }
 
     public class ReactHurtActionState : IActionState

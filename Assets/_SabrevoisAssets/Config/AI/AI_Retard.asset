@@ -150,8 +150,46 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 4
   - ActionConfig:
-      rid: 4373529886062543037
-    Preconditions: []
+      rid: 4373529910632775680
+    Preconditions:
+    - Source:
+        rid: 4373529910632775681
+      Operator: 5
+      Threshold: 0
+    Considerations:
+    - Source:
+        rid: 4373529886062543039
+      Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: -0.0051813126
+          value: 0.9936153
+          inSlope: -0.6804924
+          outSlope: -0.6804924
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 1
+        - serializedVersion: 3
+          time: 1.027202
+          value: -0.014365509
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  - ActionConfig:
+      rid: 4373529910632775682
+    Preconditions:
+    - Source:
+        rid: 4373529910632775681
+      Operator: 4
+      Threshold: 0
     Considerations:
     - Source:
         rid: 4373529886062543039
@@ -184,11 +222,6 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
-    - rid: 4373529886062543037
-      type: {class: SleepActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
-      data:
-        EnergyCost: 0
-        sleepDuration: 5
     - rid: 4373529886062543039
       type: {class: EnergyPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 
@@ -212,6 +245,19 @@ MonoBehaviour:
       type: {class: WorldObjectQuantitySource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data:
         objectCategory: 0
+    - rid: 4373529910632775680
+      type: {class: SleepAtHouseActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
+      data:
+        EnergyCost: 0
+        sleepDuration: 5
+    - rid: 4373529910632775681
+      type: {class: EmptyHouseSource, ns: , asm: Gameplay}
+      data: 
+    - rid: 4373529910632775682
+      type: {class: SleepOutsideActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
+      data:
+        EnergyCost: 0
+        sleepDuration: 5
     - rid: 6057649467727020159
       type: {class: HealthPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 
