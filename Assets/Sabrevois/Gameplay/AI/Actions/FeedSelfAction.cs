@@ -65,6 +65,8 @@ namespace Sabrevois.Gameplay.AI.Actions
                 return ActionStatus.Done;
             
             bool isPathing = agent.pathPending || agent.remainingDistance > agent.stoppingDistance;
+            if (!agent.isOnNavMesh)
+                return ActionStatus.Done;
             
             if (isPathing)
                 return ActionStatus.Running;
