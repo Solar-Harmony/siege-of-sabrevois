@@ -9,7 +9,7 @@ using Zenject;
 
 namespace Sabrevois.AI
 {
-    public class SequentialDecisionMakingService : IDecisionMakingService
+    public partial class SequentialDecisionMakingService : IDecisionMakingService
     {
         private float _averageChoosingTimeAccumulator = 0;
         private int _nbChoicesTaken = 0;
@@ -18,6 +18,12 @@ namespace Sabrevois.AI
         private readonly Dictionary<Type, IAction> _actions;
         private Dictionary<int, Agent> _idToAgent = new();
         
+#if UNITY_EDITOR
+        partial void EditorInitThreadState();
+        partial void EditorBeginRequest(int gameObjectId, string agentName, ref object reqInfoObj);
+        partial void EditorEndRequest(object reqInfoObj, ActionInstance chosenAction, Stopwatch sw);
+#endif
+
         [Inject]
         private AgentWorldService _agentWorldService;
 
@@ -25,6 +31,9 @@ namespace Sabrevois.AI
         {
             _actions = actions.ToDictionary(a => a.GetType(), a => a);
             _startTime.Start();
+#if UNITY_EDITOR
+            EditorInitThreadState();
+#endif
         }
 
         public float GetAverageChoosingTime()
@@ -53,6 +62,11 @@ namespace Sabrevois.AI
                 _idToAgent[gameObjectId].ReceiveAction(null);
                 return;
             }
+
+#if UNITY_EDITOR
+            object reqInfoObj = null;
+            EditorBeginRequest(gameObjectId, _idToAgent[gameObjectId].Name, ref reqInfoObj);
+#endif
             
             float bestScore = float.NegativeInfinity;
             IActionConfig bestActionConfig = null;
@@ -90,7 +104,13 @@ namespace Sabrevois.AI
             };
 
             stopwatch.Stop();
-            _averageChoosingTimeAccumulator += stopwatch.Elapsed.Milliseconds / 1000f;
+
+#if UNITY_EDITOR
+            EditorEndRequest(reqInfoObj, chosenAction, stopwatch);
+#endif
+
+            long ticks = stopwatch.ElapsedTicks;
+            _averageChoosingTimeAccumulator += (float)((double)ticks / Stopwatch.Frequency);
             _nbChoicesTaken++;
             // This is technically not needed, but it provides a unified interface for both the sequential and parallel
             // implementation

@@ -126,7 +126,6 @@ namespace Sabrevois.AI
             {
                 if (_idToAgent.TryGetValue(response.GameObjectId, out var agent))
                 {
-                    response.stopwatch.Stop();
                     _nbChoicesTaken++;
                     long ticks = response.stopwatch.ElapsedTicks;
                     long frequency = Stopwatch.Frequency;
@@ -152,6 +151,8 @@ namespace Sabrevois.AI
                     if (!_requests.TryDequeue(out ParallelRequest request))
                         continue;
 
+                    request.stopwatch.Restart();
+
 #if UNITY_EDITOR
                     var threadId = Thread.CurrentThread.ManagedThreadId;
                     object reqInfoObj = null;
@@ -169,8 +170,9 @@ namespace Sabrevois.AI
                     sw.Stop();
                     EditorEndRequest(reqInfoObj, chosenAction, sw);
 #endif
+                    request.stopwatch.Stop();
 
-                    _responses.Enqueue(new ParallelResponse(request.GameObjectId, chosenAction, request.stopwatc));
+                    _responses.Enqueue(new ParallelResponse(request.GameObjectId, chosenAction, request.stopwatch));
                 }
                 catch (OperationCanceledException)
                 {

@@ -82,29 +82,19 @@ namespace Sabrevois.AI.Editor
                 {
                     _lastUpdateTime = EditorApplication.timeSinceStartup;
 
-                    _cachedAvgTime = service.GetAverageChoosingTime();
-                    _cachedThroughput = service.GetAverageThroughput();
-                    _cachedReqCount = service.EditorRequests.Count;
+                    var parallelService = service as ParallelDecisionMakingService;
+                    var sequentialService = service as SequentialDecisionMakingService;
 
-                    _cachedThreadStates = service.EditorThreadStates.Values.OrderBy(t => t.ThreadId).Select(t => new CachedThreadState { 
-                        ThreadId = t.ThreadId, 
-                        ThreadName = t.ThreadName,
-                        History = t.History.Select(req => new CachedRequestInfo {
-                            GameObjectId = req.GameObjectId,
-                            AgentName = req.AgentName,
-                            Status = req.Status,
-                            TimeElapsedMs = req.TimeElapsedMs,
-                            TimeElapsedNs = req.TimeElapsedNs,
-                            ChosenAction = req.ChosenAction,
-                            ThreadId = t.ThreadId,
-                            Timestamp = req.Timestamp
-                        }).ToArray()
-                    }).ToArray();
-
-                    if (_selectedTab == 1)
+                    if (parallelService != null)
                     {
-                        _cachedAgentStates = service.EditorThreadStates.Values
-                            .SelectMany(t => t.History.Select(req => new CachedRequestInfo {
+                        _cachedAvgTime = parallelService.GetAverageChoosingTime();
+                        _cachedThroughput = parallelService.GetAverageThroughput();
+                        _cachedReqCount = parallelService.EditorRequests.Count;
+
+                        _cachedThreadStates = parallelService.EditorThreadStates.Values.OrderBy(t => t.ThreadId).Select(t => new CachedThreadState { 
+                            ThreadId = t.ThreadId, 
+                            ThreadName = t.ThreadName,
+                            History = t.History.Select(req => new CachedRequestInfo {
                                 GameObjectId = req.GameObjectId,
                                 AgentName = req.AgentName,
                                 Status = req.Status,
@@ -113,22 +103,82 @@ namespace Sabrevois.AI.Editor
                                 ChosenAction = req.ChosenAction,
                                 ThreadId = t.ThreadId,
                                 Timestamp = req.Timestamp
-                            }))
-                            .GroupBy(req => req.GameObjectId)
-                            .Select(g => new CachedAgentState {
-                                GameObjectId = g.Key,
-                                AgentName = g.First().AgentName,
-                                History = g.ToArray()
-                            })
-                            .OrderBy(a => a.AgentName)
-                            .ToArray();
+                            }).ToArray()
+                        }).ToArray();
+
+                        if (_selectedTab == 1)
+                        {
+                            _cachedAgentStates = parallelService.EditorThreadStates.Values
+                                .SelectMany(t => t.History.Select(req => new CachedRequestInfo {
+                                    GameObjectId = req.GameObjectId,
+                                    AgentName = req.AgentName,
+                                    Status = req.Status,
+                                    TimeElapsedMs = req.TimeElapsedMs,
+                                    TimeElapsedNs = req.TimeElapsedNs,
+                                    ChosenAction = req.ChosenAction,
+                                    ThreadId = t.ThreadId,
+                                    Timestamp = req.Timestamp
+                                }))
+                                .GroupBy(req => req.GameObjectId)
+                                .Select(g => new CachedAgentState {
+                                    GameObjectId = g.Key,
+                                    AgentName = g.First().AgentName,
+                                    History = g.ToArray()
+                                })
+                                .OrderBy(a => a.AgentName)
+                                .ToArray();
+                        }
+                    }
+                    else if (sequentialService != null)
+                    {
+                        _cachedAvgTime = sequentialService.GetAverageChoosingTime();
+                        _cachedThroughput = sequentialService.GetAverageThroughput();
+                        _cachedReqCount = sequentialService.EditorRequestsCount;
+
+                        _cachedThreadStates = sequentialService.EditorThreadStates.Values.OrderBy(t => t.ThreadId).Select(t => new CachedThreadState { 
+                            ThreadId = t.ThreadId, 
+                            ThreadName = t.ThreadName,
+                            History = t.History.Select(req => new CachedRequestInfo {
+                                GameObjectId = req.GameObjectId,
+                                AgentName = req.AgentName,
+                                Status = req.Status,
+                                TimeElapsedMs = req.TimeElapsedMs,
+                                TimeElapsedNs = req.TimeElapsedNs,
+                                ChosenAction = req.ChosenAction,
+                                ThreadId = t.ThreadId,
+                                Timestamp = req.Timestamp
+                            }).ToArray()
+                        }).ToArray();
+
+                        if (_selectedTab == 1)
+                        {
+                            _cachedAgentStates = sequentialService.EditorThreadStates.Values
+                                .SelectMany(t => t.History.Select(req => new CachedRequestInfo {
+                                    GameObjectId = req.GameObjectId,
+                                    AgentName = req.AgentName,
+                                    Status = req.Status,
+                                    TimeElapsedMs = req.TimeElapsedMs,
+                                    TimeElapsedNs = req.TimeElapsedNs,
+                                    ChosenAction = req.ChosenAction,
+                                    ThreadId = t.ThreadId,
+                                    Timestamp = req.Timestamp
+                                }))
+                                .GroupBy(req => req.GameObjectId)
+                                .Select(g => new CachedAgentState {
+                                    GameObjectId = g.Key,
+                                    AgentName = g.First().AgentName,
+                                    History = g.ToArray()
+                                })
+                                .OrderBy(a => a.AgentName)
+                                .ToArray();
+                        }
                     }
                 }
             }
 
             GUILayout.BeginVertical(boxStyle);
             GUILayout.Label("<b>Global Metrics</b>", labelStyle);
-            GUILayout.Label($"Average Time: {_cachedAvgTime:F3}s", labelStyle);
+            GUILayout.Label($"Average Time: {_cachedAvgTime * 1000f:F3}ms", labelStyle);
             var tp = _cachedThroughput;
             GUILayout.Label($"Throughput: {(float.IsInfinity(tp) || float.IsNaN(tp) ? 0 : tp):F2} req/s", labelStyle);
             GUILayout.EndVertical();
@@ -274,7 +324,7 @@ namespace Sabrevois.AI.Editor
         }
 
         [CanBeNull]
-        private ParallelDecisionMakingService FindService()
+        private IDecisionMakingService FindService()
         {
             if (!Application.isPlaying) 
                 return null;
@@ -282,7 +332,7 @@ namespace Sabrevois.AI.Editor
             var context = Object.FindAnyObjectByType<SceneContext>();
             if (context != null && context.Container != null)
             {
-                return context.Container.TryResolve<IDecisionMakingService>() as ParallelDecisionMakingService;
+                return context.Container.TryResolve<IDecisionMakingService>();
             }
 
             return null;
