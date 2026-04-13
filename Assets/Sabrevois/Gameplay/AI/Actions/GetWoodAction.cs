@@ -12,7 +12,7 @@ namespace Sabrevois.Gameplay.AI.Actions
     [Serializable]
     public class GetWoodActionConfig : ActionConfigBase<GetWoodAction, GetWoodActionState>
     {
-        public float gatheringDuration = 10f;
+        public float gatheringDuration = 20f;
         public float woodQuantity = 10f; //TODO : Fellable Trees, remove
     }
 
@@ -80,6 +80,7 @@ namespace Sabrevois.Gameplay.AI.Actions
 
             agentWood.AddWood(gatheredWood);
             ctx.Agent.GetComponent<Energy>().SpendEnergy(config.EnergyCost);
+            Debug.Log($"Agent {ctx.Agent.name} gathered {gatheredWood} wood.");
 
             return ActionStatus.Done;
         }

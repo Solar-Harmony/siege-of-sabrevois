@@ -6,20 +6,18 @@ namespace Sabrevois.Gameplay
     {
         public float MaxWood;
 
-        [field: SerializeField]
-        public float currentWood { get; private set; }
-        public float CurrentWood => CurrentWood;
+        public float CurrentWood { get; private set; }
 
         private void Awake()
         {
-            currentWood = MaxWood;
+            CurrentWood = MaxWood;
         }
 
         public void SpendWood(float amount)
         {
-            currentWood = Mathf.Max(currentWood - amount, 0);
+            CurrentWood = Mathf.Max(CurrentWood - amount, 0);
 
-            if (currentWood <= 0)
+            if (CurrentWood <= 0)
             {
                 //Plus de wood
             }
@@ -27,7 +25,7 @@ namespace Sabrevois.Gameplay
 
         public void AddWood(float amount)
         {
-            currentWood = Mathf.Min(currentWood + amount, MaxWood);
+            CurrentWood = Mathf.Min(CurrentWood + amount, MaxWood);
         }
     }
 
