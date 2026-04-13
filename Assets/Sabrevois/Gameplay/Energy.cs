@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Sabrevois.Gameplay
 {
@@ -13,6 +14,7 @@ namespace Sabrevois.Gameplay
         
         private void Awake()
         {
+            MaxEnergy = Random.Range(70f, 150f);
             CurrentEnergy = MaxEnergy;
         }
         

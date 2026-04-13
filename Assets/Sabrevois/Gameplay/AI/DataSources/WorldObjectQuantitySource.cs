@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Sabrevois.AI.Considerations;
+using System;
 using Sabrevois.AI.DataSources;
 using UnityEngine;
 

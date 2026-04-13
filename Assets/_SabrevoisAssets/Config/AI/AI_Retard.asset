@@ -257,7 +257,7 @@ MonoBehaviour:
       type: {class: SleepOutsideActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
       data:
         EnergyCost: 0
-        sleepDuration: 5
+        sleepDuration: 7
     - rid: 6057649467727020159
       type: {class: HealthPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 

@@ -1,6 +1,7 @@
 using System;
 using Sabrevois.Gameplay.AI;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class Food : MonoBehaviour
 {
@@ -8,6 +9,7 @@ public class Food : MonoBehaviour
 
     public void Eat(GameObject agent)
     {
+        nutritionValue = Random.Range(20f, 100f);
         agent.GetComponent<Hunger>().ReduceHunger(nutritionValue);
         Destroy(gameObject); 
     }
