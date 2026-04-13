@@ -1,0 +1,90 @@
+﻿#pragma kernel CSMain
+#pragma kernel CSInit
+
+RWTexture2D<float> ResultInit;
+
+[numthreads(8,8,1)]
+void CSInit (uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    ResultInit.GetDimensions(width, height);
+    if (id.x < width && id.y < height)
+    {
+        ResultInit[id.xy] = 0.0;
+    }
+}
+
+RWTexture2D<float> Result;
+Texture2D<float> PrevState;
+Texture2D<float> CurrentState;
+SamplerState sampler_CurrentState;
+
+float Dampening;
+float PropagationSpeed;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // Basic wave equation implementation
+    uint width, height;
+    Result.GetDimensions(width, height);
+    
+    if (id.x <= 0 || id.x >= width - 1 || id.y <= 0 || id.y >= height - 1)
+        return;
+
+    // Read neighboring pixels from current state
+    // Multiply by Dampening specifically BEFORE adding cross-axis data
+    float left = CurrentState[id.xy + int2(-1, 0)];
+    float right = CurrentState[id.xy + int2(1, 0)];
+    float up = CurrentState[id.xy + int2(0, 1)];
+    float down = CurrentState[id.xy + int2(0, -1)];
+
+    float current = CurrentState[id.xy];
+    float prev = PrevState[id.xy];
+
+    // standard height calculation optimized for floating point buffers
+    float newHeight = (current * 2.0 - prev) + ((left + right + up + down - (4.0 * current)) * 0.25);
+    newHeight *= Dampening;
+
+    // Hard clamp to prevent buffer explosion
+    Result[id.xy] = clamp(newHeight, -100.0, 100.0);
+}
+
+#pragma kernel CSDisturb
+
+float2 DisturbPos;
+float2 WaterOrigin;
+float DisturbRadius;
+float DisturbStrength;
+float AreaSize;
+
+[numthreads(8,8,1)]
+void CSDisturb (uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    Result.GetDimensions(width, height);
+
+    // Convert from pixel ID space to world space to match the hit coordinates.
+    // Ensure float division!
+    float2 uv = float2((float)id.x / (float)width, (float)id.y / (float)height);
+    
+    // Map UV (0 to 1) to world space. Assuming the water mesh is centered at WaterOrigin.
+    // E.g., if AreaSize is 50, uv=0 maps to -25, uv=1 maps to +25, etc.
+    float2 worldPos = (uv - 0.5) * AreaSize + WaterOrigin;
+
+    float dist = distance(worldPos, DisturbPos);
+
+    // Calculate minimum pixel size to prevent the ripple from falling between pixels at massive scales
+    float pixelSize = AreaSize / (float)width;
+    float effectiveRadius = max(DisturbRadius, pixelSize * 1.5);
+
+    if (dist < effectiveRadius)
+    {
+        // Smooth falloff prevents sharp "grid" aliasing artifacts when moving
+        float falloff = 1.0 - smoothstep(0.0, effectiveRadius, dist);
+        
+        // Clamp the strength so we don't blow up R16_SFloat to Infinity
+        Result[id.xy] += DisturbStrength * falloff;
+        Result[id.xy] = clamp(Result[id.xy], -10.0, 10.0);
+    }
+}
