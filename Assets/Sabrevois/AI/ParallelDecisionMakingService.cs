@@ -98,11 +98,11 @@ namespace Sabrevois.AI
         
         public void ChooseAction(ActionCandidate[] candidates, ActionContext ctx, ActionInstance currentAction, float hysteresisBias = 0.1f)
         {
-            Stopwatch stopwatch = new();
-            stopwatch.Start();
-            
             if (!_started)
                 Start();
+            
+            Stopwatch stopwatch = new();
+            stopwatch.Start();
             
             int gameObjectId = ctx.Agent.GetInstanceID();
             if (!_idToAgent.ContainsKey(gameObjectId))
