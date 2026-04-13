@@ -23,7 +23,7 @@ namespace Sabrevois.Gameplay.AI.Actions
 
         public ActionStatus Begin(ActionContext ctx, SaySomethingActionConfig config, SaySomethingActionState state)
         {
-            ctx.Agent.GetComponentInChildren<TextMeshPro>().text = Conversation.GetText();
+            // ctx.Agent.GetComponentInChildren<TextMeshPro>().text = Conversation.GetText();
             ctx.Agent.GetComponent<Energy>().SpendEnergy(config.EnergyCost);
             return ActionStatus.Done;
         }

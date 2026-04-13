@@ -46,7 +46,12 @@ namespace Sabrevois.Gameplay.AI.Actions
             }
 
             if (closestSpot != null)
+            {
+                if (!agent.isOnNavMesh)
+                    return ActionStatus.Done;
+                
                 agent.SetDestination(closestSpot.position);
+            }
 
             return ActionStatus.Running;
         }
@@ -54,7 +59,9 @@ namespace Sabrevois.Gameplay.AI.Actions
         public ActionStatus Update(ActionContext ctx, SleepActionConfig config, SleepActionState state)
         {
             NavMeshAgent agent = ctx.Agent.GetComponent<NavMeshAgent>();
-
+            if (!agent.isOnNavMesh)
+                return ActionStatus.Done;
+            
             bool isPathing = agent.pathPending || agent.remainingDistance > agent.stoppingDistance;
 
             if (isPathing)

@@ -10,6 +10,9 @@ namespace Sabrevois.Gameplay.Input
         [SerializeField] private InputRouter _input;
         [SerializeField] private int _damageAmount = 10;
         [SerializeField] private int _attackRange = 100;
+        [SerializeField] private float _explosionRadius = 5f;
+        [SerializeField] private int _explosionDamage = 0;
+        [SerializeField] private float _explosionForce = 800f;
         private Camera _camera;
         
         private void Awake()
@@ -36,15 +39,16 @@ namespace Sabrevois.Gameplay.Input
                 bool hitValid = false;
                 foreach (var hit in hits)
                 {
-                    if (hit.collider.transform.root == transform.root) continue;
+                    if (hit.collider.GetComponentInParent<AttackController>() == this) continue;
 
                     Debug.Log($"Je suis TOUCHE! {hit.collider.gameObject.name}");
-                    GameObject victim = hit.collider.gameObject;
                     
-                    if (victim.TryGetComponent(out Health health))
+                    var health = hit.collider.GetComponentInParent<Health>();
+                    if (health != null)
                         health.TakeDamage(_damageAmount);
 
-                    if (victim.TryGetComponent(out FellableTree tree))
+                    var tree = hit.collider.GetComponentInParent<FellableTree>();
+                    if (tree != null)
                     {
                         tree.Fell(ray.direction);
                     }
@@ -54,6 +58,51 @@ namespace Sabrevois.Gameplay.Input
                 }
 
                 if (!hitValid) return;
+            }
+
+            if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
+            {
+                Ray ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+                
+                if (Physics.Raycast(ray, out RaycastHit hit, _attackRange, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    Collider[] colliders = Physics.OverlapSphere(hit.point, _explosionRadius);
+                    var hitHealths = new System.Collections.Generic.HashSet<Health>();
+                    var hitTrees = new System.Collections.Generic.HashSet<FellableTree>();
+                    var hitRbs = new System.Collections.Generic.HashSet<Rigidbody>();
+
+                    foreach (var col in colliders)
+                    {
+                        if (col.GetComponentInParent<AttackController>() == this) continue;
+
+                        if (col.attachedRigidbody != null && hitRbs.Add(col.attachedRigidbody))
+                        {
+                            var navAgent = col.GetComponentInParent<UnityEngine.AI.NavMeshAgent>();
+                            if (navAgent != null)
+                            {
+                                navAgent.enabled = false;
+                            }
+                            
+                            col.attachedRigidbody.isKinematic = false;
+                            col.attachedRigidbody.constraints = RigidbodyConstraints.None;
+                            col.attachedRigidbody.AddExplosionForce(_explosionForce, hit.point, _explosionRadius, 2f, ForceMode.Impulse);
+                            col.attachedRigidbody.AddTorque(Random.insideUnitSphere * (_explosionForce * 0.05f), ForceMode.Impulse);
+                        }
+
+                        var health = col.GetComponentInParent<Health>();
+                        if (health != null && hitHealths.Add(health))
+                        {
+                            health.TakeDamage(_explosionDamage);
+                        }
+
+                        var tree = col.GetComponentInParent<FellableTree>();
+                        if (tree != null && hitTrees.Add(tree))
+                        {
+                            Vector3 dir = (col.transform.position - hit.point).normalized;
+                            tree.Fell(dir == Vector3.zero ? Vector3.up : dir);
+                        }
+                    }
+                }
             }
         }
     }

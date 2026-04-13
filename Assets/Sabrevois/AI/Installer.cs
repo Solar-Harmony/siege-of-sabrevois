@@ -14,7 +14,7 @@ namespace Sabrevois.AI
         {
             BindActionTypes();
             Container.Bind<AgentWorldService>().AsSingle();
-            Container.BindInterfacesAndSelfTo<SequentialDecisionMakingService>().AsSingle();
+            Container.BindInterfacesAndSelfTo<ParallelDecisionMakingService>().AsSingle();
         }
 
         private void BindActionTypes()
