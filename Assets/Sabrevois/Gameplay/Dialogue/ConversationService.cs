@@ -13,11 +13,14 @@
         }
         
         private readonly string[] _strings = {
-            "Hello, traveler!",
-            "The weather is nice today.",
-            "Have you heard the latest news?",
-            "Be careful out there.",
-            "Good luck on your journey!"
+            "Long live the King!",
+            "Yes? Make it quick.",
+            "I've got my eye on you.",
+            "Have you seen any immigrants?",
+            "God bless.",
+            "Nice to see you, traveller.",
+            "Remember to treat the King with respect.",
+            "Are you new here?"
         };
 
         private readonly string[] _onHurt = {
