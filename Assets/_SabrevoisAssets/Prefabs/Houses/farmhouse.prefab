@@ -105,4 +105,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c73cc66d4fb4b914dae4e8f05dfb76f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Gameplay::Sabrevois.Gameplay.Wood
-  MaxWood: 0
+  MaxWood: 40
+  <currentWood>k__BackingField: 0
