@@ -13,12 +13,18 @@ namespace Sabrevois.Gameplay.Input
         [SerializeField] private float _explosionRadius = 5f;
         [SerializeField] private int _explosionDamage = 0;
         [SerializeField] private float _explosionForce = 800f;
+        [SerializeField] private GameObject _bloodPrefab;
         private Camera _camera;
         
         private void Awake()
         {
             _camera = Camera.main;
             Debug.Assert(_camera);
+        }
+
+        private void SpawnBlood(Vector3 hitPosition, Vector3 hitNormal)
+        {
+            Instantiate(_bloodPrefab, hitPosition, Quaternion.LookRotation(hitNormal));
         }
         
         private void Update()
@@ -41,11 +47,14 @@ namespace Sabrevois.Gameplay.Input
                 {
                     if (hit.collider.GetComponentInParent<AttackController>() == this) continue;
 
-                    Debug.Log($"Je suis TOUCHE! {hit.collider.gameObject.name}");
+                    Debug.Log($"Je suis touché: {hit.collider.gameObject.name}");
                     
                     var health = hit.collider.GetComponentInParent<Health>();
                     if (health != null)
+                    {
                         health.TakeDamage(_damageAmount);
+                        SpawnBlood(hit.point, hit.normal);
+                    }
 
                     var tree = hit.collider.GetComponentInParent<FellableTree>();
                     if (tree != null)
@@ -90,13 +99,16 @@ namespace Sabrevois.Gameplay.Input
                         }
 
                         var health = col.GetComponentInParent<Health>();
-                        if (health != null && hitHealths.Add(health))
+                        if (health && hitHealths.Add(health))
                         {
                             health.TakeDamage(_explosionDamage);
+                            var p = health.transform.position;
+                            p.y = hit.point.y;
+                            SpawnBlood(p, hit.normal);
                         }
 
                         var tree = col.GetComponentInParent<FellableTree>();
-                        if (tree != null && hitTrees.Add(tree))
+                        if (tree && hitTrees.Add(tree))
                         {
                             Vector3 dir = (col.transform.position - hit.point).normalized;
                             tree.Fell(dir == Vector3.zero ? Vector3.up : dir);

@@ -9,7 +9,7 @@
         
         public string GetReactionHurt()
         {
-            return _onHurt[UnityEngine.Random.Range(0, _strings.Length)];
+            return _onHurt[UnityEngine.Random.Range(0, _onHurt.Length)];
         }
         
         private readonly string[] _strings = {

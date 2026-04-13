@@ -51,6 +51,9 @@ namespace Sabrevois.Gameplay.AI.Actions
             }
         
             state.chosenFood = closestFood.GetComponent<Food>();
+            if (!agent.isOnNavMesh)
+                return ActionStatus.Done;
+            
             agent.SetDestination(closestFood.transform.position);
 
             return ActionStatus.Running;
@@ -61,13 +64,13 @@ namespace Sabrevois.Gameplay.AI.Actions
             var agent = ctx.Agent.GetComponent<NavMeshAgent>();
             
             //Si quelqu'un d'autre a déja manger la food
-            if(!state.chosenFood)
+            if (!state.chosenFood)
                 return ActionStatus.Done;
             
-            bool isPathing = agent.pathPending || agent.remainingDistance > agent.stoppingDistance;
             if (!agent.isOnNavMesh)
                 return ActionStatus.Done;
             
+            bool isPathing = agent.pathPending || agent.remainingDistance > agent.stoppingDistance;
             if (isPathing)
                 return ActionStatus.Running;
             
