@@ -217,11 +217,182 @@ MonoBehaviour:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 4
+  - ActionConfig:
+      rid: 2127759828695646279
+    Preconditions:
+    - Source:
+        rid: 2127759828695646280
+      Operator: 2
+      Threshold: 0
+    - Source:
+        rid: 2127759828695646289
+      Operator: 2
+      Threshold: 10
+    - Source:
+        rid: 2127759828695646290
+      Operator: 0
+      Threshold: 1
+    Considerations:
+    - Source:
+        rid: 4373529886062543039
+      Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: -0.0051813126
+          value: 0.9936153
+          inSlope: -0.6804924
+          outSlope: -0.6804924
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 1
+        - serializedVersion: 3
+          time: 1.027202
+          value: -0.014365509
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    - Source:
+        rid: 2127759828695646281
+      Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: -0.0014597098
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  - ActionConfig:
+      rid: 2127759828695646277
+    Preconditions:
+    - Source:
+        rid: 2127759828695646283
+      Operator: 2
+      Threshold: 0
+    - Source:
+        rid: 2127759828695646285
+      Operator: 2
+      Threshold: 10
+    - Source:
+        rid: 2127759828695646287
+      Operator: 2
+      Threshold: 0
+    Considerations:
+    - Source:
+        rid: 4373529886062543039
+      Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: -0.0051813126
+          value: 0.9936153
+          inSlope: -0.6804924
+          outSlope: -0.6804924
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 1
+        - serializedVersion: 3
+          time: 1.027202
+          value: -0.014365509
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    - Source:
+        rid: 2127759828695646284
+      Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: -0.0051813126
+          value: 0.9936153
+          inSlope: -0.6804924
+          outSlope: -0.6804924
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 1
+        - serializedVersion: 3
+          time: 1.027202
+          value: -0.014365509
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
   DecisionMakingInterval: 1
   Hysteresis: 0.1
   references:
     version: 2
     RefIds:
+    - rid: 2127759828695646277
+      type: {class: GiveWoodActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
+      data:
+        EnergyCost: 5
+        depositDuration: 5
+    - rid: 2127759828695646279
+      type: {class: GetWoodActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
+      data:
+        EnergyCost: 20
+        gatheringDuration: 10
+        woodQuantity: 10
+    - rid: 2127759828695646280
+      type: {class: HouseWoodPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 2127759828695646281
+      type: {class: AgentWoodPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 2127759828695646283
+      type: {class: HouseWoodPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 2127759828695646284
+      type: {class: AgentWoodPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 2127759828695646285
+      type: {class: EnergyValueSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 2127759828695646287
+      type: {class: AgentWoodPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 2127759828695646289
+      type: {class: EnergyValueSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 2127759828695646290
+      type: {class: AgentWoodPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
     - rid: 4373529886062543039
       type: {class: EnergyPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 

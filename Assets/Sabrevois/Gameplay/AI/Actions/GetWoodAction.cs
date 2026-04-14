@@ -12,7 +12,7 @@ namespace Sabrevois.Gameplay.AI.Actions
     [Serializable]
     public class GetWoodActionConfig : ActionConfigBase<GetWoodAction, GetWoodActionState>
     {
-        public float gatheringDuration = 10f;
+        public float gatheringDuration = 1f;
         public float woodQuantity = 10f; //TODO : Fellable Trees, remove
     }
 
@@ -53,7 +53,10 @@ namespace Sabrevois.Gameplay.AI.Actions
             }
 
             if (closestTree != null)
-                agent.SetDestination(closestTree.position);
+            {
+                Vector3 CollisionOffset = new Vector3(3f, 0f, 3f);
+                agent.SetDestination(closestTree.position + CollisionOffset);
+            }
 
             return ActionStatus.Running;
         }
