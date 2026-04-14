@@ -17,6 +17,7 @@ MonoBehaviour:
     computeShader: {fileID: 7200000, guid: 1d0d99dbf6b1423791881c566ed95e66, type: 3}
     resolution: 8192
     dampening: 0.9409
+    propagationSpeed: 0.1
     areaSize: 1000
     waterOrigin: {x: 0, y: 0}
 --- !u!114 &11400000

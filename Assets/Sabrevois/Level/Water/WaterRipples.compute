@@ -1,0 +1,117 @@
+﻿#pragma kernel CSMain
+#pragma kernel CSInit
+
+RWTexture2D<float4> ResultInit;
+
+// Global variables shared by kernels
+float Dampening;
+float PropagationSpeed;
+float AreaSize;
+float2 WaterOrigin;
+
+[numthreads(8,8,1)]
+void CSInit (uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    ResultInit.GetDimensions(width, height);
+    if (id.x < width && id.y < height)
+    {
+        // Emit true raw normal (0, 0, 1) directly, no packing required since it's an SFloat texture!
+        ResultInit[id.xy] = float4(0.0, 0.0, 1.0, 0.0);
+    }
+}
+
+RWTexture2D<float4> Result;
+Texture2D<float4> PrevState;
+Texture2D<float4> CurrentState;
+SamplerState sampler_CurrentState;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // Basic wave equation implementation
+    uint width, height;
+    Result.GetDimensions(width, height);
+    
+    if (id.x <= 0 || id.x >= width - 1 || id.y <= 0 || id.y >= height - 1)
+        return;
+
+    // Read the 3x3 neighborhood
+    float left = CurrentState[id.xy + int2(-1, 0)].a;
+    float right = CurrentState[id.xy + int2(1, 0)].a;
+    float up = CurrentState[id.xy + int2(0, 1)].a;
+    float down = CurrentState[id.xy + int2(0, -1)].a;
+    
+    // Read diagonals
+    float tl = CurrentState[id.xy + int2(-1, 1)].a;
+    float tr = CurrentState[id.xy + int2(1, 1)].a;
+    float bl = CurrentState[id.xy + int2(-1, -1)].a;
+    float br = CurrentState[id.xy + int2(1, -1)].a;
+
+    float current = CurrentState[id.xy].a;
+    float prev = PrevState[id.xy].a;
+
+    // 9-tap Isotropic Laplacian.
+    // The standard 5-tap (left+right+up+down) creates SQUARE / DIAMOND blocky waves because 
+    // it propagates unevenly. The 9-tap completely fixes grid alignment artifacts.
+    float laplacian = (left + right + up + down) * 0.20 + 
+                      (tl + tr + bl + br) * 0.05 - 
+                      current;
+
+    // Apply propagation speed to slow down the waves
+    laplacian *= PropagationSpeed;
+
+    // Standard wave propagation: current * 2 - prev + laplacian * speed^2
+    // laplacian sum here is bounded so a scale of 1.0 (implied) is robust.
+    float newHeight = (current * 2.0 - prev) + laplacian;
+    newHeight *= Dampening;
+
+    // Hard clamp to prevent buffer explosion
+    newHeight = clamp(newHeight, -100.0, 100.0);
+
+    // Compute smoothed normal using Sobel operator from the 3x3 neighborhood
+    // This gives drastically smoother curves than purely doing (left-right)
+    float normX = (tr + 2.0*right + br) - (tl + 2.0*left + bl);
+    float normY = (tl + 2.0*up + tr) - (bl + 2.0*down + br);
+    
+    // Proper Z scaling based on world grid size prevents flat/saturated blocky normals
+    float dx = AreaSize / (float)width;
+    float3 normal = normalize(float3(-normX, -normY, 4.0 * max(0.01, dx))); 
+    
+    // We are using R16G16B16A16_SFloat, so we DO NOT need to pack into [0,1]! 
+    // We can confidently store raw negative ranges directly into the RGB channels.
+    Result[id.xy] = float4(normal.x, normal.y, normal.z, newHeight);
+}
+
+#pragma kernel CSDisturb
+
+int DisturbCount;
+float4 Disturbances[64]; // x, y (pos), z (radius), w (strength)
+
+[numthreads(8,8,1)]
+void CSDisturb (uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    Result.GetDimensions(width, height);
+
+    float2 uv = float2((float)id.x / (float)width, (float)id.y / (float)height);
+    float2 worldPos = (uv - 0.5) * AreaSize + WaterOrigin;
+
+    float pixelSize = AreaSize / (float)width;
+    float4 currentVal = Result[id.xy];
+
+    for (int i = 0; i < DisturbCount; i++)
+    {
+        float dist = distance(worldPos, Disturbances[i].xy);
+        float effectiveRadius = max(Disturbances[i].z, pixelSize * 1.5);
+
+        if (dist < effectiveRadius)
+        {
+            float falloff = 1.0 - smoothstep(0.0, effectiveRadius, dist);
+            currentVal.a += Disturbances[i].w * falloff;
+        }
+    }
+
+    currentVal.a = clamp(currentVal.a, -10.0, 10.0);
+    Result[id.xy] = currentVal;
+}
