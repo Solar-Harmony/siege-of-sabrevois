@@ -35,6 +35,17 @@ namespace Sabrevois.Level.Water
             disturbance = default;
             return false;
         }
+
+        // Static helper to easily add ripples from anywhere (like gun logic)
+        public static void AddDisturbance(Vector2 worldPosXZ, float radius, float strength)
+        {
+            _disturbances.Enqueue(new WaterDisturbance
+            {
+                position = worldPosXZ,
+                radius = radius,
+                strength = strength
+            });
+        }
         
         void Update()
         {
@@ -97,12 +108,7 @@ namespace Sabrevois.Level.Water
 
         public void DisturbWater(Vector2 worldPosXZ, float radius, float strength)
         {
-            _disturbances.Enqueue(new WaterDisturbance
-            {
-                position = worldPosXZ,
-                radius = radius,
-                strength = strength
-            });
+            AddDisturbance(worldPosXZ, radius, strength);
         }
 
         private void OnGUI()

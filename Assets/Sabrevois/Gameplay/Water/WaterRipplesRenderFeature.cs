@@ -216,7 +216,7 @@ namespace Sabrevois.Level.Water
             
             [Range(0.01f, 1.0f)]
             [Tooltip("Speed at which waves travel. Lower values make the ripples slower.")]
-            public float propagationSpeed = 0.15f;
+            public float propagationSpeed = 0.5f;
             
             [Tooltip("How many world-space units the resolution grid covers. If your water plane is 100x100 units, set this to 100.")]
             public float areaSize = 50f;
@@ -254,4 +254,3 @@ namespace Sabrevois.Level.Water
         }
     }
 }
-
