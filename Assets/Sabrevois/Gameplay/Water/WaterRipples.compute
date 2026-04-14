@@ -7,7 +7,10 @@ RWTexture2D<float4> ResultInit;
 float Dampening;
 float PropagationSpeed;
 float AreaSize;
+float2 DisturbPos;
 float2 WaterOrigin;
+float DisturbRadius;
+float DisturbStrength;
 
 [numthreads(8,8,1)]
 void CSInit (uint3 id : SV_DispatchThreadID)
@@ -85,9 +88,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
 #pragma kernel CSDisturb
 
-int DisturbCount;
-float4 Disturbances[64]; // x, y (pos), z (radius), w (strength)
-
 [numthreads(8,8,1)]
 void CSDisturb (uint3 id : SV_DispatchThreadID)
 {
@@ -97,21 +97,19 @@ void CSDisturb (uint3 id : SV_DispatchThreadID)
     float2 uv = float2((float)id.x / (float)width, (float)id.y / (float)height);
     float2 worldPos = (uv - 0.5) * AreaSize + WaterOrigin;
 
+    float dist = distance(worldPos, DisturbPos);
+
     float pixelSize = AreaSize / (float)width;
-    float4 currentVal = Result[id.xy];
+    float effectiveRadius = max(DisturbRadius, pixelSize * 1.5);
 
-    for (int i = 0; i < DisturbCount; i++)
+    if (dist < effectiveRadius)
     {
-        float dist = distance(worldPos, Disturbances[i].xy);
-        float effectiveRadius = max(Disturbances[i].z, pixelSize * 1.5);
-
-        if (dist < effectiveRadius)
-        {
-            float falloff = 1.0 - smoothstep(0.0, effectiveRadius, dist);
-            currentVal.a += Disturbances[i].w * falloff;
-        }
+        float falloff = 1.0 - smoothstep(0.0, effectiveRadius, dist);
+        
+        float4 currentVal = Result[id.xy];
+        currentVal.a += DisturbStrength * falloff;
+        currentVal.a = clamp(currentVal.a, -10.0, 10.0);
+        
+        Result[id.xy] = currentVal;
     }
-
-    currentVal.a = clamp(currentVal.a, -10.0, 10.0);
-    Result[id.xy] = currentVal;
 }

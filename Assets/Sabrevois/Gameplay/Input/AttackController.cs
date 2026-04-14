@@ -1,5 +1,6 @@
 ﻿using Sabrevois.Gameplay.Tree;
 using Sabrevois.Level;
+using Sabrevois.Level.Water;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -39,13 +40,25 @@ namespace Sabrevois.Gameplay.Input
                 
                 Debug.DrawRay(ray.origin, ray.direction * _attackRange, Color.red, 1f);
 
-                RaycastHit[] hits = Physics.RaycastAll(ray, _attackRange, ~0, QueryTriggerInteraction.Ignore);
+                // Use QueryTriggerInteraction.Collide so the raycast can hit the water plane trigger
+                RaycastHit[] hits = Physics.RaycastAll(ray, _attackRange, ~0, QueryTriggerInteraction.Collide);
                 System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
                 bool hitValid = false;
                 foreach (var hit in hits)
                 {
                     if (hit.collider.GetComponentInParent<AttackController>() == this) continue;
+
+                    // Support for shooting the water directly
+                    if (hit.collider.gameObject.CompareTag("Water") || hit.collider.gameObject.layer == LayerMask.NameToLayer("Water"))
+                    {
+                        WaterRipplesInteraction.AddDisturbance(new Vector2(hit.point.x, hit.point.z), 0.2f, 1f);
+                        hitValid = true;
+                        break;
+                    }
+
+                    // Ignore other triggers so bullets don't get blocked by invisible enemy aggro ranges or event triggers
+                    if (hit.collider.isTrigger) continue;
 
                     Debug.Log($"Je suis touché: {hit.collider.gameObject.name}");
                     

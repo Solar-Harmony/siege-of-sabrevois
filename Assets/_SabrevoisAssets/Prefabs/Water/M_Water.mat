@@ -99,7 +99,7 @@ Material:
     - _MaxDepth: 5
     - _MaxFoamWidth: 5
     - _Max_Absorption_Depth: 40
-    - _Max_Foam_Width: 0
+    - _Max_Foam_Width: 3
     - _Max_Refraction_Depth: 2.5
     - _Min_Foam_Width: 0
     - _Opacity: 0.3
