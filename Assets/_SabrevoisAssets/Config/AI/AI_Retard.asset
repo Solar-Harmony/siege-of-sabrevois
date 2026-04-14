@@ -265,8 +265,34 @@ MonoBehaviour:
         serializedVersion: 2
         m_Curve:
         - serializedVersion: 3
-          time: -0.0014597098
-          value: 1
+          time: 0.0027154237
+          value: 0.39761734
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    - Source:
+        rid: 2127759828695646291
+      Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0.0027154237
+          value: 0.39761734
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -392,6 +418,9 @@ MonoBehaviour:
       data: 
     - rid: 2127759828695646290
       type: {class: AgentWoodPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 2127759828695646291
+      type: {class: HouseWoodPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 
     - rid: 4373529886062543039
       type: {class: EnergyPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}

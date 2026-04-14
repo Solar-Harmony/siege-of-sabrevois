@@ -88,9 +88,9 @@ namespace Sabrevois.Gameplay.AI.Actions
             agentWood.SpendWood(depositedWood);
             houseWood.AddWood(depositedWood);
             ctx.Agent.GetComponent<Energy>().SpendEnergy(config.EnergyCost);
-            Debug.Log($"Agent {ctx.Agent.name} deposited {depositedWood} wood in house {state.chosenHouse.name}.");
-            Debug.Log($"Agent {ctx.Agent.name} total {agentWood.CurrentWood} wood.");
-            Debug.Log($"House {state.chosenHouse.name} total {houseWood.CurrentWood} wood.");
+            //Debug.Log($"Agent {ctx.Agent.name} deposited {depositedWood} wood in house {state.chosenHouse.name}.");
+            //Debug.Log($"Agent {ctx.Agent.name} total {agentWood.CurrentWood} wood.");
+            //Debug.Log($"House {state.chosenHouse.name} total {houseWood.CurrentWood} wood.");
 
             return ActionStatus.Done;
         }

@@ -83,7 +83,7 @@ namespace Sabrevois.Gameplay.AI.Actions
 
             agentWood.AddWood(gatheredWood);
             ctx.Agent.GetComponent<Energy>().SpendEnergy(config.EnergyCost);
-            Debug.Log($"Agent {ctx.Agent.name} gathered {gatheredWood} wood.");
+            //Debug.Log($"Agent {ctx.Agent.name} gathered {gatheredWood} wood.");
 
             return ActionStatus.Done;
         }
