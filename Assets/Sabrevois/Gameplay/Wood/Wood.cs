@@ -6,11 +6,12 @@ namespace Sabrevois.Gameplay
     {
         public float MaxWood;
 
+        [field:SerializeField]
         public float CurrentWood { get; private set; }
 
         private void Awake()
         {
-            CurrentWood = MaxWood;
+            CurrentWood = 0;
         }
 
         public void SpendWood(float amount)
