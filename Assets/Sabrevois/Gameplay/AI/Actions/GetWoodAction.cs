@@ -12,7 +12,7 @@ namespace Sabrevois.Gameplay.AI.Actions
     [Serializable]
     public class GetWoodActionConfig : ActionConfigBase<GetWoodAction, GetWoodActionState>
     {
-        public float gatheringDuration = 20f;
+        public float gatheringDuration = 10f;
         public float woodQuantity = 10f; //TODO : Fellable Trees, remove
     }
 
@@ -45,7 +45,7 @@ namespace Sabrevois.Gameplay.AI.Actions
                 //Wood treeWood = treeSpot.GetComponent<Wood>();
                 Wood agentWood = agent.GetComponent<Wood>();
                 if (distance < currentDistance &&
-                    agentWood.CurrentWood > 0)
+                    agentWood.CurrentWood < agentWood.MaxWood)
                 {
                     currentDistance = distance;
                     closestTree = treeSpot.transform;
