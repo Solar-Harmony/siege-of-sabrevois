@@ -3792,7 +3792,7 @@
     "m_ObjectId": "2835d220d5f746dcb9075f4f2af04a54",
     "m_Title": "Depth Fade",
     "m_Position": {
-        "x": 376.0,
+        "x": 376.000244140625,
         "y": -42.85693359375
     }
 }
@@ -6481,7 +6481,7 @@
         "m_SerializedTexture": "",
         "m_Guid": ""
     },
-    "m_DefaultType": 3
+    "m_DefaultType": 0
 }
 
 {
@@ -8374,7 +8374,7 @@
     "m_ObjectId": "75960d0a93884ebc887155cafe0912ed",
     "m_Title": "No Specular On Foam",
     "m_Position": {
-        "x": 458.857421875,
+        "x": 458.857177734375,
         "y": -435.999755859375
     }
 }
@@ -12899,7 +12899,7 @@
     "m_ObjectId": "d82546fcc7b147d89c713eb9dea044ac",
     "m_Title": "Beer Lambert Absorption",
     "m_Position": {
-        "x": -1344.5712890625,
+        "x": -1344.571044921875,
         "y": -2615.428466796875
     }
 }
