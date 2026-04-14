@@ -74,6 +74,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c830f5becf4e92a4a803479065ff2269, type: 3}
       insertIndex: -1
       addedObject: {fileID: -6624402306010906149}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c830f5becf4e92a4a803479065ff2269, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6907226652780850871}
   m_SourcePrefab: {fileID: 100100000, guid: c830f5becf4e92a4a803479065ff2269, type: 3}
 --- !u!1 &5060824312953376276 stripped
 GameObject:
@@ -106,3 +109,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Gameplay::House
   maxAmountOfOccupants: 4
+  fullColor: {r: 1, g: 0, b: 0, a: 1}
+--- !u!114 &6907226652780850871
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5060824312953376276}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c73cc66d4fb4b914dae4e8f05dfb76f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Gameplay::Sabrevois.Gameplay.Wood
+  MaxWood: 40
+  <CurrentWood>k__BackingField: 0

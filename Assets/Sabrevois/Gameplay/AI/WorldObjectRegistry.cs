@@ -6,6 +6,7 @@ public enum WorldObjectCategory
     Food,
     House,
     NPC,
+    Tree,
 }
 
 public class WorldObjectRegistry : MonoBehaviour
