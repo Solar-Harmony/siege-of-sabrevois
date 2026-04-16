@@ -1,0 +1,33 @@
+using UnityEngine;
+
+namespace Sabrevois.Gameplay
+{
+    public class Wood : MonoBehaviour
+    {
+        public float MaxWood;
+
+        [field:SerializeField]
+        public float CurrentWood { get; private set; }
+
+        private void Awake()
+        {
+            CurrentWood = 0;
+        }
+
+        public void SpendWood(float amount)
+        {
+            CurrentWood = Mathf.Max(CurrentWood - amount, 0);
+
+            if (CurrentWood <= 0)
+            {
+                //Plus de wood
+            }
+        }
+
+        public void AddWood(float amount)
+        {
+            CurrentWood = Mathf.Min(CurrentWood + amount, MaxWood);
+        }
+    }
+
+}

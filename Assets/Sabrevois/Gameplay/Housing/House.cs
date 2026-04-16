@@ -1,3 +1,4 @@
+using Sabrevois.Gameplay;
 using UnityEngine;
 
 public class House : MonoBehaviour
@@ -43,8 +44,14 @@ public class House : MonoBehaviour
    {
        return _currentAmountOfOccupants >= maxAmountOfOccupants;
    }
-   
-   private void UpdateColor()
+
+    public bool NeedsWood()
+    {
+        Wood houseWood = this.GetComponent<Wood>();
+        return houseWood.CurrentWood < houseWood.MaxWood;
+    }
+
+    private void UpdateColor()
    {
        _houseRenderer.material.color = IsFull() ? fullColor : _defaultColor;
    }
