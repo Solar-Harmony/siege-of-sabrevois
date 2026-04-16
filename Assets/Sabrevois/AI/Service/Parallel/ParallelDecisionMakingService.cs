@@ -212,8 +212,8 @@ namespace Sabrevois.AI
             
             // Due to the small size of our brains, we weren't able to come up with
             // a complex enough logic so we will artificially inflate the algorithmic complexity
-            // System.Random random = new System.Random();
-            // Thread.Sleep(random.Next(5, 20));
+            // Random random = new Random();
+            // Thread.Sleep(random.Next(50, 500));
             
             if (candidates.Length == 0)
                 return null;

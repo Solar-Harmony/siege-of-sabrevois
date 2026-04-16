@@ -71,13 +71,30 @@ namespace Sabrevois.Level.Water
                 threadGroupsY = Mathf.CeilToInt(resolution / 8.0f);
 
                 int kernelDisturb = computeShader.FindKernel("CSDisturb");
+                Vector4[] distArray = new Vector4[64];
+                int distCount = 0;
+
                 while (WaterRipplesInteraction.TryGetDisturbance(out var disturbance))
                 {
-                    cmd.SetComputeVectorParam(computeShader, "DisturbPos", new Vector4(disturbance.position.x, disturbance.position.y, 0, 0));
+                    distArray[distCount++] = new Vector4(disturbance.position.x, disturbance.position.y, disturbance.radius, disturbance.strength);
+                    if (distCount == 64)
+                    {
+                        cmd.SetComputeVectorParam(computeShader, "WaterOrigin", new Vector4(waterOrigin.x, waterOrigin.y, 0, 0));
+                        cmd.SetComputeFloatParam(computeShader, "AreaSize", areaSize);
+                        cmd.SetComputeIntParam(computeShader, "DisturbCount", distCount);
+                        cmd.SetComputeVectorArrayParam(computeShader, "Disturbances", distArray);
+                        cmd.SetComputeTextureParam(computeShader, kernelDisturb, "Result", rts[currStateIndex]);
+                        cmd.DispatchCompute(computeShader, kernelDisturb, threadGroupsX, threadGroupsY, 1);
+                        distCount = 0;
+                    }
+                }
+
+                if (distCount > 0)
+                {
                     cmd.SetComputeVectorParam(computeShader, "WaterOrigin", new Vector4(waterOrigin.x, waterOrigin.y, 0, 0));
-                    cmd.SetComputeFloatParam(computeShader, "DisturbRadius", disturbance.radius);
-                    cmd.SetComputeFloatParam(computeShader, "DisturbStrength", disturbance.strength);
                     cmd.SetComputeFloatParam(computeShader, "AreaSize", areaSize);
+                    cmd.SetComputeIntParam(computeShader, "DisturbCount", distCount);
+                    cmd.SetComputeVectorArrayParam(computeShader, "Disturbances", distArray);
                     cmd.SetComputeTextureParam(computeShader, kernelDisturb, "Result", rts[currStateIndex]);
                     cmd.DispatchCompute(computeShader, kernelDisturb, threadGroupsX, threadGroupsY, 1);
                 }
@@ -164,13 +181,30 @@ namespace Sabrevois.Level.Water
                         }
 
                         int kernelDisturb = data.compute.FindKernel("CSDisturb");
+                        Vector4[] distArrayRG = new Vector4[64];
+                        int distCountRG = 0;
+
                         while (WaterRipplesInteraction.TryGetDisturbance(out var disturbance))
                         {
-                            cmd.SetComputeVectorParam(data.compute, "DisturbPos", new Vector4(disturbance.position.x, disturbance.position.y, 0, 0));
+                            distArrayRG[distCountRG++] = new Vector4(disturbance.position.x, disturbance.position.y, disturbance.radius, disturbance.strength);
+                            if (distCountRG == 64)
+                            {
+                                cmd.SetComputeVectorParam(data.compute, "WaterOrigin", new Vector4(data.waterOrigin.x, data.waterOrigin.y, 0, 0));
+                                cmd.SetComputeFloatParam(data.compute, "AreaSize", data.areaSize);
+                                cmd.SetComputeIntParam(data.compute, "DisturbCount", distCountRG);
+                                cmd.SetComputeVectorArrayParam(data.compute, "Disturbances", distArrayRG);
+                                cmd.SetComputeTextureParam(data.compute, kernelDisturb, "Result", rts[currStateIndex]);
+                                cmd.DispatchCompute(data.compute, kernelDisturb, threadGroupsX, threadGroupsY, 1);
+                                distCountRG = 0;
+                            }
+                        }
+
+                        if (distCountRG > 0)
+                        {
                             cmd.SetComputeVectorParam(data.compute, "WaterOrigin", new Vector4(data.waterOrigin.x, data.waterOrigin.y, 0, 0));
-                            cmd.SetComputeFloatParam(data.compute, "DisturbRadius", disturbance.radius);
-                            cmd.SetComputeFloatParam(data.compute, "DisturbStrength", disturbance.strength);
                             cmd.SetComputeFloatParam(data.compute, "AreaSize", data.areaSize);
+                            cmd.SetComputeIntParam(data.compute, "DisturbCount", distCountRG);
+                            cmd.SetComputeVectorArrayParam(data.compute, "Disturbances", distArrayRG);
                             cmd.SetComputeTextureParam(data.compute, kernelDisturb, "Result", rts[currStateIndex]);
                             cmd.DispatchCompute(data.compute, kernelDisturb, threadGroupsX, threadGroupsY, 1);
                         }
