@@ -6,6 +6,7 @@ using Sabrevois.AI;
 using Zenject;
 using JetBrains.Annotations;
 
+#if UNITY_EDITOR
 namespace Sabrevois.AI.Editor
 {
     public class AIDecisionDebuggerWindow : EditorWindow
@@ -345,3 +346,4 @@ namespace Sabrevois.AI.Editor
         }
     }
 }
+#endif

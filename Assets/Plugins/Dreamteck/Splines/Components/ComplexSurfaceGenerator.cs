@@ -145,9 +145,12 @@ namespace Dreamteck.Splines
         [SerializeField]
         [HideInInspector]
         private Spline[] _splines = new Spline[0];
+        
+        #if UNITY_EDITOR
         [SerializeField]
         [HideInInspector]
         private bool _initializedInEditor = false;
+        #endif
 
         private int iterations => _subdivisions * _otherComputers.Length;
 

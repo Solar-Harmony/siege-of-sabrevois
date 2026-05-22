@@ -15,11 +15,11 @@ GameObject:
   - component: {fileID: -984041389127934398}
   - component: {fileID: 6702582381545169484}
   - component: {fileID: 2875921790116754687}
-  - component: {fileID: 1385801943176789513}
   - component: {fileID: -1249085982329886884}
   - component: {fileID: 6153419840484802571}
   - component: {fileID: 1844457107570209030}
   - component: {fileID: 5407985455179933185}
+  - component: {fileID: 2489421016934001020}
   m_Layer: 0
   m_Name: NPC
   m_TagString: Untagged
@@ -106,7 +106,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1894504144756601435}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a05f14acf1a74d0993a8c3cd4b43c699, type: 3}
   m_Name: 
@@ -151,19 +151,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Gameplay::Hunger
   MaxHunger: 100
---- !u!114 &1385801943176789513
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1894504144756601435}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c73cc66d4fb4b914dae4e8f05dfb76f7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Gameplay::Sabrevois.Gameplay.Wood
-  MaxWood: 5
 --- !u!114 &-1249085982329886884
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -231,6 +218,20 @@ MonoBehaviour:
   radiusMultiplier: 1
   strengthMultiplier: 1
   lastPos: {x: 0, y: 0, z: 0}
+--- !u!114 &2489421016934001020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1894504144756601435}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c73cc66d4fb4b914dae4e8f05dfb76f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Gameplay::Sabrevois.Gameplay.Wood
+  MaxWood: 5
+  <CurrentWood>k__BackingField: 0
 --- !u!1 &2389312972207194853
 GameObject:
   m_ObjectHideFlags: 0
@@ -707,7 +708,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4672032786711649329}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a05f14acf1a74d0993a8c3cd4b43c699, type: 3}
   m_Name: 
