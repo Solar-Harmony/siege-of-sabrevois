@@ -62,6 +62,12 @@ namespace Sabrevois.Gameplay.Input
 
                     Debug.Log($"Je suis touché: {hit.collider.gameObject.name}");
                     
+                    var wounds = hit.collider.GetComponentInParent<WoundsComponent>();
+                    if (wounds != null)
+                    {
+                        wounds.ApplyWound(hit);
+                    }
+                    
                     var health = hit.collider.GetComponentInParent<Health>();
                     if (health != null)
                     {

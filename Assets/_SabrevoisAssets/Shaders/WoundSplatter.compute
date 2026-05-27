@@ -1,0 +1,76 @@
+﻿// WoundSplatter.compute
+#pragma kernel SplatWound
+#pragma kernel ClearSlice
+
+RWTexture2DArray<float> Splatmap;
+
+float4 HitUV;
+float4 QuadSize;
+float Radius;
+float Penetration;
+int SliceIndex;
+
+// Pseudo-random noise functions to break up the circle
+float hash(float2 p) {
+    return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
+}
+
+float CustomNoise(float2 p) {
+    float2 i = floor(p);
+    float2 f = frac(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return lerp(lerp(hash(i), hash(i + float2(1.0, 0.0)), f.x),
+                lerp(hash(i + float2(0.0, 1.0)), hash(i + float2(1.0, 1.0)), f.x), f.y);
+}
+
+[numthreads(8,8,1)]
+void ClearSlice (uint3 id : SV_DispatchThreadID)
+{
+    uint width, height, elements;
+    Splatmap.GetDimensions(width, height, elements);
+
+    if (id.x >= width || id.y >= height)
+        return;
+
+    if (id.x < width && id.y < height)
+    {
+        Splatmap[uint3(id.x, id.y, SliceIndex)] = 0.0;
+    }
+}
+
+[numthreads(8,8,1)]
+void SplatWound (uint3 id : SV_DispatchThreadID)
+{
+    uint width, height, elements;
+    Splatmap.GetDimensions(width, height, elements);
+
+    if (id.x >= width || id.y >= height)
+        return;
+
+    // Convert pixel coordinate to 0-1 UV space
+    float2 pixelUV = float2(id.x + 0.5, id.y + 0.5) / float2(width, height);
+
+    // Map the UV difference directly into physical world units using the Quad's Size
+    float2 worldPixel = pixelUV * QuadSize.xy;
+    float2 worldHit = HitUV.xy * QuadSize.xy;
+    float2 diff = worldPixel - worldHit;
+    
+    // Calculate distance in physical units so it perfectly preserves a true circle radially
+    float dist = length(diff);
+
+    // Apply procedural noise to organically shatter the circle shape into a splat/tear
+    float noiseVal = CustomNoise(worldPixel * 25.0);
+    float dynamicRadius = Radius * (0.5 + 1.0 * noiseVal);
+
+    // Harder, sharper brush edges to remove fuzziness 
+    float influence = 1.0 - smoothstep(dynamicRadius * 0.7, dynamicRadius, dist);
+
+    if (influence > 0)
+    {
+        uint3 sampleCoord = uint3(id.x, id.y, SliceIndex);
+        float currentVal = Splatmap[sampleCoord];
+        // Accumulate penetration WITHOUT clamping, so it can dig through multiple layers
+        float newVal = currentVal + (influence * Penetration);
+        Splatmap[sampleCoord] = newVal;
+    }
+}
