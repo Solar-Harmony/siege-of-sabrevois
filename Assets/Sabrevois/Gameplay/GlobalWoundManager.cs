@@ -29,7 +29,7 @@ namespace Sabrevois.Gameplay
 
         private void InitializeSplatmap()
         {
-            _splatmapArray = new RenderTexture(_splatmapResolution, _splatmapResolution, 0, UnityEngine.Experimental.Rendering.GraphicsFormat.R16_SFloat);
+            _splatmapArray = new RenderTexture(_splatmapResolution, _splatmapResolution, 0, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16_SFloat);
             _splatmapArray.dimension = UnityEngine.Rendering.TextureDimension.Tex2DArray;
             _splatmapArray.volumeDepth = _maxSlices;
             _splatmapArray.enableRandomWrite = true;
@@ -89,7 +89,7 @@ namespace Sabrevois.Gameplay
             }
         }
 
-        public void AddWoundSplat(int sliceIndex, Vector2 uv, float radius, float penetration, Vector2 quadSize)
+        public void AddWoundSplat(int sliceIndex, Vector2 uv, float radius, float penetration, Vector2 quadSize, float bloodRatio = 0f)
         {
             if (sliceIndex < 0 || sliceIndex >= _maxSlices || _woundSplatterCompute == null)
                 return;
@@ -98,6 +98,7 @@ namespace Sabrevois.Gameplay
             _woundSplatterCompute.SetVector("QuadSize", new Vector4(quadSize.x, quadSize.y, 0, 0));
             _woundSplatterCompute.SetFloat("Radius", radius);
             _woundSplatterCompute.SetFloat("Penetration", penetration);
+            _woundSplatterCompute.SetFloat("BloodRatio", bloodRatio);
             _woundSplatterCompute.SetInt("SliceIndex", sliceIndex);
 
             int threadGroups = Mathf.CeilToInt(_splatmapResolution / 8f);

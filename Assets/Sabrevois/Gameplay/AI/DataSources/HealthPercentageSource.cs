@@ -13,7 +13,7 @@ namespace Sabrevois.Gameplay.AI.DataSources
         {
             agent.GetComponentChecked(out Health health);
             
-            return health.CurrentHealth01;
+            return health.HealthPercent;
         }
     }
 }

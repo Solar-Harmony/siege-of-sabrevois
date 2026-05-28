@@ -1,6 +1,7 @@
 ﻿using Sabrevois.Gameplay.Tree;
 using Sabrevois.Level;
 using Sabrevois.Level.Water;
+using Sabrevois.Utils;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,12 +10,12 @@ namespace Sabrevois.Gameplay.Input
     public class AttackController : MonoBehaviour
     {
         [SerializeField] private InputRouter _input;
-        [SerializeField] private int _damageAmount = 10;
         [SerializeField] private int _attackRange = 100;
         [SerializeField] private float _explosionRadius = 5f;
         [SerializeField] private int _explosionDamage = 0;
         [SerializeField] private float _explosionForce = 800f;
-        [SerializeField] private GameObject _bloodPrefab;
+        [SerializeField] private float _woundRadius = 0.15f;
+        [SerializeField] private float _woundPenetration = 0.6f;
         private Camera _camera;
         
         private void Awake()
@@ -23,11 +24,6 @@ namespace Sabrevois.Gameplay.Input
             Debug.Assert(_camera);
         }
 
-        private void SpawnBlood(Vector3 hitPosition, Vector3 hitNormal)
-        {
-            Instantiate(_bloodPrefab, hitPosition, Quaternion.LookRotation(hitNormal));
-        }
-        
         private void Update()
         {
             if (_input.AttackPressed)
@@ -58,21 +54,27 @@ namespace Sabrevois.Gameplay.Input
                     }
 
                     // Ignore other triggers so bullets don't get blocked by invisible enemy aggro ranges or event triggers
-                    if (hit.collider.isTrigger) continue;
+                    if (hit.collider.isTrigger && hit.collider.GetComponentInParent<WoundsComponent>() == null) continue;
 
-                    Debug.Log($"Je suis touché: {hit.collider.gameObject.name}");
+                    Debug.LogFormat($"{hit.collider.gameObject.name} was hit.");
+                    
+                    Vector3 trueHitNormal = hit.normal;
+                    float localPenetration = _woundPenetration;
                     
                     var wounds = hit.collider.GetComponentInParent<WoundsComponent>();
                     if (wounds != null)
                     {
-                        wounds.ApplyWound(hit);
+                        // Since we shoot a rotated proxy hitbox trigger for billboarding, the "normal" will just match the BoxCollider.
+                        // For blood splashes to shoot back at the camera reliably, we use the vector pointing backward to the player instead.
+                        trueHitNormal = (Camera.main.transform.position - hit.point).normalized;
+                        Vector3 hitVelocity = ray.direction * 5f;
+                        localPenetration = wounds.ApplyWound(hit, trueHitNormal, _woundRadius, _woundPenetration, hitVelocity);
                     }
                     
                     var health = hit.collider.GetComponentInParent<Health>();
                     if (health != null)
                     {
-                        health.TakeDamage(_damageAmount, ray.direction);
-                        SpawnBlood(hit.point, hit.normal);
+                        health.TakeDamage(localPenetration, ray.direction);
                     }
 
                     var tree = hit.collider.GetComponentInParent<FellableTree>();
@@ -124,7 +126,12 @@ namespace Sabrevois.Gameplay.Input
                             health.TakeDamage(_explosionDamage, expDir);
                             var p = health.transform.position;
                             p.y = hit.point.y;
-                            SpawnBlood(p, hit.normal);
+
+                            var wounds = col.GetComponentInParent<WoundsComponent>();
+                            if (wounds != null)
+                            {
+                                wounds.PlayBloodVFXWorld(p, hit.normal, expDir * (_explosionForce * 0.01f));
+                            }
                         }
 
                         var tree = col.GetComponentInParent<FellableTree>();

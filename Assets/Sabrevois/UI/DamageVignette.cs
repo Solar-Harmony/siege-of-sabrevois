@@ -18,8 +18,7 @@ namespace Sabrevois.UI
         
         private void HandleDamageTaken(float damage)
         {
-            float intensity = Mathf.Clamp01(damage / _health.MaxHealth);
-            _vignette.style.opacity = intensity;
+            _vignette.style.opacity = 1f - _health.HealthPercent;
         }
     }
 }

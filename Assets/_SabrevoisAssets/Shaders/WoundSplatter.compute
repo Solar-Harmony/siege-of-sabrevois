@@ -2,12 +2,13 @@
 #pragma kernel SplatWound
 #pragma kernel ClearSlice
 
-RWTexture2DArray<float> Splatmap;
+RWTexture2DArray<float2> Splatmap;
 
 float4 HitUV;
 float4 QuadSize;
 float Radius;
 float Penetration;
+float BloodRatio;
 int SliceIndex;
 
 // Pseudo-random noise functions to break up the circle
@@ -34,7 +35,7 @@ void ClearSlice (uint3 id : SV_DispatchThreadID)
 
     if (id.x < width && id.y < height)
     {
-        Splatmap[uint3(id.x, id.y, SliceIndex)] = 0.0;
+        Splatmap[uint3(id.x, id.y, SliceIndex)] = float2(0.0, 0.0);
     }
 }
 
@@ -68,9 +69,10 @@ void SplatWound (uint3 id : SV_DispatchThreadID)
     if (influence > 0)
     {
         uint3 sampleCoord = uint3(id.x, id.y, SliceIndex);
-        float currentVal = Splatmap[sampleCoord];
+        float2 currentVal = Splatmap[sampleCoord];
         // Accumulate penetration WITHOUT clamping, so it can dig through multiple layers
-        float newVal = currentVal + (influence * Penetration);
-        Splatmap[sampleCoord] = newVal;
+        float newVal = currentVal.r + (influence * Penetration);
+        float newBlood = currentVal.g + (influence * BloodRatio);
+        Splatmap[sampleCoord] = float2(newVal, newBlood);
     }
 }
