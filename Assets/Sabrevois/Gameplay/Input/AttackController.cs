@@ -71,7 +71,7 @@ namespace Sabrevois.Gameplay.Input
                     var health = hit.collider.GetComponentInParent<Health>();
                     if (health != null)
                     {
-                        health.TakeDamage(_damageAmount);
+                        health.TakeDamage(_damageAmount, ray.direction);
                         SpawnBlood(hit.point, hit.normal);
                     }
 
@@ -120,7 +120,8 @@ namespace Sabrevois.Gameplay.Input
                         var health = col.GetComponentInParent<Health>();
                         if (health && hitHealths.Add(health))
                         {
-                            health.TakeDamage(_explosionDamage);
+                            Vector3 expDir = (health.transform.position - hit.point).normalized;
+                            health.TakeDamage(_explosionDamage, expDir);
                             var p = health.transform.position;
                             p.y = hit.point.y;
                             SpawnBlood(p, hit.normal);

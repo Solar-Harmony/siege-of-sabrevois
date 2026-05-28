@@ -11,16 +11,15 @@ GameObject:
   - component: {fileID: 5890676865826243410}
   - component: {fileID: 6422312052613631476}
   - component: {fileID: 9282092635920000}
-  - component: {fileID: 1994261721310754859}
   - component: {fileID: -984041389127934398}
   - component: {fileID: 6702582381545169484}
   - component: {fileID: 2875921790116754687}
   - component: {fileID: -1249085982329886884}
-  - component: {fileID: 6153419840484802571}
   - component: {fileID: 1844457107570209030}
   - component: {fileID: 5407985455179933185}
   - component: {fileID: 2489421016934001020}
   - component: {fileID: 7967762212211093992}
+  - component: {fileID: 8406109112291712468}
   m_Layer: 0
   m_Name: NPC
   m_TagString: Untagged
@@ -97,22 +96,9 @@ NavMeshAgent:
   m_AutoBraking: 1
   m_AutoRepath: 1
   m_Height: 1.6
-  m_BaseOffset: -0.025
+  m_BaseOffset: -0.075
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &1994261721310754859
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1894504144756601435}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a05f14acf1a74d0993a8c3cd4b43c699, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Level::Sabrevois.Utils.Billboard
-  _horizontalOnly: 1
 --- !u!114 &-984041389127934398
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -125,7 +111,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e7d90b4469c4f80886ed9993d7f5c99, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Gameplay::Sabrevois.AI.Considerations.Health
-  MaxHealth: 50
+  MaxHealth: 150
 --- !u!114 &6702582381545169484
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -168,29 +154,6 @@ MonoBehaviour:
   Name: 
   _useCustomInterval: 0
   _decisionMakingInterval: 1
---- !u!136 &6153419840484802571
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1894504144756601435}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.4
-  m_Height: 1.6
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.8, z: 0}
 --- !u!114 &1844457107570209030
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -246,6 +209,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Gameplay::Sabrevois.Gameplay.WoundsComponent
   _renderer: {fileID: 546179638534640709}
+--- !u!136 &8406109112291712468
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1894504144756601435}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.45
+  m_Height: 1.7259762
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.7133244, z: 0}
 --- !u!1 &2389312972207194853
 GameObject:
   m_ObjectHideFlags: 0
@@ -868,7 +854,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 9054802795506171877}
-  - {fileID: 6239719477595783913}
   m_Father: {fileID: 5890676865826243410}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!205 &2831438303180733914
@@ -885,14 +870,10 @@ LODGroup:
   m_AnimateCrossFading: 0
   m_LastLODIsBillboard: 0
   m_LODs:
-  - screenRelativeHeight: 0.29949954
+  - screenRelativeHeight: 0.053821303
     fadeTransitionWidth: 0.545
     renderers:
     - renderer: {fileID: 546179638534640709}
-  - screenRelativeHeight: 0.01324274
-    fadeTransitionWidth: 0.498
-    renderers:
-    - renderer: {fileID: 2861240444674284691}
   m_Enabled: 1
 --- !u!1 &6128020200972421289
 GameObject:
@@ -1164,93 +1145,3 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7518500599138123776}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &9036256494866800763
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6239719477595783913}
-  - component: {fileID: 8419052378773607569}
-  - component: {fileID: 2861240444674284691}
-  m_Layer: 0
-  m_Name: LOD1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &6239719477595783913
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9036256494866800763}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2361451745855598781}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &8419052378773607569
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9036256494866800763}
-  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &2861240444674284691
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9036256494866800763}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 0
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 140386c0938997e498d586d3bc7b662d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}

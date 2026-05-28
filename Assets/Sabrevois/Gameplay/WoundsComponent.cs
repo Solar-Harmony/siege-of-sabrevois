@@ -21,6 +21,8 @@ namespace Sabrevois.Gameplay
         private MeshRenderer _renderer;
         private MaterialPropertyBlock _mpb;
 
+        private bool _billboardEnabled = true;
+
         private void Awake()
         {
             _mpb = new MaterialPropertyBlock();
@@ -48,6 +50,17 @@ namespace Sabrevois.Gameplay
             }
         }
         
+        public void SetBillboardEnabled(bool enabled)
+        {
+            _billboardEnabled = enabled;
+            if (_renderer != null)
+            {
+                _renderer.GetPropertyBlock(_mpb);
+                _mpb.SetFloat("_EnableBillboard", enabled ? 1.0f : 0.0f);
+                _renderer.SetPropertyBlock(_mpb);
+            }
+        }
+
         public void ApplyWound(RaycastHit hit)
         {
             // Resolve perspective mismatch between thick physics capsule surface and flat visual sprite plane.
@@ -67,32 +80,39 @@ namespace Sabrevois.Gameplay
                     
                 quadSize = new Vector2(localBounds.size.x * _renderer.transform.lossyScale.x, localBounds.size.y * _renderer.transform.lossyScale.y);
 
-                // Create a mathematical plane matching the GPU Billboard facing the camera (Horizontal-only Billboarding assumption)
-                Vector3 toCamera = cameraPos - _renderer.transform.position;
-                toCamera.y = 0; // If you use horizontal-only GPU billboarding
-                Vector3 planeNormal = -toCamera.normalized;
-                
-                if (planeNormal.sqrMagnitude < 0.001f) 
-                    planeNormal = -_renderer.transform.forward;
-
-                Plane quadPlane = new Plane(planeNormal, _renderer.transform.position);
-                
-                // Intersect the player's line of sight to find where it specifically pierces the 2D artwork
-                if (quadPlane.Raycast(new Ray(cameraPos, rayDir), out float enter))
+                if (_billboardEnabled)
                 {
-                    Vector3 intersectPoint = cameraPos + rayDir * enter;
+                    // Create a mathematical plane matching the GPU Billboard facing the camera (Horizontal-only Billboarding assumption)
+                    Vector3 toCamera = cameraPos - _renderer.transform.position;
+                    toCamera.y = 0; // If you use horizontal-only GPU billboarding
+                    Vector3 planeNormal = -toCamera.normalized;
                     
-                    // We must manually inverse-transform the point accounting for the billboard rotation!
-                    Quaternion billboardRot = Quaternion.LookRotation(-planeNormal, Vector3.up);
-                    Vector3 offset = intersectPoint - _renderer.transform.position;
-                    Vector3 unrotatedOffset = Quaternion.Inverse(billboardRot) * offset;
+                    if (planeNormal.sqrMagnitude < 0.001f) 
+                        planeNormal = -_renderer.transform.forward;
+
+                    Plane quadPlane = new Plane(planeNormal, _renderer.transform.position);
                     
-                    // Apply inverse scale
-                    unrotatedOffset.x /= _renderer.transform.lossyScale.x;
-                    unrotatedOffset.y /= _renderer.transform.lossyScale.y;
-                    unrotatedOffset.z /= _renderer.transform.lossyScale.z;
-                    
-                    localPoint = unrotatedOffset;
+                    // Intersect the player's line of sight to find where it specifically pierces the 2D artwork
+                    if (quadPlane.Raycast(new Ray(cameraPos, rayDir), out float enter))
+                    {
+                        Vector3 intersectPoint = cameraPos + rayDir * enter;
+                        
+                        // We must manually inverse-transform the point accounting for the billboard rotation!
+                        Quaternion billboardRot = Quaternion.LookRotation(-planeNormal, Vector3.up);
+                        Vector3 offset = intersectPoint - _renderer.transform.position;
+                        Vector3 unrotatedOffset = Quaternion.Inverse(billboardRot) * offset;
+                        
+                        // Apply inverse scale
+                        unrotatedOffset.x /= _renderer.transform.lossyScale.x;
+                        unrotatedOffset.y /= _renderer.transform.lossyScale.y;
+                        unrotatedOffset.z /= _renderer.transform.lossyScale.z;
+                        
+                        localPoint = unrotatedOffset;
+                    }
+                    else
+                    {
+                        localPoint = _renderer.transform.InverseTransformPoint(hit.point);
+                    }
                 }
                 else
                 {
