@@ -36,6 +36,8 @@
         _BloodAmountMultiplier ("Blood Prominence", Range(1.0, 10.0)) = 1.0
         
         [Header(Lighting)]
+        _VolumeDepth ("Volume Depth (Capsule)", Range(0.0, 2.0)) = 1.0
+        _BaseBumpScale ("Base Procedural Normal Scale", Range(0.0, 20.0)) = 2.0
         _WoundBumpScale ("Wound Normal Bump Scale", Range(0.0, 20.0)) = 5.0
     }
     
@@ -83,6 +85,8 @@
         float _NoiseStrength;
         float _NoiseUVOffset;
         float _ParallaxStrength;
+        float _VolumeDepth;
+        float _BaseBumpScale;
         float _WoundBumpScale;
         half4 _BloodColor;
         float _BloodAmountMultiplier;
@@ -171,7 +175,7 @@
         return c;
     }
 
-    half4 GetFinalColor(Varyings input, out float outDepth)
+    half4 GetFinalColor(Varyings input, out float outDepth, out float3 outNormalTS)
     {
         int sliceIndex = (int)UNITY_ACCESS_INSTANCED_PROP(Props, _WoundSliceIndex);
 
@@ -197,7 +201,17 @@
         
         float progressToNextLayer = frac(depth);
         
-        if (layerIndex < _LayerCount - 1 && progressToNextLayer > 0.01)
+        if (depth >= _LayerCount)
+        {
+            // Penetrated past the final layer, make a hole
+            finalColor.a = 0.0;
+        }
+        else if (layerIndex == _LayerCount - 1)
+        {
+            // Rapidly fade out alpha as it digs through the very last layer
+            finalColor.a *= saturate((_LayerCount - depth) * 5.0);
+        }
+        else if (layerIndex < _LayerCount - 1 && progressToNextLayer > 0.01)
         {
             float2 paraUV2 = input.uv - viewDirUV * ((layerIndex + 1) * _ParallaxStrength);
             half4 nextLayerColor = SampleLayerRaw(paraUV2, layerIndex + 1);
@@ -227,6 +241,37 @@
             rimTargetColor = lerp(rimTargetColor, bloodColor, bloodAmount * 0.95);
             finalColor.rgb = lerp(finalColor.rgb, rimTargetColor, rimBlend);
         }
+
+        // --- Procedural Normal Generation ---
+        
+        // 1. Volumetric Normal (capsule approximation based on UV)
+        // Treats the 2D plane like a 3D cylindrical/spherical volume for lighting
+        float2 centeredUV = input.uv * 2.0 - 1.0;
+        // Dampen Y to make it more like a capsule since characters are taller than wide
+        centeredUV.y *= 0.5; 
+        float sqrDist = saturate(dot(centeredUV, centeredUV));
+        float zDepth = sqrt(max(0.001, 1.0 - sqrDist));
+        float3 volumeNormal = normalize(float3(centeredUV.x * _VolumeDepth, centeredUV.y * _VolumeDepth, zDepth));
+        
+        // 2. Calculate an artificial height using the luminance of the final color. 
+        // Multiplying by alpha ensures a bevel along the outer edges of the sprite.
+        float baseHeight = dot(finalColor.rgb, float3(0.299, 0.587, 0.114)) * finalColor.a;
+        
+        // 3. Use screen-space derivatives to compute normal gradients for the base texture
+        float dhx = ddx(baseHeight);
+        float dhy = ddy(baseHeight);
+        float3 detailNormal = normalize(float3(-dhx * _BaseBumpScale, -dhy * _BaseBumpScale, 1.0));
+        
+        // Blend volume and detail normal
+        float3 baseNormal = normalize(float3(volumeNormal.xy + detailNormal.xy, volumeNormal.z * detailNormal.z));
+        
+        // 4. Extract the wound normal from the procedural wound depth the same way
+        float wdx = ddx(outDepth);
+        float wdy = ddy(outDepth);
+        float3 woundNormal = normalize(float3(-wdx * _WoundBumpScale, -wdy * _WoundBumpScale, 1.0));
+        
+        // 5. Combine the base sprite depth with the wound depth
+        outNormalTS = normalize(float3(baseNormal.xy + woundNormal.xy, baseNormal.z * woundNormal.z));
 
         return finalColor;
     }
@@ -276,7 +321,8 @@
                 UNITY_SETUP_INSTANCE_ID(input);
                 
                 float outDepth = 0.0;
-                half4 finalColor = GetFinalColor(input, outDepth);
+                float3 normalTS = float3(0,0,1);
+                half4 finalColor = GetFinalColor(input, outDepth, normalTS);
 
                 if (finalColor.a < 0.1)
                     discard;
@@ -286,10 +332,6 @@
                 surfaceData.alpha = finalColor.a;
                 surfaceData.metallic = 0.0;
                 surfaceData.smoothness = 0.1;
-                
-                float dx = ddx(outDepth);
-                float dy = ddy(outDepth);
-                float3 normalTS = normalize(float3(-dx * _WoundBumpScale, -dy * _WoundBumpScale, 1.0));
                 
                 surfaceData.emission = float3(0, 0, 0);
                 surfaceData.occlusion = 1.0;
@@ -358,7 +400,8 @@
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 float dummyDepth = 0.0;
-                half4 finalColor = GetFinalColor(input, dummyDepth);
+                float3 dummyNormal = float3(0,0,1);
+                half4 finalColor = GetFinalColor(input, dummyDepth, dummyNormal);
 
                 if (finalColor.a < 0.1)
                     discard;
@@ -391,7 +434,8 @@
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 float dummyDepth = 0.0;
-                half4 finalColor = GetFinalColor(input, dummyDepth);
+                float3 dummyNormal = float3(0,0,1);
+                half4 finalColor = GetFinalColor(input, dummyDepth, dummyNormal);
 
                 if (finalColor.a < 0.1)
                     discard;

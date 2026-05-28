@@ -103,6 +103,7 @@ Material:
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
+    - _BaseBumpScale: 1
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BloodAmountMultiplier: 1
@@ -144,6 +145,7 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
+    - _VolumeDepth: 1
     - _WorkflowMode: 1
     - _WoundBumpScale: 1.67
     - _WoundSliceIndex: 0
