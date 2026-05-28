@@ -51,27 +51,52 @@ namespace Sabrevois.Gameplay
         public event Action<float> OnDamageTaken;
         public event Action OnDeathComplete;
         
-        public void TakeDamage(float localPenetration, Vector3? hitDirection = null, bool isEssential = true)
+        public float GetResistanceAtDepth(float depth)
+        {
+            float currentResistance = 0f;
+            float maxPenetrationMet = -1f;
+
+            // Resistance is determined by the deepest layer we have currently reached.
+            // A layer is reached if our wound depth >= PenetrationRequired.
+            foreach (var rule in LayerRules)
+            {
+                if (depth >= rule.PenetrationRequired && rule.PenetrationRequired > maxPenetrationMet)
+                {
+                    currentResistance = rule.PenetrationResistancePercent;
+                    maxPenetrationMet = rule.PenetrationRequired;
+                }
+            }
+            
+            return currentResistance;
+        }
+
+        public void TakeDamage(float newWoundDepth, Vector3? hitDirection = null, bool isEssential = true)
         {
             if (_isDead) return;
-            
-            if (localPenetration > _maxPenetration)
-                _maxPenetration = localPenetration;
 
-            OnDamageTaken?.Invoke(localPenetration);
+            if (newWoundDepth > _maxPenetration)
+                _maxPenetration = newWoundDepth;
+
+            OnDamageTaken?.Invoke(newWoundDepth);
 
             bool shouldDie = false;
             if (isEssential)
             {
+                float highestDeathChance = 0f;
                 foreach (var rule in LayerRules)
                 {
-                    if (localPenetration >= rule.PenetrationRequired)
+                    if (newWoundDepth >= rule.PenetrationRequired)
                     {
-                        if (UnityEngine.Random.Range(0f, 100f) <= rule.InstantDeathChancePercent)
+                        if (rule.InstantDeathChancePercent > highestDeathChance)
                         {
-                            shouldDie = true;
+                            highestDeathChance = rule.InstantDeathChancePercent;
                         }
                     }
+                }
+
+                if (highestDeathChance > 0f && UnityEngine.Random.Range(0f, 100f) <= highestDeathChance)
+                {
+                    shouldDie = true;
                 }
             }
 
@@ -104,7 +129,6 @@ namespace Sabrevois.Gameplay
                     cap.radius = 0.06f; // keep raycastable but thin
                 }
                 
-                // Do a raycast downwards from slightly above the object to snap firmly to the ground exactly under the center of the entity
                 float targetY = gameObject.transform.position.y;
                 if (Physics.Raycast(gameObject.transform.position + Vector3.up * 1f, Vector3.down, out RaycastHit hit, 5f, ~0, QueryTriggerInteraction.Ignore))
                 {
@@ -137,11 +161,7 @@ namespace Sabrevois.Gameplay
                 if (hitDirXZ.sqrMagnitude > 0.001f) hitDirXZ.Normalize(); else hitDirXZ = gameObject.transform.forward;
             }
 
-            // Align NPC: +Z points directly away from the attacker (so front face -Z looks at attacker)
             Quaternion startRot = Quaternion.LookRotation(hitDirXZ, Vector3.up);
-            
-            // Final Pose: +Z points DOWN into the dirt (so front face -Z points up at the sky)
-            // and +Y (the head vector) points away from the initial impact!
             Quaternion endRot = Quaternion.LookRotation(Vector3.down, hitDirXZ);
 
             Vector3 startPos = gameObject.transform.position;

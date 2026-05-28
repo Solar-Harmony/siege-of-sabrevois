@@ -362,13 +362,20 @@ namespace Sabrevois.Gameplay
 
         public float ApplyWound(RaycastHit hit, Vector3 trueHitNormal, float radius = 0.15f, float penetration = 0.6f, Vector3 hitVelocity = default)
         {
-            bool dummy;
-            return ApplyWound(hit, trueHitNormal, radius, penetration, hitVelocity, out dummy);
+            bool dummyIsEssentialHit;
+            bool dummyIsBleeding;
+            float dummyResistancePercent;
+            float dummyDamage;
+            return ApplyWound(hit, trueHitNormal, radius, penetration, hitVelocity, out dummyIsEssentialHit, out dummyIsBleeding, out dummyResistancePercent, out dummyDamage);
         }
 
-        public float ApplyWound(RaycastHit hit, Vector3 trueHitNormal, float radius, float penetration, Vector3 hitVelocity, out bool isEssentialHit)
+        public float ApplyWound(RaycastHit hit, Vector3 trueHitNormal, float radius, float weaponPenetration, Vector3 hitVelocity, out bool isEssentialHit, out bool isBleeding, out float resistancePercent, out float damage)
         {
             isEssentialHit = false;
+            isBleeding = false;
+            resistancePercent = 0f;
+            damage = weaponPenetration;
+
             // Resolve perspective mismatch between thick physics capsule surface and flat visual sprite plane.
             // By casting directly from the player's camera vector to the visual math plane, we find the exact pixel the crosshair was aimed at!
             Vector3 cameraPos = Camera.main.transform.position;
@@ -460,35 +467,47 @@ namespace Sabrevois.Gameplay
                 }
             }
 
+            // Check accumulated depth at this UV area to determine the current layer we are hitting BEFORE applying damage
+            float oldDepth = 0f;
+            for (int i = 0; i < _wounds.Count; i++) 
+            {
+                // Distance checking
+                if (Vector2.Distance(_wounds[i].Position, uv) < _wounds[i].Radius * 1.5f) 
+                {
+                    oldDepth += _wounds[i].Penetration;
+                }
+            }
+
+            // Resistance is a multiplier for the weapon power based on the layer we are currently piercing
+            if (_health != null)
+            {
+                resistancePercent = _health.GetResistanceAtDepth(oldDepth);
+            }
+
+            damage = weaponPenetration * (1f - resistancePercent / 100f);
+            damage = Mathf.Max(0, damage);
+
             Wound wound = new Wound
             {
                 Position = uv, // Store UV in position
                 LocalPoint = localPoint,
                 Normal = trueHitNormal,        
                 Radius = radius,
-                Penetration = penetration,
+                Penetration = damage, // we store the effective damage done by the weapon into the wound pool
                 Intensity = 1f,
                 VFX = null
             };
             
             _wounds.Add(wound);
 
-            // Check accumulated depth at this UV area to determine if lower layers are breached
-            float totalLocalPenetration = 0f;
-            for (int i = 0; i < _wounds.Count; i++) 
-            {
-                // Distance checking
-                if (Vector2.Distance(_wounds[i].Position, uv) < _wounds[i].Radius * 1.5f) 
-                {
-                    totalLocalPenetration += _wounds[i].Penetration;
-                }
-            }
+            float newDepth = oldDepth + damage;
 
             float ratio = 0f;
-            if (totalLocalPenetration >= _bloodVFXDepthThreshold)
+            if (newDepth >= _bloodVFXDepthThreshold)
             {
-                ratio = Mathf.Clamp01(totalLocalPenetration / 3.0f); // Normalize depth approximation config
+                ratio = Mathf.Clamp01(newDepth / 3.0f); // Normalize depth approximation config
                 PlayBloodVFX(wound.LocalPoint, trueHitNormal, hitVelocity, ratio);
+                isBleeding = true;
             }
 
             if (_sliceIndex >= 0 && GlobalWoundManager.Instance != null)
@@ -514,7 +533,7 @@ namespace Sabrevois.Gameplay
 
 
             OnWoundCreated?.Invoke(wound, hit);
-            return totalLocalPenetration;
+            return newDepth;
         }
     }
 }

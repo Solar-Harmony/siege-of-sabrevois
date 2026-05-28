@@ -11,9 +11,8 @@ namespace Sabrevois.Gameplay.Input
     {
         [SerializeField] private InputRouter _input;
         [SerializeField] private int _attackRange = 100;
-        [SerializeField] private float _explosionRadius = 5f;
-        [SerializeField] private int _explosionDamage = 0;
-        [SerializeField] private float _explosionForce = 800f;
+        [SerializeField] private float _slashRange = 2.5f;
+        [SerializeField] private float _slashDamage = 1.0f;
         [SerializeField] private float _woundRadius = 0.15f;
         [SerializeField] private float _woundPenetration = 0.6f;
         private Camera _camera;
@@ -57,25 +56,38 @@ namespace Sabrevois.Gameplay.Input
                     if (hit.collider.isTrigger && hit.collider.GetComponentInParent<WoundsComponent>() == null) continue;
                     
                     Vector3 trueHitNormal = hit.normal;
-                    float localPenetration = _woundPenetration;
+                    float weaponPenetration = _woundPenetration;
                     bool isEssential = true;
+                    bool isBleeding = false;
+                    
+                    float woundDepth = 0f;
+                    float resistance = 0f;
+                    float damage = weaponPenetration;
                     
                     var wounds = hit.collider.GetComponentInParent<WoundsComponent>();
+                    var health = hit.collider.GetComponentInParent<Health>();
+
                     if (wounds != null)
                     {
                         // Since we shoot a rotated proxy hitbox trigger for billboarding, the "normal" will just match the BoxCollider.
                         // For blood splashes to shoot back at the camera reliably, we use the vector pointing backward to the player instead.
                         trueHitNormal = (Camera.main.transform.position - hit.point).normalized;
                         Vector3 hitVelocity = ray.direction * 5f;
-                        localPenetration = wounds.ApplyWound(hit, trueHitNormal, _woundRadius, _woundPenetration, hitVelocity, out isEssential);
                         
-                        Debug.Log($"Hit {hit.collider.name} on layer {localPenetration}, essential: {isEssential}");
+                        woundDepth = wounds.ApplyWound(hit, trueHitNormal, _woundRadius, weaponPenetration, hitVelocity, out isEssential, out isBleeding, out resistance, out damage);
+                    }
+                    else if (health != null)
+                    {
+                        resistance = health.GetResistanceAtDepth(0f);
+                        damage = weaponPenetration * (1f - resistance / 100f);
+                        woundDepth = damage;
                     }
                     
-                    var health = hit.collider.GetComponentInParent<Health>();
                     if (health != null)
                     {
-                        health.TakeDamage(localPenetration, ray.direction, isEssential);
+                        health.TakeDamage(woundDepth, ray.direction, isEssential);
+                        
+                        Debug.Log($"Target: {health.name} | Weapon Pen: {weaponPenetration} | Resistance: {resistance}% | Damage: {damage:F2} | Wound Depth: {woundDepth:F2} | Essential: {isEssential} | Bleeding: {isBleeding}");
                     }
 
                     var tree = hit.collider.GetComponentInParent<FellableTree>();
@@ -91,57 +103,39 @@ namespace Sabrevois.Gameplay.Input
                 if (!hitValid) return;
             }
 
-            if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
+            if (Mouse.current != null && Mouse.current.rightButton.isPressed)
             {
-                Ray ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+                Ray ray = _camera.ScreenPointToRay(Mouse.current.position.ReadValue());
                 
-                if (Physics.Raycast(ray, out RaycastHit hit, _attackRange, ~0, QueryTriggerInteraction.Ignore))
+                Debug.DrawRay(ray.origin, ray.direction * _attackRange, Color.blue, 1f);
+
+                // Find all enemies in slash range
+                Collider[] colliders = Physics.OverlapSphere(transform.position, _slashRange);
+                Health closestEnemy = null;
+                float closestDist = float.MaxValue;
+
+                foreach (var col in colliders)
                 {
-                    Collider[] colliders = Physics.OverlapSphere(hit.point, _explosionRadius);
-                    var hitHealths = new System.Collections.Generic.HashSet<Health>();
-                    var hitTrees = new System.Collections.Generic.HashSet<FellableTree>();
-                    var hitRbs = new System.Collections.Generic.HashSet<Rigidbody>();
-
-                    foreach (var col in colliders)
+                    var health = col.GetComponentInParent<Health>();
+                    if (health != null && health.gameObject != this.gameObject)
                     {
-                        if (col.GetComponentInParent<AttackController>() == this) continue;
-
-                        if (col.attachedRigidbody != null && hitRbs.Add(col.attachedRigidbody))
+                        float dist = Vector3.Distance(transform.position, health.transform.position);
+                        if (dist < closestDist)
                         {
-                            var navAgent = col.GetComponentInParent<UnityEngine.AI.NavMeshAgent>();
-                            if (navAgent != null)
-                            {
-                                navAgent.enabled = false;
-                            }
-                            
-                            col.attachedRigidbody.isKinematic = false;
-                            col.attachedRigidbody.constraints = RigidbodyConstraints.None;
-                            col.attachedRigidbody.AddExplosionForce(_explosionForce, hit.point, _explosionRadius, 2f, ForceMode.Impulse);
-                            col.attachedRigidbody.AddTorque(Random.insideUnitSphere * (_explosionForce * 0.05f), ForceMode.Impulse);
-                        }
-
-                        var health = col.GetComponentInParent<Health>();
-                        if (health && hitHealths.Add(health))
-                        {
-                            Vector3 expDir = (health.transform.position - hit.point).normalized;
-                            health.TakeDamage(_explosionDamage, expDir);
-                            var p = health.transform.position;
-                            p.y = hit.point.y;
-
-                            var wounds = col.GetComponentInParent<WoundsComponent>();
-                            if (wounds != null)
-                            {
-                                wounds.PlayBloodVFXWorld(p, hit.normal, expDir * (_explosionForce * 0.01f));
-                            }
-                        }
-
-                        var tree = col.GetComponentInParent<FellableTree>();
-                        if (tree && hitTrees.Add(tree))
-                        {
-                            Vector3 dir = (col.transform.position - hit.point).normalized;
-                            tree.Fell(dir == Vector3.zero ? Vector3.up : dir);
+                            closestDist = dist;
+                            closestEnemy = health;
                         }
                     }
+                }
+
+                if (closestEnemy != null)
+                {
+                    Vector3 slashDirection = (closestEnemy.transform.position - transform.position).normalized;
+                    
+                    float resistance = closestEnemy.GetResistanceAtDepth(0f);
+                    float damage = _slashDamage * (1f - resistance / 100f);
+                    
+                    closestEnemy.TakeDamage(damage, slashDirection);
                 }
             }
         }

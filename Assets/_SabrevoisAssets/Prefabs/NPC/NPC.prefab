@@ -84,7 +84,7 @@ NavMeshAgent:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1894504144756601435}
-  m_Enabled: 1
+  m_Enabled: 0
   m_AgentTypeID: 0
   m_Radius: 0.4
   m_Speed: 3.5
@@ -112,10 +112,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Gameplay::Sabrevois.AI.Considerations.Health
   LayerRules:
+  - PenetrationRequired: 3
+    InstantDeathChancePercent: 0
+    PenetrationResistancePercent: 60
+  - PenetrationRequired: 4
+    InstantDeathChancePercent: 0
+    PenetrationResistancePercent: 30
   - PenetrationRequired: 5
-    InstantDeathChancePercent: 30
+    InstantDeathChancePercent: 25
+    PenetrationResistancePercent: 0
   - PenetrationRequired: 6
-    InstantDeathChancePercent: 75
+    InstantDeathChancePercent: 50
+    PenetrationResistancePercent: 0
 --- !u!114 &6702582381545169484
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -149,7 +157,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1894504144756601435}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c596c6cf3d53417d8077c0978717cb90, type: 3}
   m_Name: 
@@ -242,9 +250,9 @@ MonoBehaviour:
   - Color: {r: 0, g: 0.5019608, b: 0.5019608, a: 0}
     PartName: Tail
     IsEssential: 0
-  _bloodVFXDepthThreshold: 5
-  _minBleedDuration: 1
-  _maxBleedDuration: 5
+  _bloodVFXDepthThreshold: 4
+  _minBleedDuration: 0.2
+  _maxBleedDuration: 1
   _hitImpulseStrength: 0.2
 --- !u!136 &8406109112291712468
 CapsuleCollider:

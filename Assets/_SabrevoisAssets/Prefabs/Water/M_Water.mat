@@ -112,6 +112,7 @@ Material:
     - _Shoreline_Width: 0.5
     - _Test: 0.8
     - _USE_FOAM: 1
+    - _USE_RIPPLES_SIMULATION: 0
     - _Waves_Scale: 0.25
     - _Waves_Speed: 0.05
     - _Waves_Strength: 0.025
