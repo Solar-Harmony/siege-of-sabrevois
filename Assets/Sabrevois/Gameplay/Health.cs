@@ -11,15 +11,17 @@ namespace Sabrevois.Gameplay
         public float PenetrationRequired;
         [Range(0f, 100f)]
         public float InstantDeathChancePercent;
+        [Range(0f, 100f)]
+        public float PenetrationResistancePercent;
     }
 
     public class Health : MonoBehaviour
     {
         public List<LayerRule> LayerRules = new List<LayerRule>() 
         {
-            new LayerRule { PenetrationRequired = 0.5f, InstantDeathChancePercent = 0f },
-            new LayerRule { PenetrationRequired = 1.0f, InstantDeathChancePercent = 25f },
-            new LayerRule { PenetrationRequired = 1.5f, InstantDeathChancePercent = 100f }
+            new LayerRule { PenetrationRequired = 0.5f, InstantDeathChancePercent = 0f, PenetrationResistancePercent = 10f },
+            new LayerRule { PenetrationRequired = 1.0f, InstantDeathChancePercent = 25f, PenetrationResistancePercent = 20f },
+            new LayerRule { PenetrationRequired = 1.5f, InstantDeathChancePercent = 100f, PenetrationResistancePercent = 50f }
         };
         
         public bool IsDead => _isDead;
@@ -47,8 +49,9 @@ namespace Sabrevois.Gameplay
         }
 
         public event Action<float> OnDamageTaken;
+        public event Action OnDeathComplete;
         
-        public void TakeDamage(float localPenetration, Vector3? hitDirection = null)
+        public void TakeDamage(float localPenetration, Vector3? hitDirection = null, bool isEssential = true)
         {
             if (_isDead) return;
             
@@ -58,13 +61,16 @@ namespace Sabrevois.Gameplay
             OnDamageTaken?.Invoke(localPenetration);
 
             bool shouldDie = false;
-            foreach (var rule in LayerRules)
+            if (isEssential)
             {
-                if (localPenetration >= rule.PenetrationRequired)
+                foreach (var rule in LayerRules)
                 {
-                    if (UnityEngine.Random.Range(0f, 100f) <= rule.InstantDeathChancePercent)
+                    if (localPenetration >= rule.PenetrationRequired)
                     {
-                        shouldDie = true;
+                        if (UnityEngine.Random.Range(0f, 100f) <= rule.InstantDeathChancePercent)
+                        {
+                            shouldDie = true;
+                        }
                     }
                 }
             }
@@ -116,25 +122,27 @@ namespace Sabrevois.Gameplay
         private System.Collections.IEnumerator DieCoroutine(Vector3? hitDirection, float targetY)
         {
             Vector3 cameraPos = Camera.main != null ? Camera.main.transform.position : gameObject.transform.position + Vector3.forward;
-            Vector3 startDir = cameraPos - gameObject.transform.position;
-            startDir.y = 0;
-            if (startDir.sqrMagnitude < 0.001f) startDir = gameObject.transform.forward;
-            startDir.Normalize();
-
-            Vector3 endDir = startDir;
-            if (hitDirection.HasValue)
+            
+            Vector3 hitDirXZ;
+            if (hitDirection.HasValue && hitDirection.Value.sqrMagnitude > 0.001f)
             {
-                Vector3 dirXZ = hitDirection.Value;
-                dirXZ.y = 0;
-                if (dirXZ.sqrMagnitude > 0.001f)
-                {
-                    endDir = -dirXZ.normalized;
-                }
+                hitDirXZ = hitDirection.Value;
+                hitDirXZ.y = 0;
+                hitDirXZ.Normalize();
+            }
+            else
+            {
+                hitDirXZ = gameObject.transform.position - cameraPos;
+                hitDirXZ.y = 0;
+                if (hitDirXZ.sqrMagnitude > 0.001f) hitDirXZ.Normalize(); else hitDirXZ = gameObject.transform.forward;
             }
 
-            // Extract strictly the Yaw angles so we can explicitly enforce horizontally bounded interpolation
-            float startYaw = Mathf.Atan2(startDir.x, startDir.z) * Mathf.Rad2Deg;
-            float endYaw = Mathf.Atan2(endDir.x, endDir.z) * Mathf.Rad2Deg;
+            // Align NPC: +Z points directly away from the attacker (so front face -Z looks at attacker)
+            Quaternion startRot = Quaternion.LookRotation(hitDirXZ, Vector3.up);
+            
+            // Final Pose: +Z points DOWN into the dirt (so front face -Z points up at the sky)
+            // and +Y (the head vector) points away from the initial impact!
+            Quaternion endRot = Quaternion.LookRotation(Vector3.down, hitDirXZ);
 
             Vector3 startPos = gameObject.transform.position;
             Vector3 endPos = new Vector3(startPos.x, targetY + 0.05f, startPos.z);
@@ -147,25 +155,18 @@ namespace Sabrevois.Gameplay
                 elapsed += Time.deltaTime;
                 float t = elapsed / duration;
                 
-                // Add a slight easing curve to feeling heavy
                 float easeT = t * t * (3f - 2f * t);
 
-                float currentYaw = Mathf.LerpAngle(startYaw, endYaw, easeT);
-                Quaternion yawRot = Quaternion.Euler(0, currentYaw, 0);
-                
-                // Pitch purely around the local X axis to simulate hinging perfectly backwards over legs
-                Quaternion pitchRot = Quaternion.AngleAxis(-90f * easeT, Vector3.right);
-
-                gameObject.transform.rotation = yawRot * pitchRot;
+                gameObject.transform.rotation = Quaternion.Slerp(startRot, endRot, easeT);
                 gameObject.transform.position = Vector3.Lerp(startPos, endPos, easeT);
                 
                 yield return null;
             }
 
-            Quaternion finalYawRot = Quaternion.Euler(0, endYaw, 0);
-            Quaternion finalPitchRot = Quaternion.AngleAxis(-90f, Vector3.right);
-            gameObject.transform.rotation = finalYawRot * finalPitchRot;
+            gameObject.transform.rotation = endRot;
             gameObject.transform.position = endPos;
+            
+            OnDeathComplete?.Invoke();
         }
     }
 }

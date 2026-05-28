@@ -27,10 +27,16 @@
         _NoiseStrength ("Noise Tearing Strength", Float) = 0.8
         _NoiseUVOffset ("Rim Parallax (UV Warp)", Range(0.0, 0.2)) = 0.02
         
+        [Header(Parallax Settings)]
+        _ParallaxStrength ("Parallax Strength", Range(0.0, 0.2)) = 0.03
+
         [Header(Hit Feedback)]
         _HitImpulse ("Hit Impulse (X, Y, Strength, 0)", Vector) = (0, 0, 0, 0)
         _BloodColor ("Blood Color", Color) = (0.5, 0, 0, 1)
         _BloodAmountMultiplier ("Blood Prominence", Range(1.0, 10.0)) = 1.0
+        
+        [Header(Lighting)]
+        _WoundBumpScale ("Wound Normal Bump Scale", Range(0.0, 20.0)) = 5.0
     }
     
     HLSLINCLUDE
@@ -76,6 +82,8 @@
         float _NoiseScale;
         float _NoiseStrength;
         float _NoiseUVOffset;
+        float _ParallaxStrength;
+        float _WoundBumpScale;
         half4 _BloodColor;
         float _BloodAmountMultiplier;
     CBUFFER_END
@@ -163,34 +171,46 @@
         return c;
     }
 
-    half4 GetFinalColor(Varyings input)
+    half4 GetFinalColor(Varyings input, out float outDepth)
     {
         int sliceIndex = (int)UNITY_ACCESS_INSTANCED_PROP(Props, _WoundSliceIndex);
+
+        float3 viewDirWS = normalize(_WorldSpaceCameraPos - input.positionWS);
+        float3 flatViewDirWS = viewDirWS;
+        flatViewDirWS.y = 0;
+        float len = length(flatViewDirWS);
+        if (len > 0.001) flatViewDirWS /= len; else flatViewDirWS = float3(0,0,-1);
+        float2 viewDirUV = float2(dot(viewDirWS, cross(float3(0,1,0), flatViewDirWS)), dot(viewDirWS, float3(0,1,0)));
 
         float2 splatData = SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, input.uv, sliceIndex).rg;
         float splatVal = splatData.r;
         float hasBlood = splatData.g;
         float noise = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, input.uv * _NoiseScale).r;
 
-        float depth = splatVal > 0.01 ? max(0.0, splatVal + (noise - 0.5) * _NoiseStrength) : 0.0;
+        float noiseAmount = (noise - 0.5) * _NoiseStrength * smoothstep(0.0, 0.25, splatVal);
+        float depth = max(0.0, splatVal + noiseAmount);
+        outDepth = depth;
         
         int layerIndex = clamp((int)floor(depth), 0, _LayerCount - 1);
-        half4 finalColor = SampleLayerRaw(input.uv, layerIndex);
+        float2 paraUV1 = input.uv - viewDirUV * (layerIndex * _ParallaxStrength);
+        half4 finalColor = SampleLayerRaw(paraUV1, layerIndex);
         
         float progressToNextLayer = frac(depth);
         
         if (layerIndex < _LayerCount - 1 && progressToNextLayer > 0.01)
         {
-            half4 nextLayerColor = SampleLayerRaw(input.uv, layerIndex + 1);
+            float2 paraUV2 = input.uv - viewDirUV * ((layerIndex + 1) * _ParallaxStrength);
+            half4 nextLayerColor = SampleLayerRaw(paraUV2, layerIndex + 1);
             finalColor = lerp(finalColor, nextLayerColor, progressToNextLayer * 0.85);
         }
         
         float rimStart = max(0.0, 1.0 - _RimThickness);
-        if (layerIndex < _LayerCount - 1 && progressToNextLayer > rimStart) 
+        float blendStart = max(0.0, rimStart - _RimSoftness);
+        if (layerIndex < _LayerCount - 1 && progressToNextLayer > blendStart) 
         {
-            float rimBlend = smoothstep(rimStart - 0.1, rimStart + _RimSoftness + 0.1, progressToNextLayer);
+            float rimBlend = smoothstep(blendStart, rimStart + 0.001, progressToNextLayer);
             
-            float2 rimUV = input.uv + (noise - 0.5) * _NoiseUVOffset;
+            float2 rimUV = paraUV1 + (noise - 0.5) * _NoiseUVOffset;
             half4 rimTexColor = SampleLayerRaw(rimUV, layerIndex + _RimLayerOffset);
             
             half3 darkenedRim = rimTexColor.rgb * (1.0 - _RimDarken);
@@ -238,7 +258,6 @@
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
-            #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             #pragma multi_compile_fragment _ _DBUFFER
             #pragma multi_compile_fragment _ _LIGHT_LAYERS
             #pragma multi_compile_fragment _ _LIGHT_COOKIES
@@ -256,7 +275,8 @@
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 
-                half4 finalColor = GetFinalColor(input);
+                float outDepth = 0.0;
+                half4 finalColor = GetFinalColor(input, outDepth);
 
                 if (finalColor.a < 0.1)
                     discard;
@@ -266,7 +286,11 @@
                 surfaceData.alpha = finalColor.a;
                 surfaceData.metallic = 0.0;
                 surfaceData.smoothness = 0.1;
-                surfaceData.normalTS = float3(0, 0, 1);
+                
+                float dx = ddx(outDepth);
+                float dy = ddy(outDepth);
+                float3 normalTS = normalize(float3(-dx * _WoundBumpScale, -dy * _WoundBumpScale, 1.0));
+                
                 surfaceData.emission = float3(0, 0, 0);
                 surfaceData.occlusion = 1.0;
                 surfaceData.clearCoatMask = 0.0;
@@ -274,13 +298,24 @@
 
                 InputData inputData = (InputData)0;
                 inputData.positionWS = input.positionWS;
-                inputData.normalWS = normalize(input.normalWS);
                 inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
                 inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                 inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionHCS);
+                
+                float3 n = normalize(input.normalWS);
+                float3 up = abs(n.y) > 0.999 ? float3(0,0,1) : float3(0,1,0); 
+                float3 t = normalize(cross(up, n));
+                float3 b = normalize(cross(n, t));
+                half3x3 tbn = half3x3(t, b, n);
+                inputData.tangentToWorld = tbn;
+
+                float3 perturbedNormalWS = normalize(t * normalTS.x + b * normalTS.y + n * normalTS.z);
+                inputData.normalWS = perturbedNormalWS;
+
                 inputData.bakedGI = SampleSH(inputData.normalWS);
                 inputData.shadowMask = half4(1, 1, 1, 1);
-                inputData.tangentToWorld = half3x3(1,0,0, 0,1,0, 0,0,1);
+                
+                surfaceData.normalTS = float3(0, 0, 1); // Essential so URP doesn't mistakenly try to apply bump logic
 
                 half4 litColor = UniversalFragmentPBR(inputData, surfaceData);
                 litColor.a = finalColor.a;
@@ -322,7 +357,8 @@
             half4 frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                half4 finalColor = GetFinalColor(input);
+                float dummyDepth = 0.0;
+                half4 finalColor = GetFinalColor(input, dummyDepth);
 
                 if (finalColor.a < 0.1)
                     discard;
@@ -354,7 +390,8 @@
             half4 frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                half4 finalColor = GetFinalColor(input);
+                float dummyDepth = 0.0;
+                half4 finalColor = GetFinalColor(input, dummyDepth);
 
                 if (finalColor.a < 0.1)
                     discard;

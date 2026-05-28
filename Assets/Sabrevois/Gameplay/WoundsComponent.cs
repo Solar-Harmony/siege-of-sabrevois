@@ -28,6 +28,14 @@ namespace Sabrevois.Gameplay
         public GameObject VFX;
     }
     
+    [System.Serializable]
+    public struct BodyPartMapping
+    {
+        public Color Color;
+        public string PartName;
+        public bool IsEssential;
+    }
+
     public class WoundsComponent : MonoBehaviour 
     {
         public event System.Action<Wound, RaycastHit> OnWoundCreated;
@@ -45,6 +53,14 @@ namespace Sabrevois.Gameplay
         private GameObject _bloodPoolPrefab;
         [SerializeField]
         private float _bloodPoolGrowthDuration = 5f;
+        [SerializeField]
+        private float _bloodPoolMinSize = 0.8f;
+        [SerializeField]
+        private float _bloodPoolMaxSize = 1.4f;
+        [SerializeField]
+        private Texture2D _bodyPartsMask;
+        [SerializeField]
+        private List<BodyPartMapping> _bodyPartMappings = new List<BodyPartMapping>();
         [SerializeField]
         private float _bloodVFXDepthThreshold = 1.0f;
         [SerializeField]
@@ -65,6 +81,7 @@ namespace Sabrevois.Gameplay
         {
             _mpb = new MaterialPropertyBlock();
             _health = GetComponentInParent<Health>();
+            if (_health != null) _health.OnDeathComplete += HandleDeathComplete;
             _hitbox = GetComponentInChildren<BoxCollider>();
         }
 
@@ -84,6 +101,7 @@ namespace Sabrevois.Gameplay
 
         private void OnDestroy()
         {
+            if (_health != null) _health.OnDeathComplete -= HandleDeathComplete;
             if (GlobalWoundManager.Instance != null && _sliceIndex >= 0)
             {
                 GlobalWoundManager.Instance.ReleaseSlice(_sliceIndex);
@@ -229,6 +247,47 @@ namespace Sabrevois.Gameplay
             }
         }
         
+        private static RaycastHit[] _poolHits = new RaycastHit[16];
+
+        private void HandleDeathComplete()
+        {
+            if (_bloodPoolPrefab == null) return;
+            List<Vector3> spawnedPositions = new List<Vector3>();
+
+            foreach(var w in _wounds)
+            {
+                if (w.Penetration >= 0.1f)
+                {
+                    Vector3 worldPos = GetBillboardWorldPosition(w.LocalPoint);
+                    bool tooClose = false;
+                    foreach(var sp in spawnedPositions) 
+                    {
+                        if (Vector3.Distance(sp, worldPos) < 0.5f) { tooClose = true; break; }
+                    }
+                    if (tooClose) continue;
+                    
+                    int hitCount = Physics.RaycastNonAlloc(worldPos + Vector3.up * 0.5f, Vector3.down, _poolHits, 5f, ~0, QueryTriggerInteraction.Ignore);
+                    RaycastHit bestHit = default;
+                    bool foundHit = false;
+                    for (int i = 0; i < hitCount; i++) {
+                        if (_poolHits[i].collider.transform.root != this.transform.root) {
+                            if (!foundHit || _poolHits[i].distance < bestHit.distance) {
+                                bestHit = _poolHits[i]; 
+                                foundHit = true;
+                            }
+                        }
+                    }
+
+                    if (foundHit)
+                    {
+                        var pool = Instantiate(_bloodPoolPrefab, bestHit.point + Vector3.up * 0.01f, Quaternion.FromToRotation(Vector3.up, bestHit.normal));
+                        StartCoroutine(GrowBloodPoolRoutine(pool.transform, _bloodPoolGrowthDuration));
+                        spawnedPositions.Add(worldPos);
+                    }
+                }
+            }
+        }
+        
         public void PlayBloodVFXWorld(Vector3 worldPosition, Vector3 worldNormal, Vector3 hitVelocity = default, float penetrationRatio = 0.5f)
         {
             Vector3 localPoint = _renderer != null ? _renderer.transform.InverseTransformPoint(worldPosition) : transform.InverseTransformPoint(worldPosition);
@@ -266,14 +325,6 @@ namespace Sabrevois.Gameplay
                 main.loop = true;
                 instance.Play(true);
                 
-                if (_bloodPoolPrefab != null)
-                {
-                    if (Physics.Raycast(GetBillboardWorldPosition(localPoint), Vector3.down, out RaycastHit groundHit, 5f, ~0, QueryTriggerInteraction.Ignore))
-                    {
-                        var pool = Instantiate(_bloodPoolPrefab, groundHit.point + Vector3.up * 0.01f, Quaternion.FromToRotation(Vector3.up, groundHit.normal));
-                        StartCoroutine(GrowBloodPoolRoutine(pool.transform, _bloodPoolGrowthDuration));
-                    }
-                }
 
                 StartCoroutine(StopBleedingRoutine(instance, duration));
             }
@@ -283,7 +334,7 @@ namespace Sabrevois.Gameplay
         {
             float elapsed = 0f;
             Vector3 initialScale = Vector3.zero;
-            Vector3 targetScale = Vector3.one * UnityEngine.Random.Range(0.8f, 1.4f);
+            Vector3 targetScale = Vector3.one * UnityEngine.Random.Range(_bloodPoolMinSize, _bloodPoolMaxSize);
             
             pool.localScale = initialScale;
 
@@ -311,6 +362,13 @@ namespace Sabrevois.Gameplay
 
         public float ApplyWound(RaycastHit hit, Vector3 trueHitNormal, float radius = 0.15f, float penetration = 0.6f, Vector3 hitVelocity = default)
         {
+            bool dummy;
+            return ApplyWound(hit, trueHitNormal, radius, penetration, hitVelocity, out dummy);
+        }
+
+        public float ApplyWound(RaycastHit hit, Vector3 trueHitNormal, float radius, float penetration, Vector3 hitVelocity, out bool isEssentialHit)
+        {
+            isEssentialHit = false;
             // Resolve perspective mismatch between thick physics capsule surface and flat visual sprite plane.
             // By casting directly from the player's camera vector to the visual math plane, we find the exact pixel the crosshair was aimed at!
             Vector3 cameraPos = Camera.main.transform.position;
@@ -377,6 +435,30 @@ namespace Sabrevois.Gameplay
             float u = Mathf.InverseLerp(localBounds.min.x, localBounds.max.x, localPoint.x);
             float v = Mathf.InverseLerp(localBounds.min.y, localBounds.max.y, localPoint.y);
             Vector2 uv = new Vector2(u, v);
+
+            if (_bodyPartsMask != null && _bodyPartMappings != null && _bodyPartMappings.Count > 0)
+            {
+                Color hitColor = _bodyPartsMask.GetPixelBilinear(u, v);
+                float minDist = float.MaxValue;
+                BodyPartMapping? bestMatch = null;
+                foreach (var mapping in _bodyPartMappings)
+                {
+                    float d = (mapping.Color.r - hitColor.r) * (mapping.Color.r - hitColor.r) +
+                              (mapping.Color.g - hitColor.g) * (mapping.Color.g - hitColor.g) +
+                              (mapping.Color.b - hitColor.b) * (mapping.Color.b - hitColor.b);
+                    if (d < minDist)
+                    {
+                        minDist = d;
+                        bestMatch = mapping;
+                    }
+                }
+                
+                // Only apply if the color is a very close match (tolerance threshold)
+                if (bestMatch.HasValue && minDist < 0.05f)
+                {
+                    isEssentialHit = bestMatch.Value.IsEssential;
+                }
+            }
 
             Wound wound = new Wound
             {

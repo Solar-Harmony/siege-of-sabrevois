@@ -55,11 +55,10 @@ namespace Sabrevois.Gameplay.Input
 
                     // Ignore other triggers so bullets don't get blocked by invisible enemy aggro ranges or event triggers
                     if (hit.collider.isTrigger && hit.collider.GetComponentInParent<WoundsComponent>() == null) continue;
-
-                    Debug.LogFormat($"{hit.collider.gameObject.name} was hit.");
                     
                     Vector3 trueHitNormal = hit.normal;
                     float localPenetration = _woundPenetration;
+                    bool isEssential = true;
                     
                     var wounds = hit.collider.GetComponentInParent<WoundsComponent>();
                     if (wounds != null)
@@ -68,13 +67,15 @@ namespace Sabrevois.Gameplay.Input
                         // For blood splashes to shoot back at the camera reliably, we use the vector pointing backward to the player instead.
                         trueHitNormal = (Camera.main.transform.position - hit.point).normalized;
                         Vector3 hitVelocity = ray.direction * 5f;
-                        localPenetration = wounds.ApplyWound(hit, trueHitNormal, _woundRadius, _woundPenetration, hitVelocity);
+                        localPenetration = wounds.ApplyWound(hit, trueHitNormal, _woundRadius, _woundPenetration, hitVelocity, out isEssential);
+                        
+                        Debug.Log($"Hit {hit.collider.name} on layer {localPenetration}, essential: {isEssential}");
                     }
                     
                     var health = hit.collider.GetComponentInParent<Health>();
                     if (health != null)
                     {
-                        health.TakeDamage(localPenetration, ray.direction);
+                        health.TakeDamage(localPenetration, ray.direction, isEssential);
                     }
 
                     var tree = hit.collider.GetComponentInParent<FellableTree>();

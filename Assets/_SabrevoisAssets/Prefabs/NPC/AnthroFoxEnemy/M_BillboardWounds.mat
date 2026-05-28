@@ -105,7 +105,7 @@ Material:
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
-    - _BloodAmountMultiplier: 7.95
+    - _BloodAmountMultiplier: 1
     - _BumpScale: 1
     - _ChromaSoftness: 0.095
     - _ChromaTolerance: 0.089
@@ -125,18 +125,19 @@ Material:
     - _GlossyReflections: 0
     - _LayerCount: 7
     - _Metallic: 0
-    - _NoiseScale: 5
+    - _NoiseScale: 3
     - _NoiseStrength: 0.8
     - _NoiseUVOffset: 0.02
     - _OcclusionStrength: 1
     - _Parallax: 0.005
+    - _ParallaxStrength: 0.0056
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _RimBlendPrevious: 1
-    - _RimDarken: 0.226
+    - _RimDarken: 0.179
     - _RimLayerOffset: -1
-    - _RimSoftness: 0.175
-    - _RimThickness: 0.241
+    - _RimSoftness: 0.37
+    - _RimThickness: 0.276
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -144,12 +145,13 @@ Material:
     - _SrcBlendAlpha: 1
     - _Surface: 0
     - _WorkflowMode: 1
+    - _WoundBumpScale: 1.67
     - _WoundSliceIndex: 0
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _BloodColor: {r: 0.0645337, g: 0.3218964, b: 0.8706199, a: 1}
+    - _BloodColor: {r: 0.09034725, g: 0.24188931, b: 0.5633422, a: 1}
     - _ChromaKey1: {r: 0.0470588, g: 0.6901961, b: 0.105882354, a: 1}
     - _ChromaKey2: {r: 0.5647059, g: 0.7490196, b: 0.3019608, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
