@@ -369,29 +369,18 @@ namespace Sabrevois.Gameplay
             return ApplyWound(hit, trueHitNormal, radius, penetration, hitVelocity, out dummyIsEssentialHit, out dummyIsBleeding, out dummyResistancePercent, out dummyDamage);
         }
 
-        public float ApplyWound(RaycastHit hit, Vector3 trueHitNormal, float radius, float weaponPenetration, Vector3 hitVelocity, out bool isEssentialHit, out bool isBleeding, out float resistancePercent, out float damage)
+        private void GetWoundProjection(Vector3 worldHitPoint, out Vector3 localPoint, out Vector2 uv)
         {
-            isEssentialHit = false;
-            isBleeding = false;
-            resistancePercent = 0f;
-            damage = weaponPenetration;
-
-            // Resolve perspective mismatch between thick physics capsule surface and flat visual sprite plane.
-            // By casting directly from the player's camera vector to the visual math plane, we find the exact pixel the crosshair was aimed at!
             Vector3 cameraPos = Camera.main.transform.position;
-            Vector3 rayDir = (hit.point - cameraPos).normalized;
+            Vector3 rayDir = (worldHitPoint - cameraPos).normalized;
 
-            Vector3 localPoint;
             Bounds localBounds = new Bounds(Vector3.zero, Vector3.one);
-            Vector2 quadSize = Vector2.one;
             
             if (_renderer != null) 
             {
                 var mf = _renderer.GetComponent<MeshFilter>();
                 if (mf != null && mf.sharedMesh != null)
                     localBounds = mf.sharedMesh.bounds;
-                    
-                quadSize = new Vector2(localBounds.size.x * _renderer.transform.lossyScale.x, localBounds.size.y * _renderer.transform.lossyScale.y);
 
                 if (_billboardEnabled)
                 {
@@ -424,28 +413,57 @@ namespace Sabrevois.Gameplay
                     }
                     else
                     {
-                        localPoint = _renderer.transform.InverseTransformPoint(hit.point);
+                        localPoint = _renderer.transform.InverseTransformPoint(worldHitPoint);
                     }
                 }
                 else
                 {
-                    localPoint = _renderer.transform.InverseTransformPoint(hit.point);
+                    localPoint = _renderer.transform.InverseTransformPoint(worldHitPoint);
                 }
             }
             else
             {
-                localPoint = transform.InverseTransformPoint(hit.point);
-                quadSize = new Vector2(transform.lossyScale.x, transform.lossyScale.y);
+                localPoint = transform.InverseTransformPoint(worldHitPoint);
             }
 
             // Convert local point to 0-1 UV space of the bounds
             float u = Mathf.InverseLerp(localBounds.min.x, localBounds.max.x, localPoint.x);
             float v = Mathf.InverseLerp(localBounds.min.y, localBounds.max.y, localPoint.y);
-            Vector2 uv = new Vector2(u, v);
+            uv = new Vector2(u, v);
+        }
 
+        public float ApplySlashWound(Vector3 worldPos, Vector3 slashDirection, float radius, float weaponPenetration, out bool isEssentialHit, out bool isBleeding, out float resistancePercent, out float damage)
+        {
+            Vector3 localPoint;
+            Vector2 uv;
+            GetWoundProjection(worldPos, out localPoint, out uv);
+            
+            Wound wound = new Wound
+            {
+                Position = uv,
+                LocalPoint = localPoint,
+                Normal = slashDirection,
+                Radius = radius,
+                Penetration = weaponPenetration,
+                Intensity = 1f,
+                VFX = null
+            };
+            
+            return AddWound(wound, slashDirection, out isEssentialHit, out isBleeding, out resistancePercent, out damage);
+        }
+
+        private float AddWound(Wound wound, Vector3 hitNormal, out bool isEssentialHit, out bool isBleeding, out float resistancePercent, out float damage)
+        {
+            isEssentialHit = false;
+            isBleeding = false;
+            resistancePercent = 0f;
+            damage = wound.Penetration;
+            
+            Vector2 uv = wound.Position;
+            
             if (_bodyPartsMask != null && _bodyPartMappings != null && _bodyPartMappings.Count > 0)
             {
-                Color hitColor = _bodyPartsMask.GetPixelBilinear(u, v);
+                Color hitColor = _bodyPartsMask.GetPixelBilinear(uv.x, uv.y);
                 float minDist = float.MaxValue;
                 BodyPartMapping? bestMatch = null;
                 foreach (var mapping in _bodyPartMappings)
@@ -460,43 +478,30 @@ namespace Sabrevois.Gameplay
                     }
                 }
                 
-                // Only apply if the color is a very close match (tolerance threshold)
                 if (bestMatch.HasValue && minDist < 0.05f)
                 {
                     isEssentialHit = bestMatch.Value.IsEssential;
                 }
             }
-
-            // Check accumulated depth at this UV area to determine the current layer we are hitting BEFORE applying damage
+            
             float oldDepth = 0f;
             for (int i = 0; i < _wounds.Count; i++) 
             {
-                // Distance checking
                 if (Vector2.Distance(_wounds[i].Position, uv) < _wounds[i].Radius * 1.5f) 
                 {
                     oldDepth += _wounds[i].Penetration;
                 }
             }
-
-            // Resistance is a multiplier for the weapon power based on the layer we are currently piercing
+            
             if (_health != null)
             {
                 resistancePercent = _health.GetResistanceAtDepth(oldDepth);
             }
 
-            damage = weaponPenetration * (1f - resistancePercent / 100f);
+            damage = wound.Penetration * (1f - resistancePercent / 100f);
             damage = Mathf.Max(0, damage);
 
-            Wound wound = new Wound
-            {
-                Position = uv, // Store UV in position
-                LocalPoint = localPoint,
-                Normal = trueHitNormal,        
-                Radius = radius,
-                Penetration = damage, // we store the effective damage done by the weapon into the wound pool
-                Intensity = 1f,
-                VFX = null
-            };
+            wound.Penetration = damage;
             
             _wounds.Add(wound);
 
@@ -505,17 +510,19 @@ namespace Sabrevois.Gameplay
             float ratio = 0f;
             if (newDepth >= _bloodVFXDepthThreshold)
             {
-                ratio = Mathf.Clamp01(newDepth / 3.0f); // Normalize depth approximation config
-                PlayBloodVFX(wound.LocalPoint, trueHitNormal, hitVelocity, ratio);
+                ratio = Mathf.Clamp01(newDepth / 3.0f);
+                PlayBloodVFX(wound.LocalPoint, hitNormal, default, ratio);
                 isBleeding = true;
             }
 
             if (_sliceIndex >= 0 && GlobalWoundManager.Instance != null)
             {
+                var mf = _renderer.GetComponent<MeshFilter>();
+                var localBounds = mf.sharedMesh.bounds;
+                var quadSize = new Vector2(localBounds.size.x * _renderer.transform.lossyScale.x, localBounds.size.y * _renderer.transform.lossyScale.y);
                 GlobalWoundManager.Instance.AddWoundSplat(_sliceIndex, uv, wound.Radius, wound.Penetration, quadSize, ratio > 0f ? 1f : 0f);
             }
-
-            // Trigger visual hit reaction
+            
             if (_hitReactionCoroutine != null)
             {
                 StopCoroutine(_hitReactionCoroutine);
@@ -528,9 +535,35 @@ namespace Sabrevois.Gameplay
             }
             if (_renderer != null && gameObject.activeInHierarchy && _health != null && !_health.IsDead)
             {
-                _hitReactionCoroutine = StartCoroutine(HitReactionRoutine(uv, trueHitNormal));
+                _hitReactionCoroutine = StartCoroutine(HitReactionRoutine(uv, hitNormal));
             }
+            
+            return newDepth;
+        }
 
+        public float ApplyWound(RaycastHit hit, Vector3 trueHitNormal, float radius, float weaponPenetration, Vector3 hitVelocity, out bool isEssentialHit, out bool isBleeding, out float resistancePercent, out float damage)
+        {
+            isEssentialHit = false;
+            isBleeding = false;
+            resistancePercent = 0f;
+            damage = weaponPenetration;
+
+            Vector3 localPoint;
+            Vector2 uv;
+            GetWoundProjection(hit.point, out localPoint, out uv);
+
+            Wound wound = new Wound
+            {
+                Position = uv, // Store UV in position
+                LocalPoint = localPoint,
+                Normal = trueHitNormal,        
+                Radius = radius,
+                Penetration = damage, // we store the effective damage done by the weapon into the wound pool
+                Intensity = 1f,
+                VFX = null
+            };
+            
+            var newDepth = AddWound(wound, trueHitNormal, out isEssentialHit, out isBleeding, out resistancePercent, out damage);
 
             OnWoundCreated?.Invoke(wound, hit);
             return newDepth;

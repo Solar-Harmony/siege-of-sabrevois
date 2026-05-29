@@ -103,39 +103,30 @@ namespace Sabrevois.Gameplay.Input
                 if (!hitValid) return;
             }
 
-            if (Mouse.current != null && Mouse.current.rightButton.isPressed)
+            if (_input.SlashHeld)
             {
-                Ray ray = _camera.ScreenPointToRay(Mouse.current.position.ReadValue());
-                
-                Debug.DrawRay(ray.origin, ray.direction * _attackRange, Color.blue, 1f);
-
-                // Find all enemies in slash range
-                Collider[] colliders = Physics.OverlapSphere(transform.position, _slashRange);
-                Health closestEnemy = null;
-                float closestDist = float.MaxValue;
-
-                foreach (var col in colliders)
+                Ray ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+                RaycastHit hit;
+                if (Physics.Raycast(ray, out hit, _slashRange))
                 {
-                    var health = col.GetComponentInParent<Health>();
-                    if (health != null && health.gameObject != this.gameObject)
+                    var wounds = hit.collider.GetComponentInParent<WoundsComponent>();
+                    if (wounds != null)
                     {
-                        float dist = Vector3.Distance(transform.position, health.transform.position);
-                        if (dist < closestDist)
+                        Vector3 slashDirection = -ray.direction;
+                        bool isEssential, isBleeding;
+                        float resistance, damage;
+                        
+                        wounds.ApplySlashWound(hit.point, slashDirection, _woundRadius, _slashDamage, out isEssential, out isBleeding, out resistance, out damage);
+
+                        Debug.DrawRay(hit.point, slashDirection * 0.5f, Color.green);
+                        
+                        var health = wounds.GetComponentInParent<Health>();
+                        if (health != null)
                         {
-                            closestDist = dist;
-                            closestEnemy = health;
+                            health.TakeDamage(damage, slashDirection, isEssential);
+                            Debug.Log($"Target: {health.name} | Weapon Pen: {_slashDamage} | Resistance: {resistance}% | Damage: {damage:F2} | Essential: {isEssential} | Bleeding: {isBleeding}");
                         }
                     }
-                }
-
-                if (closestEnemy != null)
-                {
-                    Vector3 slashDirection = (closestEnemy.transform.position - transform.position).normalized;
-                    
-                    float resistance = closestEnemy.GetResistanceAtDepth(0f);
-                    float damage = _slashDamage * (1f - resistance / 100f);
-                    
-                    closestEnemy.TakeDamage(damage, slashDirection);
                 }
             }
         }

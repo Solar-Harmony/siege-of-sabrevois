@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Sabrevois.Level
 {
@@ -10,6 +11,8 @@ namespace Sabrevois.Level
         public Vector2 LookAxis => _actions.Player.Look.ReadValue<Vector2>();
         public bool JumpPressed => _actions.Player.Jump.triggered;
         public bool AttackPressed => _actions.Player.Attack.triggered;
+        public bool SlashPressed => _actions.Player.SecondaryAttack.triggered; // Keep triggered for single events if needed? No, user wants holding
+        public bool SlashHeld => _actions.Player.SecondaryAttack.IsPressed();
         public bool CrouchPressed => _actions.Player.Crouch.triggered;
         
         private void Awake()
