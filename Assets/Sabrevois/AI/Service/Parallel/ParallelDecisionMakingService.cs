@@ -34,6 +34,14 @@ namespace Sabrevois.AI
         partial void EditorInitThreadState(Thread thread);
         partial void EditorBeginRequest(int threadId, ParallelRequest request, ref object reqInfoObj);
         partial void EditorEndRequest(object reqInfoObj, ActionInstance chosenAction, Stopwatch sw);
+        
+        public class CachedConsideration
+        {
+            public string ActionName;
+            public float Utility;
+        }
+        
+        public readonly ConcurrentDictionary<int, List<CachedConsideration>> EditorConsiderations = new();
 #endif
 
         [Inject]
@@ -174,6 +182,7 @@ namespace Sabrevois.AI
 #endif
 
                     ActionInstance chosenAction = ThreadChooseAction(
+                        request,
                         request.Candidates,
                         request.Context,
                         request.CurrentActionType,
@@ -199,7 +208,7 @@ namespace Sabrevois.AI
         }
         
         [CanBeNull]
-        public ActionInstance ThreadChooseAction(ActionCandidate[] candidates, AgentWorldSnapshot ctx, Type actionType, float hysteresisBias = 0.1f)
+        public ActionInstance ThreadChooseAction(ParallelRequest request, ActionCandidate[] candidates, AgentWorldSnapshot ctx, Type actionType, float hysteresisBias = 0.1f)
         {
             // Respect the challenges of parallelism!!! Maybe
             
@@ -221,6 +230,10 @@ namespace Sabrevois.AI
             float bestScore = float.NegativeInfinity;
             IActionConfig bestActionConfig = null;
 
+#if UNITY_EDITOR
+            var currentConsiderations = new List<CachedConsideration>();
+#endif
+
             foreach (var candidate in candidates)
             {
                 // Manage concurrent access correctly
@@ -234,12 +247,24 @@ namespace Sabrevois.AI
                     utility += hysteresisBias;
                 }
 
+#if UNITY_EDITOR
+                currentConsiderations.Add(new CachedConsideration
+                {
+                    ActionName = candidate.ActionConfig.ActionType.Name,
+                    Utility = utility
+                });
+#endif
+
                 if (utility > bestScore)
                 {
                     bestScore = utility;
                     bestActionConfig = candidate.ActionConfig;
                 }
             }
+
+#if UNITY_EDITOR
+            EditorConsiderations[request.GameObjectId] = currentConsiderations;
+#endif
 
             if (bestActionConfig == null)
                 return null;

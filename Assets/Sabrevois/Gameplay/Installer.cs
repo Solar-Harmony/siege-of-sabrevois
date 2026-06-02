@@ -1,4 +1,5 @@
-﻿using Sabrevois.Gameplay.Dialogue;
+﻿using Sabrevois.Gameplay.AI.Actions;
+using Sabrevois.Gameplay.Dialogue;
 using Zenject;
 
 namespace Sabrevois.Gameplay
@@ -8,6 +9,7 @@ namespace Sabrevois.Gameplay
         public override void InstallBindings()
         {
             Container.Bind<ConversationService>().AsSingle();
+            Container.Bind<AttackService>().AsSingle();
         }
     }
 }

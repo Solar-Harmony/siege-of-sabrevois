@@ -139,6 +139,8 @@ Material:
     - _RimLayerOffset: -1
     - _RimSoftness: 0.37
     - _RimThickness: 0.276
+    - _SmearMaxLength: 0.1
+    - _SmearStrength: 1
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1

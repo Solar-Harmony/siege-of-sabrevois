@@ -10,16 +10,18 @@ GameObject:
   m_Component:
   - component: {fileID: 5890676865826243410}
   - component: {fileID: 6422312052613631476}
+  - component: {fileID: 8406109112291712468}
   - component: {fileID: 9282092635920000}
+  - component: {fileID: -1249085982329886884}
   - component: {fileID: -984041389127934398}
   - component: {fileID: 6702582381545169484}
   - component: {fileID: 2875921790116754687}
-  - component: {fileID: -1249085982329886884}
+  - component: {fileID: 2489421016934001020}
   - component: {fileID: 1844457107570209030}
   - component: {fileID: 5407985455179933185}
-  - component: {fileID: 2489421016934001020}
   - component: {fileID: 7967762212211093992}
-  - component: {fileID: 8406109112291712468}
+  - component: {fileID: 4554301683929165305}
+  - component: {fileID: 4978249849403887002}
   m_Layer: 0
   m_Name: NPC
   m_TagString: Untagged
@@ -77,6 +79,29 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
+--- !u!136 &8406109112291712468
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1894504144756601435}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.45
+  m_Height: 1.7259762
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.7133244, z: 0}
 --- !u!195 &9282092635920000
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -84,7 +109,7 @@ NavMeshAgent:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1894504144756601435}
-  m_Enabled: 0
+  m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.4
   m_Speed: 3.5
@@ -99,6 +124,22 @@ NavMeshAgent:
   m_BaseOffset: -0.075
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &-1249085982329886884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1894504144756601435}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c596c6cf3d53417d8077c0978717cb90, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AI::Sabrevois.AI.Agent
+  Archetype: {fileID: 11400000, guid: a3a2720518a45904bbbb22947b314d50, type: 2}
+  Name: 
+  _useCustomInterval: 0
+  _decisionMakingInterval: 1
 --- !u!114 &-984041389127934398
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -150,22 +191,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Gameplay::Hunger
   MaxHunger: 100
---- !u!114 &-1249085982329886884
+--- !u!114 &2489421016934001020
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1894504144756601435}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c596c6cf3d53417d8077c0978717cb90, type: 3}
+  m_Script: {fileID: 11500000, guid: c73cc66d4fb4b914dae4e8f05dfb76f7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: AI::Sabrevois.AI.Agent
-  Archetype: {fileID: 11400000, guid: a3a2720518a45904bbbb22947b314d50, type: 2}
-  Name: 
-  _useCustomInterval: 0
-  _decisionMakingInterval: 1
+  m_EditorClassIdentifier: Gameplay::Sabrevois.Gameplay.Wood
+  MaxWood: 5
+  <CurrentWood>k__BackingField: 0
 --- !u!114 &1844457107570209030
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -194,20 +233,6 @@ MonoBehaviour:
   radiusMultiplier: 1
   strengthMultiplier: 1
   lastPos: {x: 0, y: 0, z: 0}
---- !u!114 &2489421016934001020
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1894504144756601435}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c73cc66d4fb4b914dae4e8f05dfb76f7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Gameplay::Sabrevois.Gameplay.Wood
-  MaxWood: 5
-  <CurrentWood>k__BackingField: 0
 --- !u!114 &7967762212211093992
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -254,29 +279,30 @@ MonoBehaviour:
   _minBleedDuration: 0.2
   _maxBleedDuration: 1
   _hitImpulseStrength: 0.2
---- !u!136 &8406109112291712468
-CapsuleCollider:
+--- !u!114 &4554301683929165305
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1894504144756601435}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.45
-  m_Height: 1.7259762
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.7133244, z: 0}
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 181ef7f96a095e147a90f00689907d59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Gameplay::Sabrevois.Gameplay.AI.ConversationComponent
+--- !u!114 &4978249849403887002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1894504144756601435}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29a7f30766dfbdb47a8d84cd0f8671d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Gameplay::Sabrevois.Gameplay.AI.OpponentComponent
 --- !u!1 &2389312972207194853
 GameObject:
   m_ObjectHideFlags: 0
@@ -564,7 +590,7 @@ GameObject:
   m_Layer: 0
   m_Name: Dialogue
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -656,8 +682,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: They say that syndicates of wizards have led a boycott of imperial goods
-    in the land of the Altmer.
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1247,6 +1272,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9104211161659438896, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
+      propertyPath: m_Icon
+      value: 
+      objectReference: {fileID: 4422084297763085224, guid: 0000000000000000d000000000000000, type: 0}
     - target: {fileID: 9104211161659438896, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
       propertyPath: m_Name
       value: Blood

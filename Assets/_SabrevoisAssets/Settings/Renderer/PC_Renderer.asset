@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bbf0f6a94cd84fbb90a42d0dc82ef727, type: 3}
   m_Name: WaterRipplesRenderFeature
   m_EditorClassIdentifier: Assembly-CSharp::Sabrevois.Level.Water.WaterRipplesRenderFeature
-  m_Active: 0
+  m_Active: 1
   settings:
     computeShader: {fileID: 7200000, guid: 1d0d99dbf6b1423791881c566ed95e66, type: 3}
     resolution: 8192

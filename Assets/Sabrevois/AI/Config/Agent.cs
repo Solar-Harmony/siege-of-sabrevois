@@ -45,6 +45,7 @@ namespace Sabrevois.AI
         
         private ActionContext _ctx;
         private ActionInstance _actionInstance;
+        public IAction CurrentAction => _actionInstance?.Action;
         private float _interval;
         private float _timer;
         private bool _isInterruption = false;

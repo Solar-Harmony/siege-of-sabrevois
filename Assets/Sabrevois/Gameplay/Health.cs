@@ -66,7 +66,7 @@ namespace Sabrevois.Gameplay
                     maxPenetrationMet = rule.PenetrationRequired;
                 }
             }
-            
+
             return currentResistance;
         }
 

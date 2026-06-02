@@ -14,6 +14,78 @@ MonoBehaviour:
   m_EditorClassIdentifier: AI::Sabrevois.AI.Archetype
   Actions:
   - ActionConfig:
+      rid: 8963859363900948564
+    Preconditions:
+    - Source:
+        rid: 8963859363900948565
+      Operator: 4
+      Threshold: 1
+    Considerations:
+    - Source:
+        rid: 8963859377713578054
+      Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0.0499292
+          value: 1.0141494
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0.33333334
+        - serializedVersion: 3
+          time: 1.0499291
+          value: 1.0141494
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0.33333334
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  - ActionConfig:
+      rid: 8963859363900948548
+    Preconditions:
+    - Source:
+        rid: 8963859363900948552
+      Operator: 3
+      Threshold: 1
+    - Source:
+        rid: 8963859363900948553
+      Operator: 4
+      Threshold: 0
+    Considerations:
+    - Source:
+        rid: 8963859363900948566
+      Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0.09291031
+          value: 0.5035385
+          inSlope: -0.0022059637
+          outSlope: -0.0022059637
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 1
+        - serializedVersion: 3
+          time: 1.0929103
+          value: 0.5035385
+          inSlope: 0.00041004844
+          outSlope: 0.00041004844
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0.6885704
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  - ActionConfig:
       rid: 6057649637045567557
     Preconditions:
     - Source:
@@ -48,65 +120,69 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 4
   - ActionConfig:
-      rid: 6057649637045567560
+      rid: 8963859363900948558
     Preconditions:
     - Source:
-        rid: 4373529887694651462
-      Operator: 3
-      Threshold: 5
+        rid: 8963859363900948561
+      Operator: 4
+      Threshold: 1
     Considerations:
     - Source:
-        rid: 6057649637045567558
+        rid: 8963859363900948557
       Curve:
         serializedVersion: 2
         m_Curve:
         - serializedVersion: 3
-          time: 0
-          value: 0
-          inSlope: 1
-          outSlope: 1
+          time: -0.015559472
+          value: 1.0167814
+          inSlope: -1.0014892
+          outSlope: -1.0014892
           tangentMode: 34
           weightedMode: 0
           inWeight: 0
-          outWeight: 0
+          outWeight: 0.33333334
         - serializedVersion: 3
-          time: 1
-          value: 1
-          inSlope: 1
-          outSlope: 1
+          time: 1.0116813
+          value: -0.011988997
+          inSlope: -1.0014892
+          outSlope: -1.0014892
           tangentMode: 34
           weightedMode: 0
-          inWeight: 0
+          inWeight: 0.33333334
           outWeight: 0
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 4
   - ActionConfig:
-      rid: 6057649606450216960
-    Preconditions: []
+      rid: 8963859363900948555
+    Preconditions:
+    - Source:
+        rid: 8963859363900948556
+      Operator: 4
+      Threshold: 1
     Considerations:
     - Source:
-        rid: 6057649467727020159
+        rid: 8963859363900948563
       Curve:
         serializedVersion: 2
         m_Curve:
         - serializedVersion: 3
-          time: -0.0051813126
-          value: 0.9936153
-          inSlope: -0.6804924
-          outSlope: -0.6804924
-          tangentMode: 0
+          time: -0.0012969971
+          value: 0.11172485
+          inSlope: 0.88712454
+          outSlope: 0.88712454
+          tangentMode: 34
           weightedMode: 0
           inWeight: 0
-          outWeight: 1
+          outWeight: 0.33333334
         - serializedVersion: 3
-          time: 1.027202
-          value: -0.014365509
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
+          time: 1
+          value: 1
+          inSlope: 0.88712454
+          outSlope: 0.88712454
+          tangentMode: 34
           weightedMode: 0
-          inWeight: 0
+          inWeight: 0.33333334
           outWeight: 0
         m_PreInfinity: 2
         m_PostInfinity: 2
@@ -228,9 +304,6 @@ MonoBehaviour:
     - rid: 4373529887694651461
       type: {class: EnergyValueSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 
-    - rid: 4373529887694651462
-      type: {class: EnergyValueSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
-      data: 
     - rid: 4373529887694651464
       type: {class: HungerPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 
@@ -258,26 +331,59 @@ MonoBehaviour:
       data:
         EnergyCost: 0
         sleepDuration: 7
-    - rid: 6057649467727020159
-      type: {class: HealthPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
-      data: 
-    - rid: 6057649606450216960
-      type: {class: ReactHurtActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
-      data:
-        EnergyCost: 0
-        Interval: 2
     - rid: 6057649637045567557
       type: {class: MoveRandomlyActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
       data:
         EnergyCost: 3
         Radius: 5
-    - rid: 6057649637045567558
-      type: {class: RandomSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
-      data: 
     - rid: 6057649637045567559
       type: {class: RandomSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 
-    - rid: 6057649637045567560
+    - rid: 8963859363900948548
+      type: {class: FindConversationPartnerActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
+      data:
+        EnergyCost: 1
+        SearchRadius: 25
+    - rid: 8963859363900948552
+      type: {class: WantsConversationDataSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 8963859363900948553
+      type: {class: HasConversationPartnerDataSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 8963859363900948555
+      type: {class: AttackActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
+      data:
+        EnergyCost: 1
+        AttackRange: 100
+        WoundRadius: 0.15
+        WoundPenetration: 0.6
+    - rid: 8963859363900948556
+      type: {class: HasOpponentDataSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 8963859363900948557
+      type: {class: HealthPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 8963859363900948558
+      type: {class: FleeActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
+      data:
+        EnergyCost: 0
+        FleeDistance: 10
+    - rid: 8963859363900948561
+      type: {class: HasOpponentDataSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 8963859363900948563
+      type: {class: HealthPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 8963859363900948564
       type: {class: SaySomethingActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
       data:
-        EnergyCost: 0.5
+        EnergyCost: 0
+    - rid: 8963859363900948565
+      type: {class: HasConversationPartnerDataSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 8963859363900948566
+      type: {class: RandomSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
+    - rid: 8963859377713578054
+      type: {class: RandomSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
+      data: 
