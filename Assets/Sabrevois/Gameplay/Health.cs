@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Sabrevois.Utils;
 using UnityEngine;
@@ -49,6 +49,7 @@ namespace Sabrevois.Gameplay
         }
 
         public event Action<float> OnDamageTaken;
+        public static event Action<Health, float> OnAnyDamageTaken;
         public event Action OnDeathComplete;
         
         public float GetResistanceAtDepth(float depth)
@@ -78,6 +79,7 @@ namespace Sabrevois.Gameplay
                 _maxPenetration = newWoundDepth;
 
             OnDamageTaken?.Invoke(newWoundDepth);
+            OnAnyDamageTaken?.Invoke(this, newWoundDepth);
 
             bool shouldDie = false;
             if (isEssential)

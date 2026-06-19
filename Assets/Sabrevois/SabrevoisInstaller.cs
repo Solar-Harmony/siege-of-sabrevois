@@ -1,4 +1,4 @@
-﻿using Sabrevois.AI;
+using Sabrevois.AI;
 using Sabrevois.Gameplay;
 using Zenject;
 
@@ -10,6 +10,12 @@ namespace Sabrevois
         {
             AIInstaller.Install(Container);
             GameplayInstaller.Install(Container);
+            
+            Container.BindInterfacesTo<Sabrevois.UI.DamageNumberSpawner>().AsSingle();
+            Container.BindMemoryPool<Sabrevois.UI.DamageNumber, Sabrevois.UI.DamageNumber.Pool>()
+                .WithInitialSize(10)
+                .FromNewComponentOnNewGameObject()
+                .UnderTransformGroup("DamageNumbers");
         }
     }
 }
