@@ -99,14 +99,14 @@ Material:
     - _Fresnel_Power: 3
     - _MaxDepth: 5
     - _MaxFoamWidth: 5
-    - _Max_Absorption_Depth: 40
+    - _Max_Absorption_Depth: 15.26
     - _Max_Foam_Width: 3
     - _Max_Refraction_Depth: 2.5
     - _Min_Foam_Width: 0
     - _Opacity: 0.3
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Reflectivity: 1
+    - _Reflectivity: 0.913
     - _Refraction_Strength: 0.15
     - _Roughness: 0
     - _Shoreline_Fade_Width: 0.2
@@ -114,20 +114,20 @@ Material:
     - _Test: 0.8
     - _USE_FOAM: 1
     - _USE_RIPPLES_SIMULATION: 1
-    - _Waves_Scale: 0.25
+    - _Waves_Scale: 0.09
     - _Waves_Speed: 0.05
-    - _Waves_Strength: 0.025
+    - _Waves_Strength: 0.05
     m_Colors:
     - _Absorption_Color: {r: 0.14999998, g: 0.059999965, b: 0.02, a: 1}
     - _Base_Color: {r: 0.9, g: 0.96999997, b: 1, a: 1}
     - _DeepTint: {r: 0.25844395, g: 0.31233567, b: 0.68733144, a: 1}
     - _Deep_Color: {r: 0.061409697, g: 0.078862384, b: 0.30997294, a: 1}
-    - _Deep_Tint: {r: 0.15094697, g: 0.21883017, b: 0.46091622, a: 1}
+    - _Deep_Tint: {r: 0.16286923, g: 0.7086304, b: 0.82210237, a: 1}
     - _FoamColor: {r: 0.8760108, g: 0.8760108, b: 0.8760108, a: 1}
-    - _Foam_Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Foam_Color: {r: 0.3207546, g: 0.25678027, b: 0.21225134, a: 1}
     - _ShallowTint: {r: 0.2943199, g: 0.55621666, b: 0.64420474, a: 1}
     - _Shallow_Color: {r: 0.37417987, g: 0.67979354, b: 0.84905654, a: 1}
-    - _Shallow_Tint: {r: 0.23276123, g: 0.48517263, b: 0.62803227, a: 1}
+    - _Shallow_Tint: {r: 0.4501347, g: 0.4220519, b: 0.37066343, a: 1}
     - _Tint: {r: 0.31372547, g: 0.5038701, b: 0.65882355, a: 0.30980393}
     - _Tint2: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
