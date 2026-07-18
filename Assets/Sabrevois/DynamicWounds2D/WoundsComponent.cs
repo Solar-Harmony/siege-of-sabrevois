@@ -599,28 +599,66 @@ namespace SolarHarmony.DynamicWounds2D
                 {
                     var localBounds = mf.sharedMesh.bounds;
                     var quadSize = new Vector2(localBounds.size.x * _renderer.transform.lossyScale.x, localBounds.size.y * _renderer.transform.lossyScale.y);
+                    float worldRadius = Mathf.Max(quadSize.x / _graphWidth, quadSize.y / _graphHeight) * 4f;
 
-                    float cellWorldWidth = quadSize.x / _graphWidth;
-                    float cellWorldHeight = quadSize.y / _graphHeight;
-
-                    float minU = 1f, minV = 1f, maxU = 0f, maxV = 0f;
                     foreach (var sn in severedNodes)
                     {
                         float u = (sn.x + 0.5f) / _graphWidth;
                         float v = (sn.y + 0.5f) / _graphHeight;
-                        minU = Mathf.Min(minU, u);
-                        minV = Mathf.Min(minV, v);
-                        maxU = Mathf.Max(maxU, u);
-                        maxV = Mathf.Max(maxV, v);
+                        GlobalWoundManager.Instance.AddWoundSplat(_sliceIndex, new Vector2(u, v), worldRadius, 10.0f, quadSize, 1f);
                     }
-                    float centerU = (minU + maxU) * 0.5f;
-                    float centerV = (minV + maxV) * 0.5f;
-                    float worldRadius = Mathf.Max((maxU - minU) * quadSize.x, (maxV - minV) * quadSize.y) * 0.75f;
-
-                    GlobalWoundManager.Instance.AddWoundSplat(_sliceIndex, new Vector2(centerU, centerV), worldRadius, 10.0f, quadSize, 1f);
                 }
             }
             }
+
+            ShrinkColliderToComponent(components[largestIndex]);
+        }
+
+        private void ShrinkColliderToComponent(List<int> bodyComponent)
+        {
+            if (_graphHeight <= 0 || _renderer == null || _host == null) return;
+
+            int minY = int.MaxValue;
+            int maxY = int.MinValue;
+            foreach (int nIndex in bodyComponent)
+            {
+                int y = nIndex / _graphWidth;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+            if (minY > maxY) return;
+
+            float heightFraction = (float)(maxY - minY + 1) / _graphHeight;
+            if (heightFraction >= 1f) return;
+
+            float cellHeight = _initialLocalBounds.size.y / _graphHeight;
+            float meshOffsetDown = (minY * cellHeight) * _renderer.transform.localScale.y;
+            _renderer.transform.localPosition += Vector3.down * meshOffsetDown;
+
+            var root = transform.root;
+            var capsule = root.GetComponent<CapsuleCollider>();
+            if (capsule != null)
+            {
+                float oldHeight = capsule.height;
+                float newHeight = Mathf.Max(0.1f, oldHeight * heightFraction);
+                float heightDiff = oldHeight - newHeight;
+                capsule.height = newHeight;
+                capsule.center = new Vector3(capsule.center.x,
+                    capsule.center.y - heightDiff * 0.5f,
+                    capsule.center.z);
+            }
+
+            float spriteHeight = _initialLocalBounds.size.y * _renderer.transform.lossyScale.y;
+            float heightLost = spriteHeight * (1f - heightFraction);
+            Vector3 drop = Vector3.down * heightLost;
+
+            if (Physics.Raycast(root.position + drop + Vector3.up * 0.5f, Vector3.down,
+                out RaycastHit groundHit, 10f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                drop.y = groundHit.point.y - root.position.y;
+            }
+
+            root.position += drop;
         }
 
         private void GetWoundProjection(Vector3 worldHitPoint, out Vector3 localPoint, out Vector2 uv)
