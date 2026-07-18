@@ -10,11 +10,13 @@ namespace SolarHarmony.DynamicWounds2D
             int gridResolution, Bounds initialBounds,
             ISeveredPartFactory severedPartFactory = null,
             Vector3 hitDirection = default,
-            GlobalWoundManager woundManager = null)
+            GlobalWoundManager woundManager = null,
+            LayerMask groundLayers = default)
         {
             if (sourceRenderer == null || disconnectedNodes.Count == 0) return null;
 
             GameObject severedPart = new GameObject("SeveredPart");
+            severedPart.layer = LayerMask.NameToLayer("Ignore Raycast");
 
             Vector3 viewDir;
             if (Camera.main != null)
@@ -114,6 +116,8 @@ namespace SolarHarmony.DynamicWounds2D
                 rb.mass = 5f;
                 rb.useGravity = true;
                 rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+                if (groundLayers != default)
+                    rb.excludeLayers = ~groundLayers;
                 var mf2 = severedPart.GetComponent<MeshFilter>();
                 if (mf2 != null && mf2.sharedMesh != null)
                 {

@@ -234,12 +234,38 @@ namespace Sabrevois.Gameplay
 
             if (newFraction >= 1f) return;
 
+            var rootT = transform;
+
+            float groundY = rootT.position.y;
+            bool hasGround = false;
+            if (Physics.Raycast(rootT.position + Vector3.up * 1f, Vector3.down,
+                out RaycastHit groundHit, 5f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                groundY = groundHit.point.y;
+                hasGround = true;
+            }
+            else if (Terrain.activeTerrain != null)
+            {
+                groundY = Terrain.activeTerrain.SampleHeight(rootT.position)
+                          + Terrain.activeTerrain.transform.position.y;
+                hasGround = true;
+            }
+
             var woundsRenderer = _woundsComponent.Renderer;
             if (woundsRenderer != null)
             {
                 float boundsHeight = _woundsComponent.InitialLocalBounds.size.y;
                 float bottomCut = boundsHeight * _woundsComponent.VisibleBottomFraction;
                 float meshOffsetDown = bottomCut * woundsRenderer.transform.localScale.y;
+
+                if (hasGround)
+                {
+                    float rendererWorldY = woundsRenderer.transform.position.y;
+                    float targetY = rendererWorldY - meshOffsetDown;
+                    if (targetY < groundY)
+                        meshOffsetDown = Mathf.Max(0, rendererWorldY - groundY);
+                }
+
                 woundsRenderer.transform.localPosition += Vector3.down * meshOffsetDown;
             }
 
@@ -256,34 +282,16 @@ namespace Sabrevois.Gameplay
             float heightLost = spriteHeight * (1f - newFraction);
             Vector3 drop = Vector3.down * heightLost;
 
-            var rootT = transform;
-            if (Physics.Raycast(rootT.position + Vector3.up * 1f, Vector3.down,
-                out RaycastHit groundHit, heightLost + 5f, ~0, QueryTriggerInteraction.Ignore))
-            {
-                drop.y = Mathf.Max(groundHit.point.y - rootT.position.y, -heightLost);
-            }
-            else if (Terrain.activeTerrain != null)
-            {
-                float terrainY = Terrain.activeTerrain.SampleHeight(rootT.position)
-                                 + Terrain.activeTerrain.transform.position.y;
-                if (rootT.position.y > terrainY)
-                    drop.y = Mathf.Max(terrainY - rootT.position.y, -heightLost);
-                else
-                    drop = Vector3.zero;
-            }
-            else
-            {
-                drop = Vector3.zero;
-            }
+            if (hasGround)
+                drop.y = Mathf.Max(groundY - rootT.position.y, -heightLost);
 
             rootT.position += drop;
 
-            if (Physics.Raycast(woundsRenderer.transform.position + Vector3.up * 0.5f, Vector3.down,
-                out RaycastHit rendererGround, 5f, ~0, QueryTriggerInteraction.Ignore))
+            if (hasGround && woundsRenderer != null)
             {
-                float correction = rendererGround.point.y - woundsRenderer.transform.position.y;
-                if (correction > 0f)
-                    rootT.position += Vector3.up * correction;
+                float rendererY = woundsRenderer.transform.position.y;
+                if (rendererY < groundY)
+                    rootT.position += Vector3.up * (groundY - rendererY);
             }
         }
 

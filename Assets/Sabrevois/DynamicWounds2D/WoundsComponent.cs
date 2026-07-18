@@ -83,6 +83,9 @@ namespace SolarHarmony.DynamicWounds2D
         private int _visibleMinY;
         private int _visibleMaxY;
 
+        private static WoundsComponent s_lookedAt;
+        private static int s_lastLookFrame;
+
         public float VisibleHeightFraction => _visibleHeightFraction;
         public float VisibleBottomFraction => _graphHeight > 0 ? (float)_visibleMinY / _graphHeight : 0f;
         public Bounds InitialLocalBounds => _initialLocalBounds;
@@ -167,6 +170,15 @@ namespace SolarHarmony.DynamicWounds2D
 
         private void Update()
         {
+            if (s_lastLookFrame != Time.frameCount && Camera.main != null)
+            {
+                s_lastLookFrame = Time.frameCount;
+                s_lookedAt = null;
+                Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+                if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
+                    s_lookedAt = hit.collider.GetComponentInParent<WoundsComponent>();
+            }
+
             if (_host == null || _host.IsDead) return;
             if (_maxWoundPenetration < _bloodVFXDepthThreshold) return;
 
@@ -611,7 +623,7 @@ namespace SolarHarmony.DynamicWounds2D
                 {
                     var severedPart = SpriteSlicer.CreateSlicedPart(
                         _renderer, severedNodes, _graphWidth, _initialLocalBounds,
-                        _severedPartFactory, hitDirection, _woundManager);
+                        _severedPartFactory, hitDirection, _woundManager, _groundLayerMask);
 
                     if (severedPart != null)
                         OnLimbSevered?.Invoke(severedPart, hitDirection);
@@ -867,6 +879,7 @@ namespace SolarHarmony.DynamicWounds2D
 
         private void OnDrawGizmos()
         {
+            if (this != s_lookedAt) return;
             bool[] graphToDraw = _liveGraph;
             int width = _graphWidth;
             int height = _graphHeight;
@@ -879,18 +892,38 @@ namespace SolarHarmony.DynamicWounds2D
             }
 
             if (graphToDraw == null || width <= 0 || height <= 0 || _renderer == null) return;
-
             if (_meshFilter == null || _meshFilter.sharedMesh == null) return;
 
             var localBounds = _meshFilter.sharedMesh.bounds;
             float stepX = localBounds.size.x / width;
             float stepY = localBounds.size.y / height;
 
-            Gizmos.matrix = Matrix4x4.identity;
+            int step = Mathf.Max(1, Mathf.Max(width, height) / 32);
 
-            for (int y = 0; y < height; y++)
+            Matrix4x4 worldMatrix;
+            if (_mainCamera != null)
             {
-                for (int x = 0; x < width; x++)
+                Vector3 centerWS = _renderer.transform.position;
+                Vector3 toCamera = _mainCamera.transform.position - centerWS;
+                toCamera.y = 0;
+                if (toCamera.sqrMagnitude > 0.001f) toCamera.Normalize();
+                else toCamera = -_renderer.transform.forward;
+                Quaternion billboardRot = Quaternion.LookRotation(toCamera, Vector3.up);
+                worldMatrix = Matrix4x4.TRS(centerWS, billboardRot, _renderer.transform.lossyScale);
+            }
+            else
+            {
+                worldMatrix = _renderer.transform.localToWorldMatrix;
+            }
+
+            Gizmos.matrix = worldMatrix;
+            Gizmos.color = new Color(0, 1, 0, 0.5f);
+
+            float radius = Mathf.Max(stepX, stepY) * 0.4f;
+
+            for (int y = 0; y < height; y += step)
+            {
+                for (int x = 0; x < width; x += step)
                 {
                     if (graphToDraw[y * width + x])
                     {
@@ -898,31 +931,7 @@ namespace SolarHarmony.DynamicWounds2D
                             localBounds.min.x + (x + 0.5f) * stepX,
                             localBounds.min.y + (y + 0.5f) * stepY,
                             0);
-
-                        Vector3 worldPos;
-                        if (_mainCamera != null)
-                        {
-                            Vector3 centerWS = _renderer.transform.position;
-                            Vector3 toCamera = _mainCamera.transform.position - centerWS;
-                            toCamera.y = 0;
-                            if (toCamera.sqrMagnitude > 0.001f) toCamera.Normalize();
-                            else toCamera = -_renderer.transform.forward;
-                            Quaternion billboardRot = Quaternion.LookRotation(toCamera, Vector3.up);
-                            Vector3 scaledPos = new Vector3(
-                                localPos.x * _renderer.transform.lossyScale.x,
-                                localPos.y * _renderer.transform.lossyScale.y,
-                                localPos.z * _renderer.transform.lossyScale.z);
-                            worldPos = centerWS + billboardRot * scaledPos;
-                        }
-                        else
-                        {
-                            worldPos = _renderer.transform.TransformPoint(localPos);
-                        }
-
-                        Gizmos.color = new Color(0, 1, 0, 0.5f);
-                        Gizmos.DrawSphere(worldPos, Mathf.Max(
-                            stepX * Mathf.Abs(_renderer.transform.lossyScale.x),
-                            stepY * Mathf.Abs(_renderer.transform.lossyScale.y)) * 0.4f);
+                        Gizmos.DrawSphere(localPos, radius);
                     }
                 }
             }

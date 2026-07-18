@@ -9,8 +9,6 @@ namespace Sabrevois.Gameplay.AI.Actions
     {
         public void Attack(Transform attacker, Ray ray, float attackRange, float woundRadius, float woundPenetration)
         {
-            Debug.DrawRay(ray.origin, ray.direction * attackRange, Color.red, 1f);
-
             // Use QueryTriggerInteraction.Collide so the raycast can hit the water plane trigger
             RaycastHit[] hits = Physics.RaycastAll(ray, attackRange, ~0, QueryTriggerInteraction.Collide);
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
