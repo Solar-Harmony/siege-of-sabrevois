@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -100,6 +101,10 @@ namespace SolarHarmony.DynamicWounds2D
             if (_host != null) _host.OnDeathComplete += HandleDeathComplete;
             _hitbox = GetComponentInChildren<Collider>();
             _severedPartFactory = GetComponent<ISeveredPartFactory>();
+            if (_severedPartFactory == null)
+                _severedPartFactory = GetComponentInChildren<ISeveredPartFactory>();
+            if (_severedPartFactory == null)
+                _severedPartFactory = GetComponentInParent<ISeveredPartFactory>();
             if (_renderer != null)
             {
                 var mf = _renderer.GetComponent<MeshFilter>();
@@ -386,9 +391,17 @@ namespace SolarHarmony.DynamicWounds2D
             }
         }
 
-        private void CheckAndProcessSeveredLimbs(Vector2 hitUV, float radius, float depth)
+        private void CheckAndProcessSeveredLimbs(Vector2 hitUV, float radius, float depth, Vector3 hitDirection)
         {
             if (_liveGraph == null || depth <= 0f) return;
+
+            int layerCount = 2;
+            if (_renderer != null && _renderer.sharedMaterial != null && _renderer.sharedMaterial.HasProperty("_LayerCount"))
+                layerCount = _renderer.sharedMaterial.GetInt("_LayerCount");
+            if (layerCount <= 0) layerCount = 2;
+
+            int[] dirX = { -1, 1, 0, 0, -1, 1, -1, 1 };
+            int[] dirY = { 0, 0, -1, 1, -1, -1, 1, 1 };
             
             float scaleX = 1f;
             float scaleY = 1f;
@@ -426,7 +439,7 @@ namespace SolarHarmony.DynamicWounds2D
                         }
                     }
 
-                    if (nodeDepth >= depth)
+                    if (nodeDepth >= layerCount)
                     {
                         _liveGraph[y * _graphWidth + x] = false;
                     }
@@ -452,13 +465,10 @@ namespace SolarHarmony.DynamicWounds2D
                         int cx = curr % _graphWidth;
                         int cy = curr / _graphWidth;
 
-                        int[] dx = { -1, 1, 0, 0, -1, 1, -1, 1 };
-                        int[] dy = { 0, 0, -1, 1, -1, -1, 1, 1 };
-
                         for (int j = 0; j < 8; j++)
                         {
-                            int nx = cx + dx[j];
-                            int ny = cy + dy[j];
+                            int nx = cx + dirX[j];
+                            int ny = cy + dirY[j];
 
                             if (nx >= 0 && nx < _graphWidth && ny >= 0 && ny < _graphHeight)
                             {
@@ -476,7 +486,84 @@ namespace SolarHarmony.DynamicWounds2D
                 }
             }
 
-            if (components.Count <= 1) return;
+            if (components.Count <= 1)
+            {
+                if (components.Count == 1)
+                {
+                    bool eroded = false;
+                    for (int i = 0; i < _liveGraph.Length; i++)
+                    {
+                        if (!_liveGraph[i]) continue;
+                        int cx = i % _graphWidth;
+                        int cy = i / _graphWidth;
+                        int liveNeighbors = 0;
+                        for (int dy = -1; dy <= 1; dy++)
+                        {
+                            for (int dx = -1; dx <= 1; dx++)
+                            {
+                                if (dx == 0 && dy == 0) continue;
+                                int nx = cx + dx;
+                                int ny = cy + dy;
+                                if (nx >= 0 && nx < _graphWidth && ny >= 0 && ny < _graphHeight)
+                                {
+                                    if (_liveGraph[ny * _graphWidth + nx])
+                                        liveNeighbors++;
+                                }
+                            }
+                        }
+                        if (liveNeighbors <= 2)
+                        {
+                            _liveGraph[i] = false;
+                            eroded = true;
+                        }
+                    }
+
+                    if (eroded)
+                    {
+                        components.Clear();
+                        Array.Clear(visited, 0, visited.Length);
+
+                        for (int i = 0; i < _liveGraph.Length; i++)
+                        {
+                            if (_liveGraph[i] && !visited[i])
+                            {
+                                List<int> comp = new List<int>();
+                                Queue<int> queue = new Queue<int>();
+                                queue.Enqueue(i);
+                                visited[i] = true;
+                                comp.Add(i);
+
+                                while (queue.Count > 0)
+                                {
+                                    int curr = queue.Dequeue();
+                                    int qx = curr % _graphWidth;
+                                    int qy = curr / _graphWidth;
+
+                                    for (int j = 0; j < 8; j++)
+                                    {
+                                        int nx = qx + dirX[j];
+                                        int ny = qy + dirY[j];
+
+                                        if (nx >= 0 && nx < _graphWidth && ny >= 0 && ny < _graphHeight)
+                                        {
+                                            int nIndex = ny * _graphWidth + nx;
+                                            if (_liveGraph[nIndex] && !visited[nIndex])
+                                            {
+                                                visited[nIndex] = true;
+                                                queue.Enqueue(nIndex);
+                                                comp.Add(nIndex);
+                                            }
+                                        }
+                                    }
+                                }
+                                components.Add(comp);
+                            }
+                        }
+                    }
+                }
+
+                if (components.Count <= 1) return;
+            }
 
             int largestIndex = 0;
             int maxSize = 0;
@@ -502,7 +589,7 @@ namespace SolarHarmony.DynamicWounds2D
 
                 if (components[i].Count >= 5) 
                 {
-                    SpriteSlicer.CreateSlicedPart(_renderer, severedNodes, _graphWidth, _initialLocalBounds, _severedPartFactory);
+                    SpriteSlicer.CreateSlicedPart(_renderer, severedNodes, _graphWidth, _initialLocalBounds, _severedPartFactory, hitDirection);
                 }
 
             if (_sliceIndex >= 0 && GlobalWoundManager.Instance != null)
@@ -515,14 +602,22 @@ namespace SolarHarmony.DynamicWounds2D
 
                     float cellWorldWidth = quadSize.x / _graphWidth;
                     float cellWorldHeight = quadSize.y / _graphHeight;
-                    float worldRadius = Mathf.Max(cellWorldWidth, cellWorldHeight) * 3f;
 
+                    float minU = 1f, minV = 1f, maxU = 0f, maxV = 0f;
                     foreach (var sn in severedNodes)
                     {
                         float u = (sn.x + 0.5f) / _graphWidth;
                         float v = (sn.y + 0.5f) / _graphHeight;
-                        GlobalWoundManager.Instance.AddWoundSplat(_sliceIndex, new Vector2(u, v), worldRadius, 10.0f, quadSize, 1f);
+                        minU = Mathf.Min(minU, u);
+                        minV = Mathf.Min(minV, v);
+                        maxU = Mathf.Max(maxU, u);
+                        maxV = Mathf.Max(maxV, v);
                     }
+                    float centerU = (minU + maxU) * 0.5f;
+                    float centerV = (minV + maxV) * 0.5f;
+                    float worldRadius = Mathf.Max((maxU - minU) * quadSize.x, (maxV - minV) * quadSize.y) * 0.75f;
+
+                    GlobalWoundManager.Instance.AddWoundSplat(_sliceIndex, new Vector2(centerU, centerV), worldRadius, 10.0f, quadSize, 1f);
                 }
             }
             }
@@ -692,7 +787,7 @@ namespace SolarHarmony.DynamicWounds2D
                 }
             }
             
-            CheckAndProcessSeveredLimbs(uv, wound.Radius, newDepth);
+            CheckAndProcessSeveredLimbs(uv, wound.Radius, newDepth, hitNormal);
 
             if (_hitReactionCoroutine != null)
             {
@@ -733,19 +828,9 @@ namespace SolarHarmony.DynamicWounds2D
                 var localBounds = mf.sharedMesh.bounds;
                 float stepX = localBounds.size.x / width;
                 float stepY = localBounds.size.y / height;
-                
-                Vector3 centerWS = _renderer.transform.position;
-                Vector3 toCamera = centerWS;
-                if (Camera.main != null)
-                {
-                    toCamera = Camera.main.transform.position - centerWS;
-                    toCamera.y = 0;
-                    if (toCamera.sqrMagnitude > 0.001f) toCamera.Normalize(); else toCamera = -_renderer.transform.forward;
-                }
-                Quaternion billboardRot = Quaternion.LookRotation(toCamera, Vector3.up);
 
                 Gizmos.matrix = Matrix4x4.identity;
-                
+
                 for (int y = 0; y < height; y++)
                 {
                     for (int x = 0; x < width; x++)
@@ -757,14 +842,26 @@ namespace SolarHarmony.DynamicWounds2D
                                 localBounds.min.y + (y + 0.5f) * stepY, 
                                 0);
                             
-                            Vector3 scaledPos = new Vector3(
-                                localPos.x * _renderer.transform.lossyScale.x, 
-                                localPos.y * _renderer.transform.lossyScale.y, 
-                                localPos.z * _renderer.transform.lossyScale.z);
-                            
-                            Vector3 worldPos = centerWS + billboardRot * scaledPos;
+                            Vector3 worldPos;
+                            if (_billboardEnabled && Camera.main != null)
+                            {
+                                Vector3 centerWS = _renderer.transform.position;
+                                Vector3 toCamera = Camera.main.transform.position - centerWS;
+                                toCamera.y = 0;
+                                if (toCamera.sqrMagnitude > 0.001f) toCamera.Normalize(); else toCamera = -_renderer.transform.forward;
+                                Quaternion billboardRot = Quaternion.LookRotation(toCamera, Vector3.up);
+                                Vector3 scaledPos = new Vector3(
+                                    localPos.x * _renderer.transform.lossyScale.x, 
+                                    localPos.y * _renderer.transform.lossyScale.y, 
+                                    localPos.z * _renderer.transform.lossyScale.z);
+                                worldPos = centerWS + billboardRot * scaledPos;
+                            }
+                            else
+                            {
+                                worldPos = _renderer.transform.TransformPoint(localPos);
+                            }
 
-                            Gizmos.color = new Color(0, 1, 0, 0.5f); // Green for connected
+                            Gizmos.color = new Color(0, 1, 0, 0.5f);
                             Gizmos.DrawSphere(worldPos, Mathf.Max(stepX * Mathf.Abs(_renderer.transform.lossyScale.x), stepY * Mathf.Abs(_renderer.transform.lossyScale.y)) * 0.4f);
                         }
                     }
