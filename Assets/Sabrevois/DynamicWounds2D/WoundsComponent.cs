@@ -704,10 +704,23 @@ namespace SolarHarmony.DynamicWounds2D
             float heightLost = spriteHeight * (1f - heightFraction);
             Vector3 drop = Vector3.down * heightLost;
 
-            if (Physics.Raycast(root.position + drop + Vector3.up * 0.5f, Vector3.down,
-                out RaycastHit groundHit, 10f, ~0, QueryTriggerInteraction.Ignore))
+            if (Physics.Raycast(root.position + Vector3.up * 1f, Vector3.down,
+                out RaycastHit groundHit, heightLost + 5f, ~0, QueryTriggerInteraction.Ignore))
             {
-                drop.y = groundHit.point.y - root.position.y;
+                drop.y = Mathf.Max(groundHit.point.y - root.position.y, -heightLost);
+            }
+            else if (Terrain.activeTerrain != null)
+            {
+                float terrainY = Terrain.activeTerrain.SampleHeight(root.position)
+                                 + Terrain.activeTerrain.transform.position.y;
+                if (root.position.y > terrainY)
+                    drop.y = Mathf.Max(terrainY - root.position.y, -heightLost);
+                else
+                    drop = Vector3.zero;
+            }
+            else
+            {
+                drop = Vector3.zero;
             }
 
             root.position += drop;
