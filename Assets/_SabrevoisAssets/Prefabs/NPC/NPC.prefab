@@ -165,6 +165,9 @@ MonoBehaviour:
   - PenetrationRequired: 6
     InstantDeathChancePercent: 50
     PenetrationResistancePercent: 0
+  _woundHitbox: {fileID: 8406109112291712468}
+  _woundsComponent: {fileID: 7967762212211093992}
+  _dismemberVFXPrefab: {fileID: 9104211161659438896, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
 --- !u!114 &6702582381545169484
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -280,6 +283,9 @@ MonoBehaviour:
   _maxBleedDuration: 1
   _hitImpulseStrength: 0.2
   _connectivityGraph: {fileID: 11400000, guid: 871b407414ea85a4da42c55a0b4b5b07, type: 2}
+  _groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!114 &4554301683929165305
 MonoBehaviour:
   m_ObjectHideFlags: 0

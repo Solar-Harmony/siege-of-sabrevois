@@ -54,6 +54,7 @@ namespace Sabrevois.Gameplay
         [Header("Hitbox")]
         [SerializeField] private Collider _woundHitbox;
         [SerializeField] private WoundsComponent _woundsComponent;
+        [SerializeField] private GameObject _dismemberVFXPrefab;
 
         private Camera _mainCamera;
         private Vector3 _lastHitboxToCameraDir;
@@ -104,11 +105,28 @@ namespace Sabrevois.Gameplay
             _mainCamera = Camera.main;
             if (_woundsComponent == null)
                 _woundsComponent = GetComponentInChildren<WoundsComponent>();
+            if (_woundsComponent != null)
+                _woundsComponent.OnLimbSevered += HandleLimbSevered;
             if (_woundHitbox == null && _woundsComponent != null)
                 _woundHitbox = _woundsComponent.GetComponentInChildren<Collider>();
             if (_woundHitbox == null)
                 _woundHitbox = GetComponentInChildren<Collider>();
             _cachedCapsule = GetComponent<CapsuleCollider>();
+        }
+
+        private void OnDestroy()
+        {
+            if (_woundsComponent != null)
+                _woundsComponent.OnLimbSevered -= HandleLimbSevered;
+        }
+
+        private void HandleLimbSevered(GameObject severedPart, Vector3 hitDirection)
+        {
+            if (_dismemberVFXPrefab == null || severedPart == null) return;
+
+            var vfx = Instantiate(_dismemberVFXPrefab, severedPart.transform);
+            vfx.transform.localPosition = Vector3.zero;
+            Destroy(vfx, 10f);
         }
 
         private void Update()
@@ -225,11 +243,14 @@ namespace Sabrevois.Gameplay
                 woundsRenderer.transform.localPosition += Vector3.down * meshOffsetDown;
             }
 
-            if (_cachedCapsule == null) return;
+            if (_cachedCapsule != null)
+            {
+                float oldHeight = _cachedCapsule.height;
+                float newHeight = Mathf.Max(0.1f, oldHeight * newFraction);
+                _cachedCapsule.height = newHeight;
+            }
 
-            float oldHeight = _cachedCapsule.height;
-            float newHeight = Mathf.Max(0.1f, oldHeight * newFraction);
-            _cachedCapsule.height = newHeight;
+            if (woundsRenderer == null) return;
 
             float spriteHeight = _woundsComponent.InitialLocalBounds.size.y * woundsRenderer.transform.lossyScale.y;
             float heightLost = spriteHeight * (1f - newFraction);
@@ -256,6 +277,14 @@ namespace Sabrevois.Gameplay
             }
 
             rootT.position += drop;
+
+            if (Physics.Raycast(woundsRenderer.transform.position + Vector3.up * 0.5f, Vector3.down,
+                out RaycastHit rendererGround, 5f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                float correction = rendererGround.point.y - woundsRenderer.transform.position.y;
+                if (correction > 0f)
+                    rootT.position += Vector3.up * correction;
+            }
         }
 
         private System.Collections.IEnumerator DieCoroutine(Vector3? hitDirection, float targetY)

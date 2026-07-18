@@ -43,6 +43,7 @@ namespace SolarHarmony.DynamicWounds2D
 
         public event Action<Wound, RaycastHit> OnWoundCreated;
         public event Action OnVisibilityChanged;
+        public event Action<GameObject, Vector3> OnLimbSevered;
 
         [Inject] private GlobalWoundManager _woundManager;
 
@@ -608,9 +609,12 @@ namespace SolarHarmony.DynamicWounds2D
 
                 if (components[i].Count >= 5)
                 {
-                    SpriteSlicer.CreateSlicedPart(
+                    var severedPart = SpriteSlicer.CreateSlicedPart(
                         _renderer, severedNodes, _graphWidth, _initialLocalBounds,
                         _severedPartFactory, hitDirection, _woundManager);
+
+                    if (severedPart != null)
+                        OnLimbSevered?.Invoke(severedPart, hitDirection);
                 }
 
                 if (_sliceIndex >= 0 && _woundManager != null && _meshFilter != null && _meshFilter.sharedMesh != null)
