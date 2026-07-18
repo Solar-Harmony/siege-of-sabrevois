@@ -9,11 +9,15 @@ namespace SolarHarmony.DynamicWounds2D
 
         [SerializeField] private ComputeShader _woundSplatterCompute;
         [SerializeField] private int _splatmapResolution = 256;
-        [SerializeField] private int _maxSlices = 512;
+        [SerializeField] private int _initialSlices = 64;
 
         private RenderTexture _splatmapArray;
         private Queue<int> _availableSlices = new Queue<int>();
         private int _splatKernel;
+        private int _totalSlices;
+
+        public int TotalSliceCount => _totalSlices;
+        public int AvailableSliceCount => _availableSlices.Count;
 
         private void Awake()
         {
@@ -23,34 +27,19 @@ namespace SolarHarmony.DynamicWounds2D
                 return;
             }
             Instance = this;
-
             InitializeSplatmap();
         }
 
         private void InitializeSplatmap()
         {
-            _splatmapArray = new RenderTexture(_splatmapResolution, _splatmapResolution, 0, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16_SFloat);
-            _splatmapArray.dimension = UnityEngine.Rendering.TextureDimension.Tex2DArray;
-            _splatmapArray.volumeDepth = _maxSlices;
-            _splatmapArray.enableRandomWrite = true;
-            _splatmapArray.Create();
+            _totalSlices = _initialSlices;
+            CreateSplatmapTexture();
 
-            // Clear the splatmap initially (Black)
-            RenderTexture active = RenderTexture.active;
-            for (int i = 0; i < _maxSlices; i++)
-            {
-                Graphics.SetRenderTarget(_splatmapArray, 0, CubemapFace.Unknown, i);
-                GL.Clear(false, true, Color.clear);
-            }
-            RenderTexture.active = active;
-
-            for (int i = 0; i < _maxSlices; i++)
-            {
+            for (int i = 0; i < _totalSlices; i++)
                 _availableSlices.Enqueue(i);
-            }
 
             Shader.SetGlobalTexture("_GlobalWoundSplatmap", _splatmapArray);
-            
+
             if (_woundSplatterCompute != null)
             {
                 _splatKernel = _woundSplatterCompute.FindKernel("SplatWound");
@@ -62,36 +51,100 @@ namespace SolarHarmony.DynamicWounds2D
             }
         }
 
+        private void CreateSplatmapTexture()
+        {
+            if (_splatmapArray != null)
+            {
+                _splatmapArray.Release();
+                Destroy(_splatmapArray);
+            }
+
+            _splatmapArray = new RenderTexture(_splatmapResolution, _splatmapResolution, 0,
+                UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16_SFloat);
+            _splatmapArray.dimension = UnityEngine.Rendering.TextureDimension.Tex2DArray;
+            _splatmapArray.volumeDepth = _totalSlices;
+            _splatmapArray.enableRandomWrite = true;
+            _splatmapArray.Create();
+
+            RenderTexture active = RenderTexture.active;
+            for (int i = 0; i < _totalSlices; i++)
+            {
+                Graphics.SetRenderTarget(_splatmapArray, 0, CubemapFace.Unknown, i);
+                GL.Clear(false, true, Color.clear);
+            }
+            RenderTexture.active = active;
+        }
+
         public int RequestSlice()
         {
+            if (_availableSlices.Count == 0)
+            {
+                GrowSplatmap();
+            }
+
             if (_availableSlices.Count > 0)
             {
                 int sliceIndex = _availableSlices.Dequeue();
-                
-                // Clear the slice when granting it
+
                 RenderTexture active = RenderTexture.active;
                 Graphics.SetRenderTarget(_splatmapArray, 0, CubemapFace.Unknown, sliceIndex);
                 GL.Clear(false, true, Color.clear);
                 RenderTexture.active = active;
-                
+
                 return sliceIndex;
             }
-            
-            Debug.LogWarning("GlobalWoundManager ran out of splatmap slices!");
+
+            Debug.LogWarning("GlobalWoundManager ran out of splatmap slices even after growth!");
             return -1;
+        }
+
+        private void GrowSplatmap()
+        {
+            int newTotal = _totalSlices * 2;
+            RenderTexture oldRT = _splatmapArray;
+
+            RenderTexture newRT = new RenderTexture(_splatmapResolution, _splatmapResolution, 0,
+                UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16_SFloat);
+            newRT.dimension = UnityEngine.Rendering.TextureDimension.Tex2DArray;
+            newRT.volumeDepth = newTotal;
+            newRT.enableRandomWrite = true;
+            newRT.Create();
+
+            for (int i = 0; i < _totalSlices; i++)
+                Graphics.CopyTexture(oldRT, i, 0, 0, 0, _splatmapResolution, _splatmapResolution,
+                    newRT, i, 0, 0, 0);
+
+            RenderTexture active = RenderTexture.active;
+            for (int i = _totalSlices; i < newTotal; i++)
+            {
+                Graphics.SetRenderTarget(newRT, 0, CubemapFace.Unknown, i);
+                GL.Clear(false, true, Color.clear);
+            }
+            RenderTexture.active = active;
+
+            for (int i = _totalSlices; i < newTotal; i++)
+                _availableSlices.Enqueue(i);
+
+            _splatmapArray = newRT;
+            _totalSlices = newTotal;
+
+            Shader.SetGlobalTexture("_GlobalWoundSplatmap", _splatmapArray);
+            if (_woundSplatterCompute != null)
+                _woundSplatterCompute.SetTexture(_splatKernel, "Splatmap", _splatmapArray);
+
+            oldRT.Release();
+            Destroy(oldRT);
         }
 
         public void ReleaseSlice(int sliceIndex)
         {
-            if (sliceIndex >= 0 && sliceIndex < _maxSlices)
-            {
+            if (sliceIndex >= 0 && sliceIndex < _totalSlices)
                 _availableSlices.Enqueue(sliceIndex);
-            }
         }
 
         public void AddWoundSplat(int sliceIndex, Vector2 uv, float radius, float penetration, Vector2 quadSize, float bloodRatio = 0f)
         {
-            if (sliceIndex < 0 || sliceIndex >= _maxSlices || _woundSplatterCompute == null)
+            if (sliceIndex < 0 || sliceIndex >= _totalSlices || _woundSplatterCompute == null)
                 return;
 
             _woundSplatterCompute.SetVector("HitUV", new Vector4(uv.x, uv.y, 0, 0));
@@ -103,6 +156,7 @@ namespace SolarHarmony.DynamicWounds2D
 
             int threadGroups = Mathf.CeilToInt(_splatmapResolution / 8f);
             _woundSplatterCompute.Dispatch(_splatKernel, threadGroups, threadGroups, 1);
+            GL.Flush();
         }
 
         private void OnDestroy()

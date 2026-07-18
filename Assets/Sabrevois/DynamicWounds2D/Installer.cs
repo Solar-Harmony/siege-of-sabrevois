@@ -6,7 +6,7 @@ namespace SolarHarmony.DynamicWounds2D
     {
         public override void InstallBindings()
         {
-            
+            Container.Bind<GlobalWoundManager>().FromComponentInHierarchy().AsSingle();
         }
     }
 }

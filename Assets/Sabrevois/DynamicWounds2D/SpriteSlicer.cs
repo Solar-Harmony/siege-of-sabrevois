@@ -5,7 +5,12 @@ namespace SolarHarmony.DynamicWounds2D
 {
     public class SpriteSlicer
     {
-        public static GameObject CreateSlicedPart(MeshRenderer sourceRenderer, List<Vector2Int> disconnectedNodes, int gridResolution, Bounds initialBounds, ISeveredPartFactory severedPartFactory = null, Vector3 hitDirection = default)
+        public static GameObject CreateSlicedPart(
+            MeshRenderer sourceRenderer, List<Vector2Int> disconnectedNodes,
+            int gridResolution, Bounds initialBounds,
+            ISeveredPartFactory severedPartFactory = null,
+            Vector3 hitDirection = default,
+            GlobalWoundManager woundManager = null)
         {
             if (sourceRenderer == null || disconnectedNodes.Count == 0) return null;
 
@@ -16,7 +21,8 @@ namespace SolarHarmony.DynamicWounds2D
             {
                 viewDir = Camera.main.transform.position - sourceRenderer.transform.position;
                 viewDir.y = 0;
-                if (viewDir.sqrMagnitude > 0.001f) viewDir.Normalize(); else viewDir = new Vector3(0, 0, -1);
+                if (viewDir.sqrMagnitude > 0.001f) viewDir.Normalize();
+                else viewDir = new Vector3(0, 0, -1);
                 severedPart.transform.rotation = Quaternion.LookRotation(viewDir, Vector3.up);
             }
             else
@@ -29,18 +35,21 @@ namespace SolarHarmony.DynamicWounds2D
                 ? (Camera.main.transform.position - sourceRenderer.transform.position).normalized
                 : viewDir;
             severedPart.transform.position = sourceRenderer.transform.position + cameraDir3D * 0.05f + Vector3.up * 0.15f;
-            
+
             severedPart.transform.localScale = sourceRenderer.transform.lossyScale;
 
+            if (woundManager == null)
+                woundManager = GlobalWoundManager.Instance;
+
             int severedSlice = -1;
-            if (GlobalWoundManager.Instance != null)
-                severedSlice = GlobalWoundManager.Instance.RequestSlice();
+            if (woundManager != null)
+                severedSlice = woundManager.RequestSlice();
 
             MeshFilter mf = severedPart.AddComponent<MeshFilter>();
             MeshRenderer mr = severedPart.AddComponent<MeshRenderer>();
-            
+
             mr.sharedMaterials = sourceRenderer.sharedMaterials;
-            
+
             MaterialPropertyBlock mpb = new MaterialPropertyBlock();
             mr.GetPropertyBlock(mpb);
             mpb.SetFloat("_EnableBillboard", 0f);
@@ -48,9 +57,8 @@ namespace SolarHarmony.DynamicWounds2D
             mr.SetPropertyBlock(mpb);
 
             if (severedSlice >= 0)
-                SeveredPartSliceTracker.Attach(severedPart, severedSlice);
-            
-            // Build a simple mesh from the disconnected grid nodes
+                SeveredPartSliceTracker.Attach(severedPart, severedSlice, woundManager);
+
             Mesh mesh = new Mesh();
             List<Vector3> vertices = new List<Vector3>();
             List<Vector2> uvs = new List<Vector2>();
@@ -129,17 +137,19 @@ namespace SolarHarmony.DynamicWounds2D
     public class SeveredPartSliceTracker : MonoBehaviour
     {
         private int _sliceIndex = -1;
+        private GlobalWoundManager _woundManager;
 
-        public static void Attach(GameObject go, int sliceIndex)
+        public static void Attach(GameObject go, int sliceIndex, GlobalWoundManager woundManager = null)
         {
             var tracker = go.AddComponent<SeveredPartSliceTracker>();
             tracker._sliceIndex = sliceIndex;
+            tracker._woundManager = woundManager ?? GlobalWoundManager.Instance;
         }
 
         private void OnDestroy()
         {
-            if (GlobalWoundManager.Instance != null && _sliceIndex >= 0)
-                GlobalWoundManager.Instance.ReleaseSlice(_sliceIndex);
+            if (_woundManager != null && _sliceIndex >= 0)
+                _woundManager.ReleaseSlice(_sliceIndex);
         }
     }
 }

@@ -40,12 +40,17 @@ namespace Sabrevois.Gameplay.AI.Actions
 
                 if (wounds != null)
                 {
-                    // Since we shoot a rotated proxy hitbox trigger for billboarding, the "normal" will just match the BoxCollider.
-                    // For blood splashes to shoot back at the camera reliably, we use the vector pointing backward to the player instead.
                     var trueHitNormal = (Camera.main.transform.position - hit.point).normalized;
                     Vector3 hitVelocity = ray.direction * 5f;
 
-                    woundDepth = wounds.ApplyWound(hit, trueHitNormal, woundRadius, weaponPenetration, hitVelocity, out isEssential, out isBleeding, out resistance, out damage);
+                    if (health != null && health.IsDead)
+                    {
+                        woundDepth = wounds.ApplyWoundAtPoint(hit.point, trueHitNormal, woundRadius, weaponPenetration, out isEssential, out isBleeding, out resistance, out damage);
+                    }
+                    else
+                    {
+                        woundDepth = wounds.ApplyWound(hit, trueHitNormal, woundRadius, weaponPenetration, hitVelocity, out isEssential, out isBleeding, out resistance, out damage);
+                    }
                 }
                 else if (health != null)
                 {
