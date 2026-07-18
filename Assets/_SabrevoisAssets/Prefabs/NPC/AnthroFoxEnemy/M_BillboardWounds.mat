@@ -128,16 +128,16 @@ Material:
     - _Metallic: 0
     - _NoiseScale: 3
     - _NoiseStrength: 0.8
-    - _NoiseUVOffset: 0.02
+    - _NoiseUVOffset: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
-    - _ParallaxStrength: 0.0056
+    - _ParallaxStrength: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _RimBlendPrevious: 1
     - _RimDarken: 0.179
     - _RimLayerOffset: -1
-    - _RimSoftness: 0.37
+    - _RimSoftness: 0.396
     - _RimThickness: 0.276
     - _SmearMaxLength: 0.1
     - _SmearStrength: 1

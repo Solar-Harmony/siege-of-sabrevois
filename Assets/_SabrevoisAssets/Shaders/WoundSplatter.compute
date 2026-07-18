@@ -63,8 +63,8 @@ void SplatWound (uint3 id : SV_DispatchThreadID)
     float noiseVal = CustomNoise(worldPixel * 25.0);
     float dynamicRadius = Radius * (0.5 + 1.0 * noiseVal);
 
-    // Harder, sharper brush edges to remove fuzziness 
-    float influence = 1.0 - smoothstep(dynamicRadius * 0.7, dynamicRadius, dist);
+    // Feathered falloff from center to edge for smooth blending with layers underneath
+    float influence = 1.0 - smoothstep(dynamicRadius * 0.1, dynamicRadius, dist);
 
     if (influence > 0)
     {

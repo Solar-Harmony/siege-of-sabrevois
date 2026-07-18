@@ -200,32 +200,31 @@
         half4 finalColor = SampleLayerRaw(paraUV1, layerIndex);
         
         float progressToNextLayer = frac(depth);
+        float layerBlend = smoothstep(0.0, 0.35, progressToNextLayer);
         
-        if (depth >= _LayerCount)
-        {
-            // Penetrated past the final layer, make a hole
-            finalColor.a = 0.0;
-        }
-        else if (layerIndex == _LayerCount - 1)
-        {
-            // Rapidly fade out alpha as it digs through the very last layer
-            finalColor.a *= saturate((_LayerCount - depth) * 5.0);
-        }
-        else if (layerIndex < _LayerCount - 1 && progressToNextLayer > 0.01)
+        if (layerIndex < _LayerCount - 1 && progressToNextLayer > 0.01)
         {
             float2 paraUV2 = input.uv - viewDirUV * ((layerIndex + 1) * _ParallaxStrength);
             half4 nextLayerColor = SampleLayerRaw(paraUV2, layerIndex + 1);
-            finalColor = lerp(finalColor, nextLayerColor, progressToNextLayer * 0.85);
+            finalColor = lerp(finalColor, nextLayerColor, layerBlend);
+        }
+
+        if (layerIndex >= _LayerCount - 1)
+        {
+            float holeFeather = smoothstep(_LayerCount - 0.8, _LayerCount + 0.8, depth);
+            finalColor.a *= 1.0 - holeFeather;
         }
         
-        float rimStart = max(0.0, 1.0 - _RimThickness);
-        float blendStart = max(0.0, rimStart - _RimSoftness);
-        if (layerIndex < _LayerCount - 1 && progressToNextLayer > blendStart) 
+        float rimBoundary = round(depth);
+        float rimHalfWidth = _RimThickness * 0.5;
+        float rimDist = abs(depth - rimBoundary);
+        float rimBlend = 1.0 - smoothstep(max(0.0, rimHalfWidth - _RimSoftness), rimHalfWidth, rimDist);
+        if (rimBoundary >= 1.0 && rimBoundary <= (float)(_LayerCount - 1) && rimBlend > 0.001)
         {
-            float rimBlend = smoothstep(blendStart, rimStart + 0.001, progressToNextLayer);
-            
-            float2 rimUV = paraUV1 + (noise - 0.5) * _NoiseUVOffset;
-            half4 rimTexColor = SampleLayerRaw(rimUV, layerIndex + _RimLayerOffset);
+            int rimShallowLayer = (int)rimBoundary - 1;
+            float2 rimParaUV = input.uv - viewDirUV * (rimShallowLayer * _ParallaxStrength);
+            float2 rimUV = rimParaUV + (noise - 0.5) * _NoiseUVOffset;
+            half4 rimTexColor = SampleLayerRaw(rimUV, rimShallowLayer + _RimLayerOffset);
             
             half3 darkenedRim = rimTexColor.rgb * (1.0 - _RimDarken);
             half3 darkenedFinal = finalColor.rgb * (1.0 - _RimDarken);
@@ -241,6 +240,10 @@
             rimTargetColor = lerp(rimTargetColor, bloodColor, bloodAmount * 0.95);
             finalColor.rgb = lerp(finalColor.rgb, rimTargetColor, rimBlend);
         }
+
+        half4 cleanBase = SampleLayerRaw(input.uv, 0);
+        float woundEdge = smoothstep(0.0, 0.25, depth);
+        finalColor = lerp(cleanBase, finalColor, woundEdge);
 
         // --- Procedural Normal Generation ---
         
@@ -324,8 +327,7 @@
                 float3 normalTS = float3(0,0,1);
                 half4 finalColor = GetFinalColor(input, outDepth, normalTS);
 
-                if (finalColor.a < 0.1)
-                    discard;
+                clip(finalColor.a - 0.001);
 
                 SurfaceData surfaceData = (SurfaceData)0;
                 surfaceData.albedo = finalColor.rgb;
@@ -407,8 +409,7 @@
                 float3 dummyNormal = float3(0,0,1);
                 half4 finalColor = GetFinalColor(input, dummyDepth, dummyNormal);
 
-                if (finalColor.a < 0.1)
-                    discard;
+                clip(finalColor.a - 0.001);
 
                 return 0;
             }
@@ -441,8 +442,7 @@
                 float3 dummyNormal = float3(0,0,1);
                 half4 finalColor = GetFinalColor(input, dummyDepth, dummyNormal);
 
-                if (finalColor.a < 0.1)
-                    discard;
+                clip(finalColor.a - 0.001);
 
                 return 0;
             }
