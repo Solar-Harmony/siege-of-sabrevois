@@ -7,7 +7,7 @@ namespace Sabrevois.Utils
         private void Awake()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.unityLogger.logHandler = new Scribe();
+            Debug.unityLogger.logHandler = new Scribe(Debug.unityLogger.logHandler);
 #else
             Debug.unityLogger.logEnabled = false;
 #endif
