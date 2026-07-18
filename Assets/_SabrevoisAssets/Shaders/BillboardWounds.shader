@@ -344,7 +344,11 @@
                 inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                 inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionHCS);
                 
-                float3 n = normalize(input.normalWS);
+                float3 n;
+                if (_EnableBillboard < 0.5f)
+                    n = inputData.viewDirectionWS;
+                else
+                    n = normalize(input.normalWS);
                 float3 up = abs(n.y) > 0.999 ? float3(0,0,1) : float3(0,1,0); 
                 float3 t = normalize(cross(up, n));
                 float3 b = normalize(cross(n, t));
@@ -357,7 +361,7 @@
                 inputData.bakedGI = SampleSH(inputData.normalWS);
                 inputData.shadowMask = half4(1, 1, 1, 1);
                 
-                surfaceData.normalTS = float3(0, 0, 1); // Essential so URP doesn't mistakenly try to apply bump logic
+                surfaceData.normalTS = float3(0, 0, 1);
 
                 half4 litColor = UniversalFragmentPBR(inputData, surfaceData);
                 litColor.a = finalColor.a;

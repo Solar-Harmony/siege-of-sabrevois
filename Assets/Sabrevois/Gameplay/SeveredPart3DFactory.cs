@@ -13,7 +13,6 @@ namespace Sabrevois.Gameplay
             rb.isKinematic = false;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-            rb.constraints = RigidbodyConstraints.FreezeRotationZ;
 
             var mf = severedPart.GetComponent<MeshFilter>();
             if (mf != null && mf.sharedMesh != null)
@@ -32,8 +31,8 @@ namespace Sabrevois.Gameplay
                 severedPart.AddComponent<BoxCollider>();
             }
 
-            rb.AddForce(Vector3.up * 1.5f, ForceMode.VelocityChange);
-            rb.AddTorque(new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f)), ForceMode.VelocityChange);
+            rb.AddForce(Vector3.up * 2f + Random.insideUnitSphere * 1.5f, ForceMode.VelocityChange);
+            rb.angularVelocity = new Vector3(Random.Range(-8f, 8f), Random.Range(-8f, 8f), Random.Range(-8f, 8f));
 
             Destroy(severedPart, 10f);
         }

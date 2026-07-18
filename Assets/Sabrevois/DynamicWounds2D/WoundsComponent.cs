@@ -416,6 +416,8 @@ namespace SolarHarmony.DynamicWounds2D
                 }
             }
 
+            List<int> depthKilledNodes = new List<int>();
+
             for (int y = 0; y < _graphHeight; y++)
             {
                 for (int x = 0; x < _graphWidth; x++)
@@ -442,6 +444,7 @@ namespace SolarHarmony.DynamicWounds2D
                     if (nodeDepth >= layerCount)
                     {
                         _liveGraph[y * _graphWidth + x] = false;
+                        depthKilledNodes.Add(y * _graphWidth + x);
                     }
                 }
             }
@@ -486,11 +489,14 @@ namespace SolarHarmony.DynamicWounds2D
                 }
             }
 
+            List<int> erodedNodes = null;
+
             if (components.Count <= 1)
             {
+
                 if (components.Count == 1)
                 {
-                    bool eroded = false;
+                    erodedNodes = new List<int>();
                     for (int i = 0; i < _liveGraph.Length; i++)
                     {
                         if (!_liveGraph[i]) continue;
@@ -514,11 +520,11 @@ namespace SolarHarmony.DynamicWounds2D
                         if (liveNeighbors <= 2)
                         {
                             _liveGraph[i] = false;
-                            eroded = true;
+                            erodedNodes.Add(i);
                         }
                     }
 
-                    if (eroded)
+                    if (erodedNodes.Count > 0)
                     {
                         components.Clear();
                         Array.Clear(visited, 0, visited.Length);
@@ -599,16 +605,52 @@ namespace SolarHarmony.DynamicWounds2D
                 {
                     var localBounds = mf.sharedMesh.bounds;
                     var quadSize = new Vector2(localBounds.size.x * _renderer.transform.lossyScale.x, localBounds.size.y * _renderer.transform.lossyScale.y);
-                    float worldRadius = Mathf.Max(quadSize.x / _graphWidth, quadSize.y / _graphHeight) * 4f;
+                    float worldRadius = Mathf.Max(quadSize.x / _graphWidth, quadSize.y / _graphHeight) * 6f;
 
                     foreach (var sn in severedNodes)
                     {
                         float u = (sn.x + 0.5f) / _graphWidth;
                         float v = (sn.y + 0.5f) / _graphHeight;
-                        GlobalWoundManager.Instance.AddWoundSplat(_sliceIndex, new Vector2(u, v), worldRadius, 10.0f, quadSize, 1f);
+                        GlobalWoundManager.Instance.AddWoundSplat(_sliceIndex, new Vector2(u, v), worldRadius, 1000.0f, quadSize, 1f);
                     }
                 }
             }
+            }
+
+            if (erodedNodes != null && erodedNodes.Count > 0 && _sliceIndex >= 0 && GlobalWoundManager.Instance != null)
+            {
+                var mf = _renderer.GetComponent<MeshFilter>();
+                if (mf != null && mf.sharedMesh != null)
+                {
+                    var localBounds = mf.sharedMesh.bounds;
+                    var quadSize = new Vector2(localBounds.size.x * _renderer.transform.lossyScale.x, localBounds.size.y * _renderer.transform.lossyScale.y);
+                    float worldRadius = Mathf.Max(quadSize.x / _graphWidth, quadSize.y / _graphHeight) * 1.2f;
+
+                    foreach (int nIndex in erodedNodes)
+                    {
+                        float u = (nIndex % _graphWidth + 0.5f) / _graphWidth;
+                        float v = (nIndex / _graphWidth + 0.5f) / _graphHeight;
+                        GlobalWoundManager.Instance.AddWoundSplat(_sliceIndex, new Vector2(u, v), worldRadius, 1000.0f, quadSize, 1f);
+                    }
+                }
+            }
+
+            if (depthKilledNodes.Count > 0 && _sliceIndex >= 0 && GlobalWoundManager.Instance != null)
+            {
+                var mf = _renderer.GetComponent<MeshFilter>();
+                if (mf != null && mf.sharedMesh != null)
+                {
+                    var localBounds = mf.sharedMesh.bounds;
+                    var quadSize = new Vector2(localBounds.size.x * _renderer.transform.lossyScale.x, localBounds.size.y * _renderer.transform.lossyScale.y);
+                    float worldRadius = Mathf.Max(quadSize.x / _graphWidth, quadSize.y / _graphHeight) * 1.2f;
+
+                    foreach (int nIndex in depthKilledNodes)
+                    {
+                        float u = (nIndex % _graphWidth + 0.5f) / _graphWidth;
+                        float v = (nIndex / _graphWidth + 0.5f) / _graphHeight;
+                        GlobalWoundManager.Instance.AddWoundSplat(_sliceIndex, new Vector2(u, v), worldRadius, 1000.0f, quadSize, 1f);
+                    }
+                }
             }
 
             ShrinkColliderToComponent(components[largestIndex]);
