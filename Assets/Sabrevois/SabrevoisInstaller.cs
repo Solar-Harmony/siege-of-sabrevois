@@ -1,4 +1,5 @@
 using Sabrevois.AI;
+using SolarHarmony.DynamicWounds2D;
 using Sabrevois.Gameplay;
 using Zenject;
 
@@ -10,6 +11,7 @@ namespace Sabrevois
         {
             AIInstaller.Install(Container);
             GameplayInstaller.Install(Container);
+            DynamicWounds2DInstaller.Install(Container);
             
             Container.BindInterfacesTo<Sabrevois.UI.DamageNumberSpawner>().AsSingle();
             Container.BindMemoryPool<Sabrevois.UI.DamageNumber, Sabrevois.UI.DamageNumber.Pool>()

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Sabrevois.Gameplay
+namespace SolarHarmony.DynamicWounds2D
 {
     public class GlobalWoundManager : MonoBehaviour
     {

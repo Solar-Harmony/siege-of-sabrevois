@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Sabrevois.Utils;
+using SolarHarmony.DynamicWounds2D;
 using UnityEngine;
 
 namespace Sabrevois.Gameplay
@@ -15,7 +16,7 @@ namespace Sabrevois.Gameplay
         public float PenetrationResistancePercent;
     }
 
-    public class Health : MonoBehaviour
+    public class Health : MonoBehaviour, IWoundHost
     {
         public List<LayerRule> LayerRules = new List<LayerRule>() 
         {
@@ -71,6 +72,28 @@ namespace Sabrevois.Gameplay
             return currentResistance;
         }
 
+        public Transform Transform => transform;
+
+        public void ForceKill()
+        {
+            TakeDamage(999f, null, true);
+        }
+
+        public void ApplyMovementImpulse(Vector3 direction, float strength)
+        {
+            if (_isDead) return;
+
+            var agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
+            if (agent != null && agent.enabled)
+            {
+                agent.Move(direction * strength);
+            }
+            else
+            {
+                transform.position += direction * strength;
+            }
+        }
+
         public void TakeDamage(float newWoundDepth, Vector3? hitDirection = null, bool isEssential = true)
         {
             if (_isDead) return;
@@ -108,9 +131,6 @@ namespace Sabrevois.Gameplay
 
                 var billboard = GetComponent<Billboard>();
                 if (billboard != null) billboard.enabled = false;
-                
-                var wounds = GetComponent<WoundsComponent>();
-                if (wounds != null) wounds.SetBillboardEnabled(false);
                 
                 var navMeshAgent = GetComponent<UnityEngine.AI.NavMeshAgent>();
                 if (navMeshAgent != null) navMeshAgent.enabled = false;

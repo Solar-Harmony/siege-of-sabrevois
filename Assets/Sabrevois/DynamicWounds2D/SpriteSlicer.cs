@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Sabrevois.Gameplay
+namespace SolarHarmony.DynamicWounds2D
 {
     public class SpriteSlicer
     {
-        public static GameObject CreateSlicedPart(MeshRenderer sourceRenderer, List<Vector2Int> disconnectedNodes, int gridResolution, Bounds initialBounds)
+        public static GameObject CreateSlicedPart(MeshRenderer sourceRenderer, List<Vector2Int> disconnectedNodes, int gridResolution, Bounds initialBounds, ISeveredPartFactory severedPartFactory = null)
         {
             if (sourceRenderer == null || disconnectedNodes.Count == 0) return null;
 
@@ -82,40 +82,12 @@ namespace Sabrevois.Gameplay
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
 
-            mf.sharedMesh = mesh;
+            mf.mesh = mesh;
 
-            var rb = severedPart.AddComponent<Rigidbody>();
-            rb.mass = 5f;
-            rb.useGravity = true;
-            rb.isKinematic = false;
-            rb.interpolation = RigidbodyInterpolation.Interpolate;
-            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            rb.constraints = RigidbodyConstraints.FreezeRotationZ;
-
-            var col = severedPart.AddComponent<BoxCollider>();
-            col.size = mesh.bounds.size + Vector3.one * 0.02f;
-            col.center = mesh.bounds.center;
-
-            var rootColliders = sourceRenderer.transform.root.GetComponentsInChildren<Collider>();
-            foreach (var rc in rootColliders)
+            if (severedPartFactory != null)
             {
-                Physics.IgnoreCollision(col, rc);
+                severedPartFactory.FinalizeSeveredPart(severedPart, sourceRenderer);
             }
-
-            Vector3 pushDir;
-            if (Camera.main != null)
-            {
-                pushDir = (Camera.main.transform.position - sourceRenderer.transform.position).normalized;
-                pushDir.y = 0;
-                if (pushDir.sqrMagnitude < 0.001f) pushDir = -sourceRenderer.transform.forward;
-            }
-            else
-            {
-                pushDir = -sourceRenderer.transform.forward;
-            }
-            rb.AddForce(pushDir * 3f + Vector3.up * 2f, ForceMode.VelocityChange);
-
-            Object.Destroy(severedPart, 10f);
 
             return severedPart;
         }

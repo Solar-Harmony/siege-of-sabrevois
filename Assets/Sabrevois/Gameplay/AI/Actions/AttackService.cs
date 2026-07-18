@@ -1,4 +1,5 @@
-﻿using Sabrevois.Gameplay.Tree;
+﻿using SolarHarmony.DynamicWounds2D;
+using Sabrevois.Gameplay.Tree;
 using Sabrevois.Level.Water;
 using UnityEngine;
 

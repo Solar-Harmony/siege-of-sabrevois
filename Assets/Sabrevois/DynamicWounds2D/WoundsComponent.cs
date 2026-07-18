@@ -1,7 +1,8 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Sabrevois.Gameplay
+namespace SolarHarmony.DynamicWounds2D
 {
     public class WoundVFXTracker : MonoBehaviour
     {
@@ -79,8 +80,10 @@ namespace Sabrevois.Gameplay
         private bool[] _liveGraph;
         private int _graphWidth;
         private int _graphHeight;
-        private BoxCollider _hitbox;
-        private Health _health;
+        private Collider _hitbox;
+        private IWoundHost _host;
+        private ISeveredPartFactory _severedPartFactory;
+        private bool _wasDeadLastFrame;
         private Coroutine _hitReactionCoroutine;
         private Bounds _initialLocalBounds;
 
@@ -93,9 +96,10 @@ namespace Sabrevois.Gameplay
                 _graphHeight = _connectivityGraph.Height;
                 _liveGraph = (bool[])_connectivityGraph.Nodes.Clone();
             }
-            _health = GetComponentInParent<Health>();
-            if (_health != null) _health.OnDeathComplete += HandleDeathComplete;
-            _hitbox = GetComponentInChildren<BoxCollider>();
+            _host = GetComponentInParent<IWoundHost>();
+            if (_host != null) _host.OnDeathComplete += HandleDeathComplete;
+            _hitbox = GetComponentInChildren<Collider>();
+            _severedPartFactory = GetComponent<ISeveredPartFactory>();
             if (_renderer != null)
             {
                 var mf = _renderer.GetComponent<MeshFilter>();
@@ -120,7 +124,7 @@ namespace Sabrevois.Gameplay
 
         private void OnDestroy()
         {
-            if (_health != null) _health.OnDeathComplete -= HandleDeathComplete;
+            if (_host != null) _host.OnDeathComplete -= HandleDeathComplete;
             if (GlobalWoundManager.Instance != null && _sliceIndex >= 0)
             {
                 GlobalWoundManager.Instance.ReleaseSlice(_sliceIndex);
@@ -140,8 +144,14 @@ namespace Sabrevois.Gameplay
                 }
             }
 
+            // Detect death transition: disable billboarding when host dies
+            if (_host != null && _host.IsDead && !_wasDeadLastFrame)
+            {
+                SetBillboardEnabled(false);
+            }
+
             // Only show severe VFX when health is low (<= 40%), attached to the most damaged wounds
-            if (_health != null && !_health.IsDead)
+            if (_host != null && !_host.IsDead)
             {
                 float maxPen = 0f;
                 for (int i = 0; i < _wounds.Count; i++)
@@ -186,9 +196,11 @@ namespace Sabrevois.Gameplay
                     }
                 }
             }
+
+            _wasDeadLastFrame = _host != null && _host.IsDead;
         }
         
-        private System.Collections.IEnumerator HitReactionRoutine(Vector2 hitUV, Vector3 impactNormal)
+        private IEnumerator HitReactionRoutine(Vector2 hitUV, Vector3 impactNormal)
         {
             if (_renderer == null) yield break;
 
@@ -198,7 +210,6 @@ namespace Sabrevois.Gameplay
             float hitX = (hitUV.x - 0.5f) * 2f;
             float hitY = (hitUV.y - 0.5f) * 2f;
 
-            var agent = _health != null ? _health.GetComponent<UnityEngine.AI.NavMeshAgent>() : null;
             Vector3 pushDir = -impactNormal;
             pushDir.y = 0;
             if (pushDir.sqrMagnitude > 0.001f) pushDir = pushDir.normalized;
@@ -211,13 +222,9 @@ namespace Sabrevois.Gameplay
                 // Sinusoidal bounce: peak at exactly halfway through to drive the impulse strength
                 float strength = Mathf.Sin(t * Mathf.PI) * _hitImpulseStrength; 
                 
-                if (agent != null && agent.enabled)
+                if (_host != null)
                 {
-                    agent.Move(pushDir * (strength * Time.deltaTime * 2.5f));
-                }
-                else if (_health != null && !_health.IsDead)
-                {
-                    _health.transform.position += pushDir * (strength * Time.deltaTime * 2.5f);
+                    _host.ApplyMovementImpulse(pushDir, strength * Time.deltaTime * 2.5f);
                 }
 
                 _renderer.GetPropertyBlock(_mpb);
@@ -501,18 +508,18 @@ namespace Sabrevois.Gameplay
 
                 if (components[i].Count >= 5) 
                 {
-                    var slicedPart = SpriteSlicer.CreateSlicedPart(_renderer, severedNodes, _graphWidth, _initialLocalBounds);
+                    var slicedPart = SpriteSlicer.CreateSlicedPart(_renderer, severedNodes, _graphWidth, _initialLocalBounds, _severedPartFactory);
 
-                    if (avgV < 0.45f && _health != null && !_health.IsDead)
+                    if (avgV < 0.45f && _host != null && !_host.IsDead)
                     {
-                        _health.TakeDamage(999f, null, true);
+                        _host.ForceKill();
                     }
                 }
                 else
                 {
-                    if (avgV < 0.4f && _health != null && !_health.IsDead)
+                    if (avgV < 0.4f && _host != null && !_host.IsDead)
                     {
-                        _health.TakeDamage(999f, null, true);
+                        _host.ForceKill();
                     }
                 }
 
@@ -541,6 +548,13 @@ namespace Sabrevois.Gameplay
 
         private void GetWoundProjection(Vector3 worldHitPoint, out Vector3 localPoint, out Vector2 uv)
         {
+            if (Camera.main == null)
+            {
+                localPoint = transform.InverseTransformPoint(worldHitPoint);
+                uv = Vector2.zero;
+                return;
+            }
+
             Vector3 cameraPos = Camera.main.transform.position;
             Vector3 rayDir = (worldHitPoint - cameraPos).normalized;
 
@@ -663,9 +677,9 @@ namespace Sabrevois.Gameplay
                 }
             }
             
-            if (_health != null)
+            if (_host != null)
             {
-                resistancePercent = _health.GetResistanceAtDepth(oldDepth);
+                resistancePercent = _host.GetResistanceAtDepth(oldDepth);
             }
 
             damage = wound.Penetration * (1f - resistancePercent / 100f);
@@ -708,7 +722,7 @@ namespace Sabrevois.Gameplay
                     _renderer.SetPropertyBlock(_mpb);
                 }
             }
-            if (_renderer != null && gameObject.activeInHierarchy && _health != null && !_health.IsDead)
+            if (_renderer != null && gameObject.activeInHierarchy && _host != null && !_host.IsDead)
             {
                 _hitReactionCoroutine = StartCoroutine(HitReactionRoutine(uv, hitNormal));
             }

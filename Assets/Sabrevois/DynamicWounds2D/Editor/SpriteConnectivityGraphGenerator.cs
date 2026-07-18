@@ -1,8 +1,7 @@
-using UnityEngine;
 using UnityEditor;
-using Sabrevois.Gameplay;
+using UnityEngine;
 
-namespace Sabrevois.Editor
+namespace SolarHarmony.DynamicWounds2D.Editor
 {
     public class SpriteConnectivityGraphGenerator : EditorWindow
     {

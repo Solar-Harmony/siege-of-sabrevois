@@ -3,6 +3,7 @@ using Sabrevois.Gameplay.Tree;
 using Sabrevois.Level;
 using Sabrevois.Level.Water;
 using Sabrevois.Utils;
+using SolarHarmony.DynamicWounds2D;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Zenject;

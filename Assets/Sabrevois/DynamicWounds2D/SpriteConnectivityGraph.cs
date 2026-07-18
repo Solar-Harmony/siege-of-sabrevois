@@ -1,7 +1,6 @@
 using UnityEngine;
-using System.Collections.Generic;
 
-namespace Sabrevois.Gameplay
+namespace SolarHarmony.DynamicWounds2D
 {
     [CreateAssetMenu(fileName = "NewConnectivityGraph", menuName = "Sabrevois/Sprite Connectivity Graph")]
     public class SpriteConnectivityGraph : ScriptableObject
