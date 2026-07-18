@@ -422,11 +422,20 @@ namespace SolarHarmony.DynamicWounds2D
             {
                 for (int x = 0; x < _graphWidth; x++)
                 {
-                    if (!_liveGraph[y * _graphWidth + x]) continue;
+                    int nodeIndex = y * _graphWidth + x;
+                    if (!_liveGraph[nodeIndex]) continue;
 
-                    float u = (x + 0.5f) / _graphWidth;
-                    float v = (y + 0.5f) / _graphHeight;
-                    Vector2 nodeUV = new Vector2(u, v);
+                    if (_bodyPartsMask != null)
+                    {
+                        float u = (x + 0.5f) / _graphWidth;
+                        float v = (y + 0.5f) / _graphHeight;
+                        Color maskColor = _bodyPartsMask.GetPixelBilinear(u, v);
+                        if (maskColor.maxColorComponent < 0.01f)
+                        {
+                            _liveGraph[nodeIndex] = false;
+                            continue;
+                        }
+                    }
 
                     float nodeDepth = 0f;
                     foreach (var w in _wounds)
@@ -435,7 +444,8 @@ namespace SolarHarmony.DynamicWounds2D
                         float rY = w.Radius / scaleY;
                         float wRadius = Mathf.Max(rX, rY);
 
-                        if (Vector2.Distance(w.Position, nodeUV) <= wRadius)
+                        if (Vector2.Distance(w.Position, new Vector2(
+                            (x + 0.5f) / _graphWidth, (y + 0.5f) / _graphHeight)) <= wRadius)
                         {
                             nodeDepth += w.Penetration;
                         }
@@ -443,8 +453,8 @@ namespace SolarHarmony.DynamicWounds2D
 
                     if (nodeDepth >= layerCount)
                     {
-                        _liveGraph[y * _graphWidth + x] = false;
-                        depthKilledNodes.Add(y * _graphWidth + x);
+                        _liveGraph[nodeIndex] = false;
+                        depthKilledNodes.Add(nodeIndex);
                     }
                 }
             }
