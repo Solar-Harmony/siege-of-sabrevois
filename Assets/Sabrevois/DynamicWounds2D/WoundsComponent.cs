@@ -388,7 +388,7 @@ namespace SolarHarmony.DynamicWounds2D
 
         private void CheckAndProcessSeveredLimbs(Vector2 hitUV, float radius, float depth)
         {
-            if (_liveGraph == null || depth < 1.5f) return;
+            if (_liveGraph == null || depth <= 0f) return;
             
             float scaleX = 1f;
             float scaleY = 1f;
@@ -426,7 +426,7 @@ namespace SolarHarmony.DynamicWounds2D
                         }
                     }
 
-                    if (nodeDepth >= 1.5f)
+                    if (nodeDepth >= depth)
                     {
                         _liveGraph[y * _graphWidth + x] = false;
                     }
@@ -500,27 +500,9 @@ namespace SolarHarmony.DynamicWounds2D
                     _liveGraph[nIndex] = false;
                 }
 
-                float avgY = 0f;
-                foreach (var sn in severedNodes)
-                    avgY += sn.y;
-                avgY /= severedNodes.Count;
-                float avgV = avgY / _graphHeight;
-
                 if (components[i].Count >= 5) 
                 {
-                    var slicedPart = SpriteSlicer.CreateSlicedPart(_renderer, severedNodes, _graphWidth, _initialLocalBounds, _severedPartFactory);
-
-                    if (avgV < 0.45f && _host != null && !_host.IsDead)
-                    {
-                        _host.ForceKill();
-                    }
-                }
-                else
-                {
-                    if (avgV < 0.4f && _host != null && !_host.IsDead)
-                    {
-                        _host.ForceKill();
-                    }
+                    SpriteSlicer.CreateSlicedPart(_renderer, severedNodes, _graphWidth, _initialLocalBounds, _severedPartFactory);
                 }
 
             if (_sliceIndex >= 0 && GlobalWoundManager.Instance != null)
