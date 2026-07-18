@@ -282,6 +282,13 @@ namespace SolarHarmony.DynamicWounds2D
 
         private void HandleDeathComplete()
         {
+            // The renderer's local offset was applied in the standing orientation.
+            // After the death rotation to face-down, local Y is horizontal, so the
+            // offset would displace the sprite sideways instead of vertically.
+            // Reset it — the root is already at ground level so the visual sits correctly.
+            if (_renderer != null)
+                _renderer.transform.localPosition = Vector3.zero;
+
             if (_bloodPoolPrefab == null) return;
             List<Vector3> spawnedPositions = new List<Vector3>();
 
@@ -695,8 +702,19 @@ namespace SolarHarmony.DynamicWounds2D
                 float newHeight = Mathf.Max(0.1f, oldHeight * heightFraction);
                 float heightDiff = oldHeight - newHeight;
                 capsule.height = newHeight;
+
+                bool bottomSevered = minY > 0;
+                bool topSevered = maxY < _graphHeight - 1;
+                float centerShift;
+                if (bottomSevered && topSevered)
+                    centerShift = 0f;
+                else if (topSevered)
+                    centerShift = -heightDiff * 0.5f;
+                else
+                    centerShift = heightDiff * 0.5f;
+
                 capsule.center = new Vector3(capsule.center.x,
-                    capsule.center.y - heightDiff * 0.5f,
+                    capsule.center.y + centerShift,
                     capsule.center.z);
             }
 

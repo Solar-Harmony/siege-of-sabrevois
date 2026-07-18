@@ -148,7 +148,7 @@ namespace Sabrevois.Gameplay
                 var cap  = GetComponent<CapsuleCollider>();
                 if (cap != null) 
                 {
-                    cap.radius = 0.06f; // keep raycastable but thin
+                    cap.radius = 0.2f; // thick enough to hit all body parts while lying face-down
                 }
                 
                 float targetY = gameObject.transform.position.y;
