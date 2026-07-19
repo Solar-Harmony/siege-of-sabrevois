@@ -19,7 +19,7 @@ namespace Sabrevois.Level.Water
         public float disturbStrength = 5.0f;
         
         [Tooltip("Toggle the real-time texture visualizer UI at the top left of the screen.")]
-        public bool debugDrawTexture = true;
+        public bool debugDrawTexture = false;
 
         private static readonly Queue<WaterDisturbance> _disturbances = new Queue<WaterDisturbance>();
         
@@ -119,9 +119,7 @@ namespace Sabrevois.Level.Water
             if (tex != null)
             {
                 GUI.color = Color.white;
-                // Making the debug view much larger
-                GUI.DrawTexture(new Rect(10, 10, 1024, 1024), tex, ScaleMode.ScaleToFit, false);
-                GUI.Label(new Rect(10, 530, 512, 20), "Water Ripples Debug");
+                GUI.DrawTexture(new Rect(10, 10, 256, 256), tex, ScaleMode.ScaleToFit, false);
             }
             else
             {

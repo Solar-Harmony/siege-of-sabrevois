@@ -2,23 +2,20 @@
 {
     Properties
     {
-        _MainTex ("Sprite Texture Layers (Texture2DArray)", 2DArray) = "white" {}
+        _MainTex ("Sprite Atlas Texture", 2D) = "white" {}
         _NoiseTex ("Noise Texture", 2D) = "white" {}
-        _WoundSliceIndex ("Wound Slice Index", Float) = 0
         _LayerCount ("Layer Count", Int) = 2
-        
-        [Header(Chroma Keying)]
-        _ChromaKey1 ("Chroma Key Color 1 (RGB)", Color) = (0, 1, 0, 1)
-        _ChromaKey2 ("Chroma Key Color 2 (RGB)", Color) = (1, 0, 1, 1)
-        _ChromaTolerance ("Chroma Tolerance", Range(0.0, 1.0)) = 0.02
-        _ChromaSoftness ("Chroma Softness Mask", Range(0.001, 1.0)) = 0.05
+        _LayerUV00_01 ("Layer UV0-1 (x,y / z,w)", Vector) = (0,0,0,0)
+        _LayerUV02_03 ("Layer UV2-3 (x,y / z,w)", Vector) = (0,0,0,0)
+        _LayerUV04_05 ("Layer UV4-5 (x,y / z,w)", Vector) = (0,0,0,0)
+        _LayerUV06_07 ("Layer UV6-7 (x,y / z,w)", Vector) = (0,0,0,0)
 
         [Header(Outline Settings)]
         _RimLayerOffset ("Rim Tex Layer Offset (e.g. -1 for Previous)", Int) = -1
         _RimThickness ("Rim Thickness", Range(0.01, 1.0)) = 0.2
         _RimSoftness ("Rim Border Softness", Range(0.001, 0.5)) = 0.05
         _RimDarken ("Rim Darken Multiplier", Range(0.0, 1.0)) = 0.3
-        
+
         [Header(GPU Billboard Settings)]
         [Toggle] _EnableBillboard ("Enable Horizontal GPU Billboard", Float) = 1.0
 
@@ -26,7 +23,7 @@
         _NoiseScale ("Noise Scale", Float) = 5.0
         _NoiseStrength ("Noise Tearing Strength", Float) = 0.8
         _NoiseUVOffset ("Rim Parallax (UV Warp)", Range(0.0, 0.2)) = 0.02
-        
+
         [Header(Parallax Settings)]
         _ParallaxStrength ("Parallax Strength", Range(0.0, 0.2)) = 0.03
 
@@ -34,13 +31,13 @@
         _HitImpulse ("Hit Impulse (X, Y, Strength, 0)", Vector) = (0, 0, 0, 0)
         _BloodColor ("Blood Color", Color) = (0.5, 0, 0, 1)
         _BloodAmountMultiplier ("Blood Prominence", Range(1.0, 10.0)) = 1.0
-        
+
         [Header(Lighting)]
         _VolumeDepth ("Volume Depth (Capsule)", Range(0.0, 2.0)) = 1.0
         _BaseBumpScale ("Base Procedural Normal Scale", Range(0.0, 20.0)) = 2.0
         _WoundBumpScale ("Wound Normal Bump Scale", Range(0.0, 20.0)) = 5.0
     }
-    
+
     HLSLINCLUDE
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
@@ -48,6 +45,7 @@
     {
         float4 positionOS   : POSITION;
         float2 uv           : TEXCOORD0;
+        float2 charUV       : TEXCOORD1;
         float3 normalOS     : NORMAL;
         UNITY_VERTEX_INPUT_INSTANCE_ID
     };
@@ -55,13 +53,14 @@
     struct Varyings
     {
         float2 uv           : TEXCOORD0;
+        float2 charUV       : TEXCOORD3;
         float4 positionHCS  : SV_POSITION;
         float3 positionWS   : TEXCOORD1;
         float3 normalWS     : TEXCOORD2;
         UNITY_VERTEX_INPUT_INSTANCE_ID
     };
 
-    TEXTURE2D_ARRAY(_MainTex);
+    TEXTURE2D(_MainTex);
     SAMPLER(sampler_MainTex);
 
     TEXTURE2D(_NoiseTex);
@@ -73,10 +72,10 @@
 
     CBUFFER_START(UnityPerMaterial)
         int _LayerCount;
-        half4 _ChromaKey1;
-        half4 _ChromaKey2;
-        float _ChromaTolerance;
-        float _ChromaSoftness;
+        float4 _LayerUV00_01;
+        float4 _LayerUV02_03;
+        float4 _LayerUV04_05;
+        float4 _LayerUV06_07;
         int _RimLayerOffset;
         float _RimThickness;
         float _RimSoftness;
@@ -98,16 +97,6 @@
         UNITY_DEFINE_INSTANCED_PROP(float4, _HitImpulse)
     UNITY_INSTANCING_BUFFER_END(Props)
 
-    float3 RGBtoHSV(float3 arg1)
-    {
-        float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-        float4 p = lerp(float4(arg1.bg, K.wz), float4(arg1.gb, K.xy), step(arg1.b, arg1.g));
-        float4 q = lerp(float4(p.xyw, arg1.r), float4(arg1.r, p.yzx), step(p.x, arg1.r));
-        float d = q.x - min(q.w, q.y);
-        float e = 1.0e-10;
-        return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
-    }
-
     Varyings vertCommon(Attributes input)
     {
         Varyings output = (Varyings)0;
@@ -115,31 +104,31 @@
         UNITY_TRANSFER_INSTANCE_ID(input, output);
 
         float3 positionOS = input.positionOS.xyz;
-        
+
         float4 hitImpulse = UNITY_ACCESS_INSTANCED_PROP(Props, _HitImpulse);
         float push = ((input.uv.x - 0.5) * 2.0 * hitImpulse.x + (input.uv.y - 0.5) * 2.0 * hitImpulse.y) * hitImpulse.z;
-        positionOS.z += push; 
+        positionOS.z += push;
 
-        if (_EnableBillboard > 0.5) 
+        if (_EnableBillboard > 0.5)
         {
             float3 centerWS = TransformObjectToWorld(float3(0, 0, 0));
             float3 viewDir = _WorldSpaceCameraPos - centerWS;
-            viewDir.y = 0; 
+            viewDir.y = 0;
             float len = length(viewDir);
             if (len > 0.001) viewDir /= len; else viewDir = float3(0,0,-1);
-            
+
             float3 upWS = float3(0, 1, 0);
             float3 rightWS = cross(upWS, viewDir);
             float3 forwardWS = -viewDir;
-            
+
             float scaleX = length(float3(UNITY_MATRIX_M[0].x, UNITY_MATRIX_M[1].x, UNITY_MATRIX_M[2].x));
             float scaleY = length(float3(UNITY_MATRIX_M[0].y, UNITY_MATRIX_M[1].y, UNITY_MATRIX_M[2].y));
-            
+
             float3 billboardPosWS = centerWS + rightWS * positionOS.x * scaleX + upWS * positionOS.y * scaleY + forwardWS * positionOS.z;
-            
+
             output.positionWS = billboardPosWS;
             output.positionHCS = TransformWorldToHClip(billboardPosWS);
-            
+
             float3 trueViewDirWS = _WorldSpaceCameraPos - centerWS;
             output.normalWS = length(trueViewDirWS) > 0.001 ? normalize(trueViewDirWS) : float3(0, 0, 1);
         }
@@ -151,29 +140,23 @@
         }
 
         output.uv = input.uv;
+        output.charUV = input.charUV;
         return output;
     }
 
-    half4 SampleLayerRaw(float2 uv, int index)
+    half4 SampleLayerAtlas(float2 uv, int layerIndex)
     {
-        index = clamp(index, 0, _LayerCount - 1);
-        half4 c = SAMPLE_TEXTURE2D_ARRAY(_MainTex, sampler_MainTex, uv, index);
-        
-        float3 hsv = RGBtoHSV(c.rgb);
-        float3 key1HSV = RGBtoHSV(_ChromaKey1.rgb);
-        float3 key2HSV = RGBtoHSV(_ChromaKey2.rgb);
-        
-        float hd1 = abs(hsv.x - key1HSV.x); hd1 = min(hd1, 1.0 - hd1);
-        float hd2 = abs(hsv.x - key2HSV.x); hd2 = min(hd2, 1.0 - hd2);
-        
-        float d1 = length(float3(hd1 * 2.0, abs(hsv.y - key1HSV.y)*0.5, abs(hsv.z - key1HSV.z)*0.2));
-        float d2 = length(float3(hd2 * 2.0, abs(hsv.y - key2HSV.y)*0.5, abs(hsv.z - key2HSV.z)*0.2));
-        
-        float d = min(d1, d2);
-        float chromaMask = smoothstep(_ChromaTolerance, _ChromaTolerance + _ChromaSoftness, d);
-        c.a = min(c.a, chromaMask);
-        
-        return c;
+        layerIndex = clamp(layerIndex, 0, _LayerCount - 1);
+        float2 delta;
+        if (layerIndex == 0) delta = _LayerUV00_01.xy;
+        else if (layerIndex == 1) delta = _LayerUV00_01.zw;
+        else if (layerIndex == 2) delta = _LayerUV02_03.xy;
+        else if (layerIndex == 3) delta = _LayerUV02_03.zw;
+        else if (layerIndex == 4) delta = _LayerUV04_05.xy;
+        else if (layerIndex == 5) delta = _LayerUV04_05.zw;
+        else if (layerIndex == 6) delta = _LayerUV06_07.xy;
+        else delta = _LayerUV06_07.zw;
+        return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv + delta);
     }
 
     float GetWoundDepth(float2 uv, int sliceIndex)
@@ -188,8 +171,9 @@
     {
         int sliceIndex = (int)UNITY_ACCESS_INSTANCED_PROP(Props, _WoundSliceIndex);
 
-        // Tangent-space view ray in the billboard basis (right / up / toward camera).
-        // Dividing by z gives a true perspective offset; z is clamped to limit smearing at grazing angles.
+        float2 charUV = input.charUV;
+        float2 atlasUV = input.uv;
+
         float3 viewDirWS = normalize(_WorldSpaceCameraPos - input.positionWS);
         float3 flatViewDirWS = viewDirWS;
         flatViewDirWS.y = 0;
@@ -200,105 +184,89 @@
         float viewZ = max(dot(viewDirWS, flatViewDirWS), 0.3);
         float2 parallaxDir = viewDirTS / viewZ;
 
-        // March the view ray to the wound floor: offset is proportional to the actual
-        // continuous depth, refined iteratively so the floor UV and its depth agree.
-        float surfaceDepth = GetWoundDepth(input.uv, sliceIndex);
+        float surfaceDepth = GetWoundDepth(charUV, sliceIndex);
         float depth = surfaceDepth;
-        float2 uvF = input.uv;
+        float2 charUVF = charUV;
         [unroll]
         for (int it = 0; it < 2; it++)
         {
-            uvF = input.uv - parallaxDir * (min(depth, (float)_LayerCount) * _ParallaxStrength);
-            depth = GetWoundDepth(uvF, sliceIndex);
+            charUVF = charUV - parallaxDir * (min(depth, (float)_LayerCount) * _ParallaxStrength);
+            depth = GetWoundDepth(charUVF, sliceIndex);
         }
         outDepth = depth;
 
-        float2 splatDataF = SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, uvF, sliceIndex).rg;
+        float2 splatDataF = SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, charUVF, sliceIndex).rg;
         float splatVal = splatDataF.r;
         float hasBlood = splatDataF.g;
-        float noise = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, uvF * _NoiseScale).r;
+        float noise = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, charUVF * _NoiseScale).r;
 
-        // The wound floor is one continuous surface at 'depth' — every layer samples the
-        // same floor UV, so blended layers can't slide apart (no double-image ghosting).
+        float2 parallaxOffset = charUV - charUVF;
+
         int layerIndex = clamp((int)floor(depth), 0, _LayerCount - 1);
-        half4 finalColor = SampleLayerRaw(uvF, layerIndex);
-        
+        half4 finalColor = SampleLayerAtlas(atlasUV - parallaxOffset, layerIndex);
+
         float progressToNextLayer = frac(depth);
         float layerBlend = smoothstep(0.0, 0.35, progressToNextLayer);
-        
+
         if (layerIndex < _LayerCount - 1 && progressToNextLayer > 0.01)
         {
-            half4 nextLayerColor = SampleLayerRaw(uvF, layerIndex + 1);
+            half4 nextLayerColor = SampleLayerAtlas(atlasUV - parallaxOffset, layerIndex + 1);
             finalColor = lerp(finalColor, nextLayerColor, layerBlend);
         }
 
-        // Hole cutout tracks the surface mask so silhouettes (severed limbs) don't swim with the camera
         float holeFeather = smoothstep(_LayerCount - 0.8, _LayerCount + 0.8, surfaceDepth);
         finalColor.a *= 1.0 - holeFeather;
-        
+
         float rimBoundary = round(depth);
         float rimHalfWidth = _RimThickness * 0.5;
         float rimDist = abs(depth - rimBoundary);
         float rimBlend = 1.0 - smoothstep(max(0.0, rimHalfWidth - _RimSoftness), rimHalfWidth, rimDist);
         if (rimBoundary >= 1.0 && rimBoundary <= (float)(_LayerCount - 1) && rimBlend > 0.001)
         {
-            float2 rimUV = uvF + (noise - 0.5) * _NoiseUVOffset;
-            half4 rimTexColor = SampleLayerRaw(rimUV, (int)rimBoundary + _RimLayerOffset);
-            
+            float2 rimCharUV = charUVF + (noise - 0.5) * _NoiseUVOffset;
+            float2 rimAtlasUV = atlasUV - parallaxOffset + (noise - 0.5) * _NoiseUVOffset;
+            half4 rimTexColor = SampleLayerAtlas(rimAtlasUV, (int)rimBoundary + _RimLayerOffset);
+
             half3 darkenedRim = rimTexColor.rgb * (1.0 - _RimDarken);
             half3 darkenedFinal = finalColor.rgb * (1.0 - _RimDarken);
             half3 rimTargetColor = lerp(darkenedFinal, darkenedRim, rimTexColor.a);
-            
-            // Replaced unreliable ddy with a physical upward shift sampling to firmly isolate the bottom sill geometry!
-            float splatUp = SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, uvF + float2(0, 0.01 * _BloodAmountMultiplier), sliceIndex).r;
+
+            float splatUp = SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, charUVF + float2(0, 0.01 * _BloodAmountMultiplier), sliceIndex).r;
             float bottomFactor = saturate((splatUp - splatVal) * 10.0);
-            
+
             float bloodAmount = bottomFactor * step(0.1, hasBlood);
             half3 bloodColor = _BloodColor.rgb;
-            
+
             rimTargetColor = lerp(rimTargetColor, bloodColor, bloodAmount * 0.95);
             finalColor.rgb = lerp(finalColor.rgb, rimTargetColor, rimBlend);
         }
 
-        half4 cleanBase = SampleLayerRaw(input.uv, 0);
+        half4 cleanBase = SampleLayerAtlas(atlasUV, 0);
         float woundEdge = smoothstep(0.0, 0.25, surfaceDepth);
         finalColor = lerp(cleanBase, finalColor, woundEdge);
 
-        // --- Procedural Normal Generation ---
-        
-        // 1. Volumetric Normal (capsule approximation based on UV)
-        // Treats the 2D plane like a 3D cylindrical/spherical volume for lighting
-        float2 centeredUV = input.uv * 2.0 - 1.0;
-        // Dampen Y to make it more like a capsule since characters are taller than wide
-        centeredUV.y *= 0.5; 
+        float2 centeredUV = charUV * 2.0 - 1.0;
+        centeredUV.y *= 0.5;
         float sqrDist = saturate(dot(centeredUV, centeredUV));
         float zDepth = sqrt(max(0.001, 1.0 - sqrDist));
         float3 volumeNormal = normalize(float3(centeredUV.x * _VolumeDepth, centeredUV.y * _VolumeDepth, zDepth));
-        
-        // 2. Calculate an artificial height using the luminance of the final color. 
-        // Multiplying by alpha ensures a bevel along the outer edges of the sprite.
+
         float baseHeight = dot(finalColor.rgb, float3(0.299, 0.587, 0.114)) * finalColor.a;
-        
-        // 3. Use screen-space derivatives to compute normal gradients for the base texture
+
         float dhx = ddx(baseHeight);
         float dhy = ddy(baseHeight);
         float3 detailNormal = normalize(float3(-dhx * _BaseBumpScale, -dhy * _BaseBumpScale, 1.0));
-        
-        // Blend volume and detail normal
+
         float3 baseNormal = normalize(float3(volumeNormal.xy + detailNormal.xy, volumeNormal.z * detailNormal.z));
-        
-        // 4. Wound crater normal from the depth-field gradient in UV space.
-        // For a depth field (positive = into the surface) the tangent normal is (+dD/du, +dD/dv, 1);
-        // UV-space central differences are zoom-independent and orientation-safe, unlike ddx/ddy.
+
         float2 gradStep = max(_GlobalWoundSplatmap_TexelSize.xy, 1.0 / 1024.0) * 1.5;
-        float dRight = GetWoundDepth(uvF + float2(gradStep.x, 0), sliceIndex);
-        float dLeft  = GetWoundDepth(uvF - float2(gradStep.x, 0), sliceIndex);
-        float dUp    = GetWoundDepth(uvF + float2(0, gradStep.y), sliceIndex);
-        float dDown  = GetWoundDepth(uvF - float2(0, gradStep.y), sliceIndex);
+        float dRight = GetWoundDepth(charUVF + float2(gradStep.x, 0), sliceIndex);
+        float dLeft  = GetWoundDepth(charUVF - float2(gradStep.x, 0), sliceIndex);
+        float dUp    = GetWoundDepth(charUVF + float2(0, gradStep.y), sliceIndex);
+        float dDown  = GetWoundDepth(charUVF - float2(0, gradStep.y), sliceIndex);
         float2 depthDelta = clamp(float2(dRight - dLeft, dUp - dDown) * 0.5, -2.0, 2.0);
         float3 woundNormal = normalize(float3(depthDelta * _WoundBumpScale, 1.0));
-        
-        // 5. Combine the base sprite depth with the wound depth
+
         outNormalTS = normalize(float3(baseNormal.xy + woundNormal.xy, baseNormal.z * woundNormal.z));
 
         return finalColor;
@@ -324,7 +292,7 @@
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_instancing
-            
+
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
@@ -347,7 +315,7 @@
             half4 frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                
+
                 float outDepth = 0.0;
                 float3 normalTS = float3(0,0,1);
                 half4 finalColor = GetFinalColor(input, outDepth, normalTS);
@@ -359,7 +327,7 @@
                 surfaceData.alpha = finalColor.a;
                 surfaceData.metallic = 0.0;
                 surfaceData.smoothness = 0.1;
-                
+
                 surfaceData.emission = float3(0, 0, 0);
                 surfaceData.occlusion = 1.0;
                 surfaceData.clearCoatMask = 0.0;
@@ -370,13 +338,13 @@
                 inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
                 inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                 inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionHCS);
-                
+
                 float3 n;
                 if (_EnableBillboard < 0.5f)
                     n = inputData.viewDirectionWS;
                 else
                     n = normalize(input.normalWS);
-                float3 up = abs(n.y) > 0.999 ? float3(0,0,1) : float3(0,1,0); 
+                float3 up = abs(n.y) > 0.999 ? float3(0,0,1) : float3(0,1,0);
                 float3 t = normalize(cross(up, n));
                 float3 b = normalize(cross(n, t));
                 half3x3 tbn = half3x3(t, b, n);
@@ -387,7 +355,7 @@
 
                 inputData.bakedGI = SampleSH(inputData.normalWS);
                 inputData.shadowMask = half4(1, 1, 1, 1);
-                
+
                 surfaceData.normalTS = float3(0, 0, 1);
 
                 half4 litColor = UniversalFragmentPBR(inputData, surfaceData);
@@ -417,7 +385,6 @@
 
             Varyings vert(Attributes input)
             {
-                // Note: Standard shadow caster applies a bias to positionHCS
                 Varyings output = vertCommon(input);
                 #if UNITY_REVERSED_Z
                 output.positionHCS.z = min(output.positionHCS.z, output.positionHCS.w * UNITY_NEAR_CLIP_VALUE);

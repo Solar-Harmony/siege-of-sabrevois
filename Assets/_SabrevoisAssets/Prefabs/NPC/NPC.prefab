@@ -255,34 +255,11 @@ MonoBehaviour:
   _bloodPoolGrowthDuration: 10
   _bloodPoolMinSize: 0.6
   _bloodPoolMaxSize: 0.8
-  _bodyPartsMask: {fileID: 2800000, guid: 2909705b61f79984694323b0d4105059, type: 3}
-  _bodyPartMappings:
-  - Color: {r: 1, g: 0, b: 0, a: 0}
-    PartName: ArmR
-    IsEssential: 0
-  - Color: {r: 0, g: 0, b: 1, a: 0}
-    PartName: ArmL
-    IsEssential: 0
-  - Color: {r: 0, g: 0.5019608, b: 0, a: 0}
-    PartName: LegR
-    IsEssential: 0
-  - Color: {r: 0, g: 0, b: 0.5019608, a: 0}
-    PartName: LegL
-    IsEssential: 0
-  - Color: {r: 0.5019608, g: 0, b: 0, a: 0}
-    PartName: Head
-    IsEssential: 1
-  - Color: {r: 0, g: 1, b: 0, a: 0}
-    PartName: Torso
-    IsEssential: 1
-  - Color: {r: 0, g: 0.5019608, b: 0.5019608, a: 0}
-    PartName: Tail
-    IsEssential: 0
   _bloodVFXDepthThreshold: 4
   _minBleedDuration: 0.2
   _maxBleedDuration: 1
   _hitImpulseStrength: 0.2
-  _connectivityGraph: {fileID: 11400000, guid: 871b407414ea85a4da42c55a0b4b5b07, type: 2}
+  _atlasData: {fileID: 11400000, guid: 6b2f660282dece44e9414422f58cf371, type: 2}
   _groundLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295

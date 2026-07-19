@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6457d5f3b9084dd4da54c23505dc0939, type: 3}
   m_Name: Default Validator Config
   m_EditorClassIdentifier: abzorba.artificetoolkit.editor::ArtificeToolkit.Editor.Artifice_SCR_ValidatorConfig
-  autorun: 0
+  autorun: 1
   batchingPriority: 150
   useCustomBatchingValue: 0
   customBatchingValue: 0

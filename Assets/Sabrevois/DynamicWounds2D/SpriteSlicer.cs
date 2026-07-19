@@ -11,7 +11,8 @@ namespace SolarHarmony.DynamicWounds2D
             ISeveredPartFactory severedPartFactory = null,
             Vector3 hitDirection = default,
             GlobalWoundManager woundManager = null,
-            LayerMask groundLayers = default)
+            LayerMask groundLayers = default,
+            CharacterAtlasData atlasData = null)
         {
             if (sourceRenderer == null || disconnectedNodes.Count == 0) return null;
 
@@ -36,7 +37,8 @@ namespace SolarHarmony.DynamicWounds2D
             Vector3 cameraDir3D = Camera.main != null
                 ? (Camera.main.transform.position - sourceRenderer.transform.position).normalized
                 : viewDir;
-            severedPart.transform.position = sourceRenderer.transform.position + cameraDir3D * 0.05f + Vector3.up * 0.15f;
+            severedPart.transform.position = sourceRenderer.transform.position
+                + cameraDir3D * 0.05f + Vector3.up * 0.15f;
 
             severedPart.transform.localScale = sourceRenderer.transform.lossyScale;
 
@@ -63,8 +65,33 @@ namespace SolarHarmony.DynamicWounds2D
 
             Mesh mesh = new Mesh();
             List<Vector3> vertices = new List<Vector3>();
-            List<Vector2> uvs = new List<Vector2>();
+            List<Vector2> atlasUvs = new List<Vector2>();
+            List<Vector2> charUvs = new List<Vector2>();
             List<int> triangles = new List<int>();
+
+            float invTexW = 1f;
+            float invTexH = 1f;
+            float spriteX = 0f;
+            float spriteY = 0f;
+            float spriteW = 1f;
+            float spriteH = 1f;
+
+            if (atlasData != null && atlasData.LayerSprites != null && atlasData.LayerSprites.Count > 0)
+            {
+                var sprite0 = atlasData.LayerSprites[0];
+                if (sprite0 != null)
+                {
+                    var r = sprite0.rect;
+                    float tw = sprite0.texture != null ? sprite0.texture.width : 1024f;
+                    float th = sprite0.texture != null ? sprite0.texture.height : 1024f;
+                    invTexW = 1f / tw;
+                    invTexH = 1f / th;
+                    spriteX = r.x * invTexW;
+                    spriteY = r.y * invTexH;
+                    spriteW = r.width * invTexW;
+                    spriteH = r.height * invTexH;
+                }
+            }
 
             float stepX = initialBounds.size.x / gridResolution;
             float stepY = initialBounds.size.y / gridResolution;
@@ -82,10 +109,20 @@ namespace SolarHarmony.DynamicWounds2D
                 vertices.Add(new Vector3(x, y2, 0));
                 vertices.Add(new Vector3(x2, y2, 0));
 
-                uvs.Add(new Vector2((float)node.x / gridResolution, (float)node.y / gridResolution));
-                uvs.Add(new Vector2((node.x + 1f) / gridResolution, (float)node.y / gridResolution));
-                uvs.Add(new Vector2((float)node.x / gridResolution, (node.y + 1f) / gridResolution));
-                uvs.Add(new Vector2((node.x + 1f) / gridResolution, (node.y + 1f) / gridResolution));
+                float cu0 = (float)node.x / gridResolution;
+                float cv0 = (float)node.y / gridResolution;
+                float cu1 = (node.x + 1f) / gridResolution;
+                float cv1 = (node.y + 1f) / gridResolution;
+
+                atlasUvs.Add(new Vector2(spriteX + cu0 * spriteW, spriteY + cv0 * spriteH));
+                atlasUvs.Add(new Vector2(spriteX + cu1 * spriteW, spriteY + cv0 * spriteH));
+                atlasUvs.Add(new Vector2(spriteX + cu0 * spriteW, spriteY + cv1 * spriteH));
+                atlasUvs.Add(new Vector2(spriteX + cu1 * spriteW, spriteY + cv1 * spriteH));
+
+                charUvs.Add(new Vector2(cu0, cv0));
+                charUvs.Add(new Vector2(cu1, cv0));
+                charUvs.Add(new Vector2(cu0, cv1));
+                charUvs.Add(new Vector2(cu1, cv1));
 
                 triangles.Add(vIndex);
                 triangles.Add(vIndex + 2);
@@ -98,9 +135,10 @@ namespace SolarHarmony.DynamicWounds2D
                 vIndex += 4;
             }
 
-            mesh.vertices = vertices.ToArray();
-            mesh.uv = uvs.ToArray();
-            mesh.triangles = triangles.ToArray();
+            mesh.SetVertices(vertices);
+            mesh.SetUVs(0, atlasUvs);
+            mesh.SetUVs(1, charUvs);
+            mesh.SetTriangles(triangles, 0);
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
 
@@ -130,8 +168,9 @@ namespace SolarHarmony.DynamicWounds2D
                         Physics.IgnoreCollision(col, rc);
                 }
                 rb.AddForce(Vector3.up * 2f + Random.insideUnitSphere * 1.5f, ForceMode.VelocityChange);
-                rb.angularVelocity = new Vector3(Random.Range(-8f, 8f), Random.Range(-8f, 8f), Random.Range(-8f, 8f));
-                UnityEngine.Object.Destroy(severedPart, 10f);
+                rb.angularVelocity = new Vector3(
+                    Random.Range(-8f, 8f), Random.Range(-8f, 8f), Random.Range(-8f, 8f));
+                Object.Destroy(severedPart, 10f);
             }
 
             return severedPart;
@@ -143,7 +182,8 @@ namespace SolarHarmony.DynamicWounds2D
         private int _sliceIndex = -1;
         private GlobalWoundManager _woundManager;
 
-        public static void Attach(GameObject go, int sliceIndex, GlobalWoundManager woundManager = null)
+        public static void Attach(GameObject go, int sliceIndex,
+            GlobalWoundManager woundManager = null)
         {
             var tracker = go.AddComponent<SeveredPartSliceTracker>();
             tracker._sliceIndex = sliceIndex;
