@@ -39,6 +39,8 @@ namespace SolarHarmony.DynamicWounds2D
                 _availableSlices.Enqueue(i);
 
             Shader.SetGlobalTexture("_GlobalWoundSplatmap", _splatmapArray);
+            Shader.SetGlobalVector("_GlobalWoundSplatmap_TexelSize",
+                new Vector4(1f / _splatmapResolution, 1f / _splatmapResolution, _splatmapResolution, _splatmapResolution));
 
             if (_woundSplatterCompute != null)
             {

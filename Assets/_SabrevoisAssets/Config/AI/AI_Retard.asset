@@ -14,78 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: AI::Sabrevois.AI.Archetype
   Actions:
   - ActionConfig:
-      rid: 8963859363900948564
-    Preconditions:
-    - Source:
-        rid: 8963859363900948565
-      Operator: 4
-      Threshold: 1
-    Considerations:
-    - Source:
-        rid: 8963859377713578054
-      Curve:
-        serializedVersion: 2
-        m_Curve:
-        - serializedVersion: 3
-          time: 0.0499292
-          value: 1.0141494
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 34
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0.33333334
-        - serializedVersion: 3
-          time: 1.0499291
-          value: 1.0141494
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 34
-          weightedMode: 0
-          inWeight: 0.33333334
-          outWeight: 0
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-  - ActionConfig:
-      rid: 8963859363900948548
-    Preconditions:
-    - Source:
-        rid: 8963859363900948552
-      Operator: 3
-      Threshold: 1
-    - Source:
-        rid: 8963859363900948553
-      Operator: 4
-      Threshold: 0
-    Considerations:
-    - Source:
-        rid: 8963859363900948566
-      Curve:
-        serializedVersion: 2
-        m_Curve:
-        - serializedVersion: 3
-          time: 0.09291031
-          value: 0.5035385
-          inSlope: -0.0022059637
-          outSlope: -0.0022059637
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 1
-        - serializedVersion: 3
-          time: 1.0929103
-          value: 0.5035385
-          inSlope: 0.00041004844
-          outSlope: 0.00041004844
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0.6885704
-          outWeight: 0
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-  - ActionConfig:
       rid: 6057649637045567557
     Preconditions:
     - Source:
@@ -339,17 +267,6 @@ MonoBehaviour:
     - rid: 6057649637045567559
       type: {class: RandomSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 
-    - rid: 8963859363900948548
-      type: {class: FindConversationPartnerActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
-      data:
-        EnergyCost: 1
-        SearchRadius: 25
-    - rid: 8963859363900948552
-      type: {class: WantsConversationDataSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
-      data: 
-    - rid: 8963859363900948553
-      type: {class: HasConversationPartnerDataSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
-      data: 
     - rid: 8963859363900948555
       type: {class: AttackActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
       data:
@@ -373,17 +290,4 @@ MonoBehaviour:
       data: 
     - rid: 8963859363900948563
       type: {class: HealthPercentageSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
-      data: 
-    - rid: 8963859363900948564
-      type: {class: SaySomethingActionConfig, ns: Sabrevois.Gameplay.AI.Actions, asm: Gameplay}
-      data:
-        EnergyCost: 0
-    - rid: 8963859363900948565
-      type: {class: HasConversationPartnerDataSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
-      data: 
-    - rid: 8963859363900948566
-      type: {class: RandomSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
-      data: 
-    - rid: 8963859377713578054
-      type: {class: RandomSource, ns: Sabrevois.Gameplay.AI.DataSources, asm: Gameplay}
       data: 

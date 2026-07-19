@@ -69,6 +69,7 @@
 
     TEXTURE2D_ARRAY(_GlobalWoundSplatmap);
     SAMPLER(sampler_GlobalWoundSplatmap);
+    float4 _GlobalWoundSplatmap_TexelSize;
 
     CBUFFER_START(UnityPerMaterial)
         int _LayerCount;
@@ -175,45 +176,65 @@
         return c;
     }
 
+    float GetWoundDepth(float2 uv, int sliceIndex)
+    {
+        float splat = SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, uv, sliceIndex).r;
+        float n = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, uv * _NoiseScale).r;
+        float noiseAmount = (n - 0.5) * _NoiseStrength * smoothstep(0.0, 0.25, splat);
+        return max(0.0, splat + noiseAmount);
+    }
+
     half4 GetFinalColor(Varyings input, out float outDepth, out float3 outNormalTS)
     {
         int sliceIndex = (int)UNITY_ACCESS_INSTANCED_PROP(Props, _WoundSliceIndex);
 
+        // Tangent-space view ray in the billboard basis (right / up / toward camera).
+        // Dividing by z gives a true perspective offset; z is clamped to limit smearing at grazing angles.
         float3 viewDirWS = normalize(_WorldSpaceCameraPos - input.positionWS);
         float3 flatViewDirWS = viewDirWS;
         flatViewDirWS.y = 0;
         float len = length(flatViewDirWS);
         if (len > 0.001) flatViewDirWS /= len; else flatViewDirWS = float3(0,0,-1);
-        float2 viewDirUV = float2(dot(viewDirWS, cross(float3(0,1,0), flatViewDirWS)), dot(viewDirWS, float3(0,1,0)));
+        float3 rightWS = cross(float3(0,1,0), flatViewDirWS);
+        float2 viewDirTS = float2(dot(viewDirWS, rightWS), dot(viewDirWS, float3(0,1,0)));
+        float viewZ = max(dot(viewDirWS, flatViewDirWS), 0.3);
+        float2 parallaxDir = viewDirTS / viewZ;
 
-        float2 splatData = SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, input.uv, sliceIndex).rg;
-        float splatVal = splatData.r;
-        float hasBlood = splatData.g;
-        float noise = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, input.uv * _NoiseScale).r;
-
-        float noiseAmount = (noise - 0.5) * _NoiseStrength * smoothstep(0.0, 0.25, splatVal);
-        float depth = max(0.0, splatVal + noiseAmount);
+        // March the view ray to the wound floor: offset is proportional to the actual
+        // continuous depth, refined iteratively so the floor UV and its depth agree.
+        float surfaceDepth = GetWoundDepth(input.uv, sliceIndex);
+        float depth = surfaceDepth;
+        float2 uvF = input.uv;
+        [unroll]
+        for (int it = 0; it < 2; it++)
+        {
+            uvF = input.uv - parallaxDir * (min(depth, (float)_LayerCount) * _ParallaxStrength);
+            depth = GetWoundDepth(uvF, sliceIndex);
+        }
         outDepth = depth;
-        
+
+        float2 splatDataF = SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, uvF, sliceIndex).rg;
+        float splatVal = splatDataF.r;
+        float hasBlood = splatDataF.g;
+        float noise = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, uvF * _NoiseScale).r;
+
+        // The wound floor is one continuous surface at 'depth' — every layer samples the
+        // same floor UV, so blended layers can't slide apart (no double-image ghosting).
         int layerIndex = clamp((int)floor(depth), 0, _LayerCount - 1);
-        float2 paraUV1 = input.uv - viewDirUV * (layerIndex * _ParallaxStrength);
-        half4 finalColor = SampleLayerRaw(paraUV1, layerIndex);
+        half4 finalColor = SampleLayerRaw(uvF, layerIndex);
         
         float progressToNextLayer = frac(depth);
         float layerBlend = smoothstep(0.0, 0.35, progressToNextLayer);
         
         if (layerIndex < _LayerCount - 1 && progressToNextLayer > 0.01)
         {
-            float2 paraUV2 = input.uv - viewDirUV * ((layerIndex + 1) * _ParallaxStrength);
-            half4 nextLayerColor = SampleLayerRaw(paraUV2, layerIndex + 1);
+            half4 nextLayerColor = SampleLayerRaw(uvF, layerIndex + 1);
             finalColor = lerp(finalColor, nextLayerColor, layerBlend);
         }
 
-        if (layerIndex >= _LayerCount - 1)
-        {
-            float holeFeather = smoothstep(_LayerCount - 0.8, _LayerCount + 0.8, depth);
-            finalColor.a *= 1.0 - holeFeather;
-        }
+        // Hole cutout tracks the surface mask so silhouettes (severed limbs) don't swim with the camera
+        float holeFeather = smoothstep(_LayerCount - 0.8, _LayerCount + 0.8, surfaceDepth);
+        finalColor.a *= 1.0 - holeFeather;
         
         float rimBoundary = round(depth);
         float rimHalfWidth = _RimThickness * 0.5;
@@ -221,9 +242,7 @@
         float rimBlend = 1.0 - smoothstep(max(0.0, rimHalfWidth - _RimSoftness), rimHalfWidth, rimDist);
         if (rimBoundary >= 1.0 && rimBoundary <= (float)(_LayerCount - 1) && rimBlend > 0.001)
         {
-            int rimShallowLayer = (int)rimBoundary - 1;
-            float2 rimParaUV = input.uv - viewDirUV * (rimShallowLayer * _ParallaxStrength);
-            float2 rimUV = rimParaUV + (noise - 0.5) * _NoiseUVOffset;
+            float2 rimUV = uvF + (noise - 0.5) * _NoiseUVOffset;
             half4 rimTexColor = SampleLayerRaw(rimUV, (int)rimBoundary + _RimLayerOffset);
             
             half3 darkenedRim = rimTexColor.rgb * (1.0 - _RimDarken);
@@ -231,7 +250,7 @@
             half3 rimTargetColor = lerp(darkenedFinal, darkenedRim, rimTexColor.a);
             
             // Replaced unreliable ddy with a physical upward shift sampling to firmly isolate the bottom sill geometry!
-            float splatUp = SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, input.uv + float2(0, 0.01 * _BloodAmountMultiplier), sliceIndex).r;
+            float splatUp = SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, uvF + float2(0, 0.01 * _BloodAmountMultiplier), sliceIndex).r;
             float bottomFactor = saturate((splatUp - splatVal) * 10.0);
             
             float bloodAmount = bottomFactor * step(0.1, hasBlood);
@@ -242,7 +261,7 @@
         }
 
         half4 cleanBase = SampleLayerRaw(input.uv, 0);
-        float woundEdge = smoothstep(0.0, 0.25, depth);
+        float woundEdge = smoothstep(0.0, 0.25, surfaceDepth);
         finalColor = lerp(cleanBase, finalColor, woundEdge);
 
         // --- Procedural Normal Generation ---
@@ -268,10 +287,16 @@
         // Blend volume and detail normal
         float3 baseNormal = normalize(float3(volumeNormal.xy + detailNormal.xy, volumeNormal.z * detailNormal.z));
         
-        // 4. Extract the wound normal from the procedural wound depth the same way
-        float wdx = ddx(outDepth);
-        float wdy = ddy(outDepth);
-        float3 woundNormal = normalize(float3(-wdx * _WoundBumpScale, -wdy * _WoundBumpScale, 1.0));
+        // 4. Wound crater normal from the depth-field gradient in UV space.
+        // For a depth field (positive = into the surface) the tangent normal is (+dD/du, +dD/dv, 1);
+        // UV-space central differences are zoom-independent and orientation-safe, unlike ddx/ddy.
+        float2 gradStep = max(_GlobalWoundSplatmap_TexelSize.xy, 1.0 / 1024.0) * 1.5;
+        float dRight = GetWoundDepth(uvF + float2(gradStep.x, 0), sliceIndex);
+        float dLeft  = GetWoundDepth(uvF - float2(gradStep.x, 0), sliceIndex);
+        float dUp    = GetWoundDepth(uvF + float2(0, gradStep.y), sliceIndex);
+        float dDown  = GetWoundDepth(uvF - float2(0, gradStep.y), sliceIndex);
+        float2 depthDelta = clamp(float2(dRight - dLeft, dUp - dDown) * 0.5, -2.0, 2.0);
+        float3 woundNormal = normalize(float3(depthDelta * _WoundBumpScale, 1.0));
         
         // 5. Combine the base sprite depth with the wound depth
         outNormalTS = normalize(float3(baseNormal.xy + woundNormal.xy, baseNormal.z * woundNormal.z));
