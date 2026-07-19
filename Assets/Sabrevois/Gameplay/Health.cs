@@ -61,7 +61,7 @@ namespace Sabrevois.Gameplay
         private CapsuleCollider _cachedCapsule;
         private float _previousVisibleHeightFraction = 1f;
 
-        public float GetResistanceAtDepth(float depth)
+        public float GetResistanceAtDepth(float depth, CharacterAtlasData atlas = null, int bodyPartIndex = -1)
         {
             float resistance = 0f;
             float maxMet = -1f;
@@ -75,9 +75,10 @@ namespace Sabrevois.Gameplay
                 }
             }
 
-            var atlas = _woundsComponent?.AtlasData;
-            if (atlas != null)
-                resistance += atlas.GetBodyPartArmour(_woundsComponent.LastHitBodyPartIndex);
+            var effectiveAtlas = atlas ?? _woundsComponent?.AtlasData;
+            int effectiveIndex = bodyPartIndex >= 0 ? bodyPartIndex : _woundsComponent?.LastHitBodyPartIndex ?? -1;
+            if (effectiveAtlas != null)
+                resistance += effectiveAtlas.GetBodyPartArmour(effectiveIndex);
 
             return Mathf.Min(resistance, 100f);
         }

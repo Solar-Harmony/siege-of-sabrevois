@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DynamicWounds2D::SolarHarmony.DynamicWounds2D.CharacterAtlasData
   _sourceTexture: {fileID: 2800000, guid: 18543132406cf1e4b91b009c3f449361, type: 3}
   LayerSprites:
-  - {fileID: 544641745, guid: 18543132406cf1e4b91b009c3f449361, type: 3}
+  - {fileID: 21300000, guid: 18543132406cf1e4b91b009c3f449361, type: 3}
   BodyPartsMask: {fileID: 0}
   BodyPartMappings: []
   NormalMap: {fileID: 0}

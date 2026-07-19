@@ -59,7 +59,7 @@ namespace Sabrevois.Gameplay.AI.Actions
                 }
 
                 float weaponPenetration = woundPenetration;
-                bool isEssential = true;
+                bool isEssential = false;
                 bool isBleeding = false;
 
                 float woundDepth = 0f;
@@ -79,16 +79,25 @@ namespace Sabrevois.Gameplay.AI.Actions
                         woundDepth = wounds.ApplyWound(hit, trueHitNormal, woundRadius, weaponPenetration, hitVelocity, out isEssential, out isBleeding, out resistance, out damage);
                     }
                 }
+                else if (allWounds.Length > 0)
+                {
+                    // Grid cells are dead at this point (limb severed / flesh gone),
+                    // but we still need to accumulate wound depth so resistance
+                    // tracks correctly.  Without this, GetResistanceAtDepth(0f)
+                    // fires every hit with zero layer-rule resistance.
+                    wounds = allWounds[0];
+
+                    if (health != null && health.IsDead)
+                    {
+                        woundDepth = wounds.ApplyWoundAtPoint(hit.point, trueHitNormal, woundRadius, weaponPenetration, out isEssential, out isBleeding, out resistance, out damage);
+                    }
+                    else
+                    {
+                        woundDepth = wounds.ApplyWound(hit, trueHitNormal, woundRadius, weaponPenetration, Vector3.zero, out isEssential, out isBleeding, out resistance, out damage);
+                    }
+                }
                 else if (health != null)
                 {
-                    // No solid WoundsComponent at hit point (grid cells dead / limb severed).
-                    // Still try to identify the body part for correct resistance and essential detection.
-                    foreach (var wc in allWounds)
-                    {
-                        if (wc.TryMatchBodyPartAtWorld(hit.point, out _, out isEssential))
-                            break;
-                    }
-
                     resistance = health.GetResistanceAtDepth(0f);
                     damage = weaponPenetration * (1f - resistance / 100f);
                     woundDepth = damage;

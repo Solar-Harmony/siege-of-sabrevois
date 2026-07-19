@@ -428,8 +428,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: DynamicWounds2D::SolarHarmony.DynamicWounds2D.WoundsComponent
   _renderer: {fileID: 4227765241374053879}
   _severeWoundVFX: {fileID: 9104211161659438896, guid: a35d114cb5c8cfe42b660eb47fc583b5, type: 3}
-  _bloodVFX: {fileID: 8771800446612668594}
-  _woundImpactVFX: {fileID: 0}
+  _bloodPrefab: {fileID: 9104211161659438896, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
+  _woundImpactVFX: {fileID: 9104211161659438896, guid: 29cdcd012eea1454787844cb044affea, type: 3}
   _bloodPoolPrefab: {fileID: 7078304527254770000, guid: a61dc7b4cbd80e64a80e35dda5b38176, type: 3}
   _bloodPoolGrowthDuration: 5
   _bloodPoolMinSize: 0.8
@@ -438,7 +438,7 @@ MonoBehaviour:
   _minBleedDuration: 1
   _maxBleedDuration: 4
   _hitImpulseStrength: 0.4
-  _bloodColor: {r: 0.2976837, g: 0.43642077, b: 0.97304577, a: 1}
+  _bloodColor: {r: 0.9137466, g: 0.8812543, b: 0.58001965, a: 1}
   _atlasData: {fileID: 11400000, guid: 327c3003ddc9b1446a457c8804ea8c7a, type: 2}
   _groundLayerMask:
     serializedVersion: 2
@@ -548,8 +548,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: DynamicWounds2D::SolarHarmony.DynamicWounds2D.WoundsComponent
   _renderer: {fileID: 4578955337260560892}
   _severeWoundVFX: {fileID: 9104211161659438896, guid: a35d114cb5c8cfe42b660eb47fc583b5, type: 3}
-  _bloodVFX: {fileID: 8771800446612668594}
-  _woundImpactVFX: {fileID: 0}
+  _bloodPrefab: {fileID: 9104211161659438896, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
+  _woundImpactVFX: {fileID: 9104211161659438896, guid: 29cdcd012eea1454787844cb044affea, type: 3}
   _bloodPoolPrefab: {fileID: 7078304527254770000, guid: a61dc7b4cbd80e64a80e35dda5b38176, type: 3}
   _bloodPoolGrowthDuration: 5
   _bloodPoolMinSize: 0.8
@@ -558,7 +558,7 @@ MonoBehaviour:
   _minBleedDuration: 1
   _maxBleedDuration: 4
   _hitImpulseStrength: 0.4
-  _bloodColor: {r: 0.1703452, g: 0.3420157, b: 0.85983825, a: 1}
+  _bloodColor: {r: 0.9137466, g: 0.8812543, b: 0.58001965, a: 1}
   _atlasData: {fileID: 11400000, guid: fe51d05d77c64ab49a3a00a19a2cf07b, type: 2}
   _groundLayerMask:
     serializedVersion: 2
@@ -1154,7 +1154,6 @@ Transform:
   - {fileID: 9054802795506171877}
   - {fileID: 8846672922339794930}
   - {fileID: 5353682752352735698}
-  - {fileID: 5731404389263607965}
   m_Father: {fileID: 5890676865826243410}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!205 &2831438303180733914
@@ -1306,7 +1305,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Gameplay::Sabrevois.Gameplay.WoundsComponent
   _renderer: {fileID: 546179638534640709}
   _severeWoundVFX: {fileID: 9104211161659438896, guid: a35d114cb5c8cfe42b660eb47fc583b5, type: 3}
-  _bloodVFX: {fileID: 8771800446612668594}
+  _bloodPrefab: {fileID: 9104211161659438896, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
   _woundImpactVFX: {fileID: 9104211161659438896, guid: 29cdcd012eea1454787844cb044affea, type: 3}
   _bloodPoolPrefab: {fileID: 7078304527254770000, guid: a61dc7b4cbd80e64a80e35dda5b38176, type: 3}
   _bloodPoolGrowthDuration: 10
@@ -1316,7 +1315,7 @@ MonoBehaviour:
   _minBleedDuration: 0.2
   _maxBleedDuration: 1
   _hitImpulseStrength: 0.2
-  _bloodColor: {r: 0.9946091, g: 0.85868806, b: 0.5777311, a: 1}
+  _bloodColor: {r: 0.9137466, g: 0.8812543, b: 0.58001965, a: 1}
   _atlasData: {fileID: 11400000, guid: b03c3844e9fc25843b8a7a126ddb91d0, type: 2}
   _groundLayerMask:
     serializedVersion: 2
@@ -1501,94 +1500,3 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7518500599138123776}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1001 &493157146956332055
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 2361451745855598781}
-    m_Modifications:
-    - target: {fileID: 5283287662422848650, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.4214618
-      objectReference: {fileID: 0}
-    - target: {fileID: 5283287662422848650, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.42146176
-      objectReference: {fileID: 0}
-    - target: {fileID: 5283287662422848650, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -0.01
-      objectReference: {fileID: 0}
-    - target: {fileID: 5283287662422848650, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.48967373
-      objectReference: {fileID: 0}
-    - target: {fileID: 5283287662422848650, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5283287662422848650, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5283287662422848650, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5283287662422848650, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5283287662422848650, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5283287662422848650, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5283287662422848650, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5283287662422848650, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9104211161659438896, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_Icon
-      value: 
-      objectReference: {fileID: 4422084297763085224, guid: 0000000000000000d000000000000000, type: 0}
-    - target: {fileID: 9104211161659438896, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: m_Name
-      value: Blood
-      objectReference: {fileID: 0}
-    - target: {fileID: 9179384734393892005, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: looping
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9179384734393892005, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: stopAction
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9179384734393892005, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-      propertyPath: playOnAwake
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
---- !u!4 &5731404389263607965 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 5283287662422848650, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-  m_PrefabInstance: {fileID: 493157146956332055}
-  m_PrefabAsset: {fileID: 0}
---- !u!198 &8771800446612668594 stripped
-ParticleSystem:
-  m_CorrespondingSourceObject: {fileID: 9179384734393892005, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
-  m_PrefabInstance: {fileID: 493157146956332055}
-  m_PrefabAsset: {fileID: 0}

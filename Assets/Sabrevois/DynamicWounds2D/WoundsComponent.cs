@@ -45,7 +45,7 @@ namespace SolarHarmony.DynamicWounds2D
 
         [SerializeField] private MeshRenderer _renderer;
         [SerializeField] private GameObject _severeWoundVFX;
-        [SerializeField] private ParticleSystem _bloodVFX;
+        [SerializeField] private GameObject _bloodPrefab;
         [SerializeField] private GameObject _woundImpactVFX;
         [SerializeField] private GameObject _bloodPoolPrefab;
         [SerializeField] private float _bloodPoolGrowthDuration = 5f;
@@ -87,6 +87,20 @@ namespace SolarHarmony.DynamicWounds2D
         public MeshRenderer Renderer => _renderer;
         public CharacterAtlasData AtlasData => _atlasData;
         public int LastHitBodyPartIndex => _lastHitBodyPartIndex;
+
+        public static WoundsComponent LookedAtWoundsComponent => s_lookedAt;
+
+        internal List<Wound> WoundList => _wounds;
+        internal float MaxWoundPenetration => _maxWoundPenetration;
+        internal bool IsBleeding =>
+            _maxWoundPenetration >= _bloodVFXDepthThreshold && _host is { IsDead: false };
+        internal bool IsHostDead => _host is { IsDead: true };
+        internal IWoundHost WoundHost => _host;
+        internal bool[] LiveGraph => _liveGraph;
+        internal int GraphWidth => _graphWidth;
+        internal int GraphHeight => _graphHeight;
+        internal int VisibleMinY => _visibleMinY;
+        internal int VisibleMaxY => _visibleMaxY;
 
         private void Awake()
         {
@@ -477,9 +491,12 @@ namespace SolarHarmony.DynamicWounds2D
         public void PlayBloodVFX(Vector3 localPoint, Vector3 worldNormal,
             Vector3 hitVelocity = default, float penetrationRatio = 0.5f)
         {
-            if (_bloodVFX == null || _renderer == null) return;
+            if (_bloodPrefab == null || _renderer == null) return;
+            if (_host != null && _host.IsDead) return;
 
-            var instance = Instantiate(_bloodVFX, _renderer.transform);
+            var go = Instantiate(_bloodPrefab, _renderer.transform);
+            var instance = go.GetComponent<ParticleSystem>();
+            if (instance == null) return;
             instance.transform.position = GetBillboardWorldPosition(localPoint);
 
             var tracker = instance.gameObject.AddComponent<WoundVFXTracker>();
@@ -777,7 +794,46 @@ namespace SolarHarmony.DynamicWounds2D
                         _atlasData);
 
                     if (severedPart != null)
+                    {
+                        // Centroid of the severed region in the source mesh's local space
+                        float totalX = 0f, totalY = 0f;
+                        foreach (var sn in severedNodes)
+                        {
+                            totalX += sn.x;
+                            totalY += sn.y;
+                        }
+                        float avgGridX = totalX / severedNodes.Count;
+                        float avgGridY = totalY / severedNodes.Count;
+                        float u = avgGridX / _graphWidth;
+                        float v = avgGridY / _graphHeight;
+
+                        Vector3 centroid = new Vector3(
+                            _initialLocalBounds.min.x + u * _initialLocalBounds.size.x,
+                            _initialLocalBounds.min.y + v * _initialLocalBounds.size.y,
+                            0f);
+
+                        // Blood VFX on the main body (severed stump)
+                        PlayBloodVFX(centroid, hitDirection, default, 1.0f);
+
+                        // Blood VFX on the severed part (flies off with it)
+                        if (_bloodPrefab != null)
+                        {
+                            var bloodGO = Instantiate(_bloodPrefab, severedPart.transform);
+                            var ps = bloodGO.GetComponent<ParticleSystem>();
+                            if (ps != null)
+                            {
+                                ps.transform.localPosition = centroid;
+                                var main = ps.main;
+                                main.simulationSpace = ParticleSystemSimulationSpace.Local;
+                                main.startColor = new ParticleSystem.MinMaxGradient(_bloodColor);
+                                main.loop = true;
+                                ps.Play(true);
+                                StartCoroutine(StopBleedingRoutine(ps, _maxBleedDuration));
+                            }
+                        }
+
                         OnLimbSevered?.Invoke(severedPart, hitDirection);
+                    }
                 }
 
                 if (_sliceIndex >= 0 && _woundManager != null && _meshFilter != null &&
@@ -961,7 +1017,7 @@ namespace SolarHarmony.DynamicWounds2D
             }
 
             if (_host != null)
-                resistancePercent = _host.GetResistanceAtDepth(oldDepth);
+                resistancePercent = _host.GetResistanceAtDepth(oldDepth, _atlasData, _lastHitBodyPartIndex);
 
             damage = wound.Penetration * (1f - resistancePercent / 100f);
             damage = Mathf.Max(0, damage);
@@ -1117,7 +1173,8 @@ namespace SolarHarmony.DynamicWounds2D
             int step = Mathf.Max(1, Mathf.Max(width, height) / 32);
 
             Matrix4x4 worldMatrix;
-            if (_mainCamera != null)
+            bool useActualTransform = _host != null && _host.IsDead;
+            if (!useActualTransform && _mainCamera != null)
             {
                 Vector3 centerWS = _renderer.transform.position;
                 Vector3 toCamera = _mainCamera.transform.position - centerWS;
@@ -1253,11 +1310,14 @@ namespace SolarHarmony.DynamicWounds2D
                 return false;
             }
 
-            // No mask or empty mappings: treat whole character as a single essential part
-            isEssential = true;
-            _lastHitBodyPartIndex = 0;
-            bodyPartIndex = 0;
-            return true;
+            // No mask or empty mappings: cannot determine body part,
+            // so treat as non-essential (non-lethal).  This also covers
+            // decorative WoundsComponents like wings or clothing overlays
+            // that share the root but have no body-part configuration.
+            isEssential = false;
+            _lastHitBodyPartIndex = -1;
+            bodyPartIndex = -1;
+            return false;
         }
 
         public bool TryMatchBodyPartAtWorld(Vector3 worldPoint, out int bodyPartIndex, out bool isEssential)

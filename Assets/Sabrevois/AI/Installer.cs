@@ -12,6 +12,7 @@ namespace Sabrevois.AI
     {
         public override void InstallBindings()
         {
+            Container.Bind<AIGameConfig>().AsSingle().IfNotBound();
             BindActionTypes();
             BindCoreService();
             Container.Bind<AgentWorldService>().AsSingle();

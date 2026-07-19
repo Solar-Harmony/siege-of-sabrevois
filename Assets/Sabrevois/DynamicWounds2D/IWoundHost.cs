@@ -11,7 +11,7 @@ namespace SolarHarmony.DynamicWounds2D
 
         void ForceKill();
 
-        float GetResistanceAtDepth(float depth);
+        float GetResistanceAtDepth(float depth, CharacterAtlasData atlas = null, int bodyPartIndex = -1);
 
         void ApplyMovementImpulse(Vector3 direction, float strength);
 

@@ -15,10 +15,10 @@ MonoBehaviour:
   _sourceTexture: {fileID: 2800000, guid: 98f0afdac295e0048a9602f17eca78c5, type: 3}
   LayerSprites:
   - {fileID: -405447547, guid: 98f0afdac295e0048a9602f17eca78c5, type: 3}
-  - {fileID: 318608637, guid: 98f0afdac295e0048a9602f17eca78c5, type: 3}
   - {fileID: 1989388494, guid: 98f0afdac295e0048a9602f17eca78c5, type: 3}
-  - {fileID: 1109946499, guid: 98f0afdac295e0048a9602f17eca78c5, type: 3}
+  - {fileID: 318608637, guid: 98f0afdac295e0048a9602f17eca78c5, type: 3}
   - {fileID: -2135576697, guid: 98f0afdac295e0048a9602f17eca78c5, type: 3}
+  - {fileID: 1109946499, guid: 98f0afdac295e0048a9602f17eca78c5, type: 3}
   BodyPartsMask: {fileID: 2800000, guid: 7876470d0fadac640b9c482313002324, type: 3}
   BodyPartMappings:
   - Color: {r: 0, g: 0.5, b: 0, a: 1}

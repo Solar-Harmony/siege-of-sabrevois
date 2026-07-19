@@ -27,6 +27,9 @@ namespace Sabrevois.AI
 #endif
 
         [Inject]
+        private AIGameConfig _config;
+
+        [Inject]
         private AgentWorldService _agentWorldService;
 
         public SequentialDecisionMakingService(IEnumerable<IAction> actions)
@@ -51,7 +54,16 @@ namespace Sabrevois.AI
         [CanBeNull]
         public void ChooseAction(ActionCandidate[] candidates, ActionContext ctx, ActionInstance currentAction, float hysteresisBias = 0.1f)
         {
-            
+            if (_config.DisableAllAgents)
+            {
+                var agent = ctx.Agent.GetComponent<Agent>();
+                int id = ctx.Agent.GetInstanceID();
+                if (!_idToAgent.ContainsKey(id))
+                    _idToAgent[id] = agent;
+                agent.ReceiveAction(null);
+                return;
+            }
+
             if (_startTime.Elapsed.Seconds > currentMetricResetDelay)
             {
                 currentMetricResetDelay *= 10;

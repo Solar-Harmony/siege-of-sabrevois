@@ -45,6 +45,9 @@ namespace Sabrevois.AI
 #endif
 
         [Inject]
+        private AIGameConfig _config;
+
+        [Inject]
         private AgentWorldService _agentWorldService;
 
         #region Main thread
@@ -111,6 +114,16 @@ namespace Sabrevois.AI
         
         public void ChooseAction(ActionCandidate[] candidates, ActionContext ctx, ActionInstance currentAction, float hysteresisBias = 0.1f)
         {
+            if (_config.DisableAllAgents)
+            {
+                var agent = ctx.Agent.GetComponent<Agent>();
+                int id = ctx.Agent.GetInstanceID();
+                if (!_idToAgent.ContainsKey(id))
+                    _idToAgent[id] = agent;
+                agent.ReceiveAction(null);
+                return;
+            }
+
             if (!_started)
                 Start();
             
@@ -136,6 +149,12 @@ namespace Sabrevois.AI
         
         public void Tick()
         {
+            if (_config.DisableAllAgents)
+            {
+                while (_responses.TryDequeue(out _)) { }
+                return;
+            }
+
             while (_responses.TryDequeue(out var response))
             {
                 if (_idToAgent.TryGetValue(response.GameObjectId, out var agent))

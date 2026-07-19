@@ -41,6 +41,9 @@ namespace Sabrevois.AI
         private float _decisionMakingInterval = 1f;
         
         [Inject]
+        private AIGameConfig _config;
+        
+        [Inject]
         private IDecisionMakingService _decisionMakingService;
         
         private ActionContext _ctx;
@@ -67,6 +70,9 @@ namespace Sabrevois.AI
         
         private void Update()
         {
+            if (_config.DisableAllAgents)
+                return;
+            
             // If we are waiting for an action, let's freeze
             if (_hasRequestedAction)
                 return;
