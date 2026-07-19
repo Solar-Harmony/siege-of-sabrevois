@@ -62,6 +62,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _GlowMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: 18543132406cf1e4b91b009c3f449361, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -74,11 +78,19 @@ Material:
         m_Texture: {fileID: 2800000, guid: e24d007885662ae47b5fe67bf0410fc6, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _NormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SmoothnessMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -103,7 +115,8 @@ Material:
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
-    - _BaseBumpScale: 1
+    - _BaseBumpScale: 0
+    - _BaseSmoothness: 0.5
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BloodAmountMultiplier: 1
@@ -127,11 +140,13 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _GlowIntensity: 0.5
     - _LayerCount: 7
     - _Metallic: 0
     - _NoiseScale: 3
     - _NoiseStrength: 0.8
     - _NoiseUVOffset: 0
+    - _NormalStrength: 1
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _ParallaxStrength: 0.0006
@@ -145,6 +160,7 @@ Material:
     - _SmearMaxLength: 0.1
     - _SmearStrength: 1
     - _Smoothness: 0.5
+    - _SmoothnessMapStrength: 1
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -152,7 +168,7 @@ Material:
     - _Surface: 0
     - _VolumeDepth: 1
     - _WorkflowMode: 1
-    - _WoundBumpScale: 1
+    - _WoundBumpScale: 2.98
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:

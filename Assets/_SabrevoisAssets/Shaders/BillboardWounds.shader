@@ -43,6 +43,15 @@
         _VolumeDepth ("Volume Depth (Capsule)", Range(0.0, 2.0)) = 1.0
         _BaseBumpScale ("Base Procedural Normal Scale", Range(0.0, 20.0)) = 2.0
         _WoundBumpScale ("Wound Normal Bump Scale", Range(0.0, 20.0)) = 5.0
+
+        [Header(PBR Texture Atlases)]
+        _NormalMap ("Normal Map Atlas", 2D) = "bump" {}
+        _NormalStrength ("Normal Strength", Range(0, 2)) = 1.0
+        _SmoothnessMap ("Smoothness Map Atlas", 2D) = "black" {}
+        _SmoothnessMapStrength ("Smoothness Map Strength", Range(0, 1)) = 1.0
+        _BaseSmoothness ("Base Smoothness", Range(0, 1)) = 0.1
+        _GlowMap ("Glow Map Atlas", 2D) = "black" {}
+        _GlowIntensity ("Glow Intensity", Float) = 1.0
     }
 
     HLSLINCLUDE
@@ -54,7 +63,6 @@
         float2 uv           : TEXCOORD0;
         float2 charUV       : TEXCOORD1;
         float3 normalOS     : NORMAL;
-        float4 color        : COLOR;
         UNITY_VERTEX_INPUT_INSTANCE_ID
     };
 
@@ -73,6 +81,15 @@
 
     TEXTURE2D(_NoiseTex);
     SAMPLER(sampler_NoiseTex);
+
+    TEXTURE2D(_NormalMap);
+    SAMPLER(sampler_NormalMap);
+
+    TEXTURE2D(_SmoothnessMap);
+    SAMPLER(sampler_SmoothnessMap);
+
+    TEXTURE2D(_GlowMap);
+    SAMPLER(sampler_GlowMap);
 
     TEXTURE2D_ARRAY(_GlobalWoundSplatmap);
     SAMPLER(sampler_GlobalWoundSplatmap);
@@ -104,12 +121,16 @@
         float _BloodDripNoiseScale;
         float _BloodDripDarken;
         float _WoundTime;
+        float _NormalStrength;
+        float _SmoothnessMapStrength;
+        float _BaseSmoothness;
+        float _GlowIntensity;
     CBUFFER_END
 
     UNITY_INSTANCING_BUFFER_START(Props)
         UNITY_DEFINE_INSTANCED_PROP(int, _WoundSliceIndex)
         UNITY_DEFINE_INSTANCED_PROP(float4, _HitImpulse)
-        UNITY_DEFINE_INSTANCED_PROP(float, _HitBodyPartIndex)
+        UNITY_DEFINE_INSTANCED_PROP(float4, _HitMaskParams)
     UNITY_INSTANCING_BUFFER_END(Props)
 
     Varyings vertCommon(Attributes input)
@@ -121,13 +142,17 @@
         float3 positionOS = input.positionOS.xyz;
 
         float4 hitImpulse = UNITY_ACCESS_INSTANCED_PROP(Props, _HitImpulse);
-        float hitBodyPartIndex = UNITY_ACCESS_INSTANCED_PROP(Props, _HitBodyPartIndex);
-        int vertexBodyPart = round(input.color.r * 256.0 - 1.0);
+        float4 hitMaskParams = UNITY_ACCESS_INSTANCED_PROP(Props, _HitMaskParams);
 
-        if (hitBodyPartIndex < 0.0 || (float)vertexBodyPart == hitBodyPartIndex)
+        if (hitImpulse.z > 0.001)
         {
+            float2 hitUV = hitMaskParams.xy;
+            float radius = max(hitMaskParams.z, 0.45);
+            float distSq = dot(input.charUV - hitUV, input.charUV - hitUV);
+            float mask = exp(-distSq / (radius * radius * 0.35));
+
             float push = ((input.charUV.x - 0.5) * 2.0 * hitImpulse.x + (input.charUV.y - 0.5) * 2.0 * hitImpulse.y) * hitImpulse.z;
-            positionOS.z += push;
+            positionOS.z += push * mask;
         }
 
         if (_EnableBillboard > 0.5)
@@ -165,19 +190,22 @@
         return output;
     }
 
+    float2 GetLayerDelta(int layerIndex)
+    {
+        if (layerIndex == 0) return _LayerUV00_01.xy;
+        else if (layerIndex == 1) return _LayerUV00_01.zw;
+        else if (layerIndex == 2) return _LayerUV02_03.xy;
+        else if (layerIndex == 3) return _LayerUV02_03.zw;
+        else if (layerIndex == 4) return _LayerUV04_05.xy;
+        else if (layerIndex == 5) return _LayerUV04_05.zw;
+        else if (layerIndex == 6) return _LayerUV06_07.xy;
+        else return _LayerUV06_07.zw;
+    }
+
     half4 SampleLayerAtlas(float2 uv, int layerIndex)
     {
         layerIndex = clamp(layerIndex, 0, _LayerCount - 1);
-        float2 delta;
-        if (layerIndex == 0) delta = _LayerUV00_01.xy;
-        else if (layerIndex == 1) delta = _LayerUV00_01.zw;
-        else if (layerIndex == 2) delta = _LayerUV02_03.xy;
-        else if (layerIndex == 3) delta = _LayerUV02_03.zw;
-        else if (layerIndex == 4) delta = _LayerUV04_05.xy;
-        else if (layerIndex == 5) delta = _LayerUV04_05.zw;
-        else if (layerIndex == 6) delta = _LayerUV06_07.xy;
-        else delta = _LayerUV06_07.zw;
-        return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv + delta);
+        return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv + GetLayerDelta(layerIndex));
     }
 
     float GetWoundDepth(float2 uv, int sliceIndex)
@@ -188,7 +216,7 @@
         return max(0.0, splat + noiseAmount);
     }
 
-    half4 GetFinalColor(Varyings input, out float outDepth, out float3 outNormalTS)
+    half4 GetFinalColor(Varyings input, out float outDepth, out float3 outNormalTS, out float outSmoothness, out half3 outGlow)
     {
         int sliceIndex = (int)UNITY_ACCESS_INSTANCED_PROP(Props, _WoundSliceIndex);
 
@@ -234,6 +262,31 @@
             half4 nextLayerColor = SampleLayerAtlas(atlasUV - parallaxOffset, layerIndex + 1);
             finalColor = lerp(finalColor, nextLayerColor, layerBlend);
         }
+
+        float2 baseLayerUV = atlasUV - parallaxOffset;
+        float2 layerUV = baseLayerUV + GetLayerDelta(layerIndex);
+
+        half3 texNormalTS = half3(0, 0, 1);
+        {
+            half4 normalSample = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, layerUV);
+            texNormalTS = UnpackNormalScale(normalSample, 1.0);
+        }
+        float sampledSmooth = SAMPLE_TEXTURE2D(_SmoothnessMap, sampler_SmoothnessMap, layerUV).r;
+        half3 sampledGlow = SAMPLE_TEXTURE2D(_GlowMap, sampler_GlowMap, layerUV).rgb;
+
+        if (layerIndex < _LayerCount - 1 && progressToNextLayer > 0.01)
+        {
+            float2 layer1UV = baseLayerUV + GetLayerDelta(layerIndex + 1);
+            half3 nextNormalTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, layer1UV), 1.0);
+            texNormalTS = lerp(texNormalTS, nextNormalTS, layerBlend);
+            float nextSmooth = SAMPLE_TEXTURE2D(_SmoothnessMap, sampler_SmoothnessMap, layer1UV).r;
+            sampledSmooth = lerp(sampledSmooth, nextSmooth, layerBlend);
+            half3 nextGlow = SAMPLE_TEXTURE2D(_GlowMap, sampler_GlowMap, layer1UV).rgb;
+            sampledGlow = lerp(sampledGlow, nextGlow, layerBlend);
+        }
+
+        outSmoothness = lerp(_BaseSmoothness, 1.0, sampledSmooth * _SmoothnessMapStrength);
+        outGlow = sampledGlow * _GlowIntensity;
 
         float holeFeather = smoothstep(_LayerCount - 0.8, _LayerCount + 0.8, surfaceDepth);
         finalColor.a *= 1.0 - holeFeather;
@@ -308,7 +361,8 @@
         float2 depthDelta = clamp(float2(dRight - dLeft, dUp - dDown) * 0.5, -2.0, 2.0);
         float3 woundNormal = normalize(float3(depthDelta * _WoundBumpScale, 1.0));
 
-        outNormalTS = normalize(float3(baseNormal.xy + woundNormal.xy, baseNormal.z * woundNormal.z));
+        float3 blendedBase = normalize(lerp(baseNormal, texNormalTS, _NormalStrength));
+        outNormalTS = normalize(float3(blendedBase.xy + woundNormal.xy, blendedBase.z * woundNormal.z));
 
         return finalColor;
     }
@@ -359,7 +413,9 @@
 
                 float outDepth = 0.0;
                 float3 normalTS = float3(0,0,1);
-                half4 finalColor = GetFinalColor(input, outDepth, normalTS);
+                float outSmoothness = 0.1;
+                half3 outGlow = half3(0,0,0);
+                half4 finalColor = GetFinalColor(input, outDepth, normalTS, outSmoothness, outGlow);
 
                 clip(finalColor.a - 0.001);
 
@@ -367,9 +423,9 @@
                 surfaceData.albedo = finalColor.rgb;
                 surfaceData.alpha = finalColor.a;
                 surfaceData.metallic = 0.0;
-                surfaceData.smoothness = 0.1;
+                surfaceData.smoothness = outSmoothness;
 
-                surfaceData.emission = float3(0, 0, 0);
+                surfaceData.emission = outGlow;
                 surfaceData.occlusion = 1.0;
                 surfaceData.clearCoatMask = 0.0;
                 surfaceData.clearCoatSmoothness = 0.0;
@@ -440,7 +496,9 @@
                 UNITY_SETUP_INSTANCE_ID(input);
                 float dummyDepth = 0.0;
                 float3 dummyNormal = float3(0,0,1);
-                half4 finalColor = GetFinalColor(input, dummyDepth, dummyNormal);
+                float dummySmoothness = 0.0;
+                half3 dummyGlow = half3(0,0,0);
+                half4 finalColor = GetFinalColor(input, dummyDepth, dummyNormal, dummySmoothness, dummyGlow);
 
                 clip(finalColor.a - 0.001);
 
@@ -473,7 +531,9 @@
                 UNITY_SETUP_INSTANCE_ID(input);
                 float dummyDepth = 0.0;
                 float3 dummyNormal = float3(0,0,1);
-                half4 finalColor = GetFinalColor(input, dummyDepth, dummyNormal);
+                float dummySmoothness = 0.0;
+                half3 dummyGlow = half3(0,0,0);
+                half4 finalColor = GetFinalColor(input, dummyDepth, dummyNormal, dummySmoothness, dummyGlow);
 
                 clip(finalColor.a - 0.001);
 

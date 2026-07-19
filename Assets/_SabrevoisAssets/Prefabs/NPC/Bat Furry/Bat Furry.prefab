@@ -136,7 +136,7 @@ MonoBehaviour:
   - PenetrationRequired: 4
     InstantDeathChancePercent: 50
     PenetrationResistancePercent: 0
-  _woundHitbox: {fileID: 0}
+  _woundHitbox: {fileID: 2225736924371807978}
   _woundsComponent: {fileID: 6028727069789442544}
   _dismemberVFXPrefab: {fileID: 9104211161659438896, guid: 2e02c5efbbae13142aaf5cccc1f620c1, type: 3}
 --- !u!114 &6702582381545169484
@@ -245,7 +245,7 @@ BoxCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
@@ -1130,6 +1130,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2361451745855598781}
   - component: {fileID: 2831438303180733914}
+  - component: {fileID: 4619869909720540749}
   m_Layer: 0
   m_Name: Sprites
   m_TagString: Untagged
@@ -1177,6 +1178,29 @@ LODGroup:
     - renderer: {fileID: 4227765241374053879}
     - renderer: {fileID: 4578955337260560892}
   m_Enabled: 1
+--- !u!136 &4619869909720540749
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5471503676665790772}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.09
+  m_Height: 1
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &6128020200972421289
 GameObject:
   m_ObjectHideFlags: 0

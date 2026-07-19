@@ -22,6 +22,11 @@ namespace SolarHarmony.DynamicWounds2D
         public Texture2D BodyPartsMask;
         public List<BodyPartMapping> BodyPartMappings = new List<BodyPartMapping>();
 
+        [Header("Optional PBR Atlases (same layout as SourceTexture)")]
+        public Texture2D NormalMap;
+        public Texture2D SmoothnessMap;
+        public Texture2D GlowMap;
+
         public float GetBodyPartArmour(int bodyPartIndex)
         {
             if (bodyPartIndex < 0 || bodyPartIndex >= BodyPartMappings.Count) return 0f;
@@ -96,6 +101,7 @@ namespace SolarHarmony.DynamicWounds2D
                 if (obj is Sprite s)
                     LayerSprites.Add(s);
             }
+            LayerSprites.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
             UnityEditor.EditorUtility.SetDirty(this);
         }
 

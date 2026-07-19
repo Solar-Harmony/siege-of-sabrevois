@@ -165,9 +165,9 @@ namespace Sabrevois.Gameplay
             AdjustColliderFromWounds();
 
             bool shouldDie = false;
+            float highestDeathChance = 0f;
             if (isEssential)
             {
-                float highestDeathChance = 0f;
                 foreach (var rule in LayerRules)
                 {
                     if (newWoundDepth >= rule.PenetrationRequired)
@@ -183,6 +183,18 @@ namespace Sabrevois.Gameplay
 
             if (shouldDie)
             {
+                string bodyPartName = "Unknown";
+                int bodyPartIndex = -1;
+                if (_woundsComponent != null)
+                {
+                    bodyPartIndex = _woundsComponent.LastHitBodyPartIndex;
+                    var atlas = _woundsComponent.AtlasData;
+                    if (atlas != null && bodyPartIndex >= 0 && bodyPartIndex < atlas.BodyPartMappings.Count)
+                        bodyPartName = atlas.BodyPartMappings[bodyPartIndex].PartName;
+                }
+
+                Debug.Log($"[Health] {name} died. Body part: {bodyPartName} (idx:{bodyPartIndex}, essential:{isEssential}). Depth: {newWoundDepth:F2}. DeathChance: {highestDeathChance}%");
+
                 _isDead = true;
 
                 var billboard = GetComponent<Billboard>();

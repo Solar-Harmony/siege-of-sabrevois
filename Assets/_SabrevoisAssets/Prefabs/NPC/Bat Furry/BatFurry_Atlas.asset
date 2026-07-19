@@ -55,7 +55,7 @@ MonoBehaviour:
     ArmourPercent: 0
   - Color: {r: 0.5, g: 1, b: 0, a: 1}
     PartName: Part_R0.50_G1.00_B0.00
-    IsEssential: 1
+    IsEssential: 0
     ArmourPercent: 0
   - Color: {r: 0, g: 1, b: 0, a: 1}
     PartName: Part_9
@@ -97,3 +97,6 @@ MonoBehaviour:
     PartName: Part_18
     IsEssential: 0
     ArmourPercent: 0
+  NormalMap: {fileID: 2800000, guid: bd5d90ca3f90ef84d82987bd6f50fb5f, type: 3}
+  SmoothnessMap: {fileID: 2800000, guid: fe61da4ca40b30446b22d77c96a3f50f, type: 3}
+  GlowMap: {fileID: 2800000, guid: b18e3cd3cafd2704888394f9e068ca17, type: 3}

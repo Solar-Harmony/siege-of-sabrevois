@@ -18,6 +18,12 @@ namespace Sabrevois
                 .WithInitialSize(10)
                 .FromNewComponentOnNewGameObject()
                 .UnderTransformGroup("DamageNumbers");
+
+            Container.BindInterfacesTo<Sabrevois.UI.MissTextSpawner>().AsSingle();
+            Container.BindMemoryPool<Sabrevois.UI.DamageNumber, Sabrevois.UI.DamageNumber.MissTextPool>()
+                .WithInitialSize(5)
+                .FromNewComponentOnNewGameObject()
+                .UnderTransformGroup("DamageNumbers");
         }
     }
 }

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 98f0afdac295e0048a9602f17eca78c5
+guid: bd5d90ca3f90ef84d82987bd6f50fb5f
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -7,7 +7,7 @@ TextureImporter:
   mipmaps:
     mipMapMode: 0
     enableMipMap: 1
-    sRGBTexture: 1
+    sRGBTexture: 0
     linearTexture: 0
     fadeOut: 0
     borderMipMap: 0
@@ -37,8 +37,8 @@ TextureImporter:
     filterMode: 1
     aniso: 1
     mipBias: 0
-    wrapU: 1
-    wrapV: 1
+    wrapU: 0
+    wrapV: 0
     wrapW: 0
   nPOTScale: 0
   lightmap: 0
@@ -52,9 +52,9 @@ TextureImporter:
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
-  alphaIsTransparency: 1
+  alphaIsTransparency: 0
   spriteTessellationDetail: -1
-  textureType: 8
+  textureType: 1
   textureShape: 1
   singleChannelComponent: 0
   flipbookRows: 1
@@ -69,10 +69,10 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 8192
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -97,13 +97,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Atlas_BatFurry_0
+      name: BatFurry_n_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1425
-        height: 1729
+        width: 837
+        height: 1024
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -112,20 +112,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 7ffe769ff0c89824db9bb1450f928a8e
-      internalID: -405447547
+      spriteID: 6cb4da85bdcf22441835fcb644227b41
+      internalID: 1608739796
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Atlas_BatFurry_2
+      name: BatFurry_n_2
       rect:
         serializedVersion: 2
-        x: 2844
+        x: 837
         y: 0
-        width: 1424
-        height: 1729
+        width: 837
+        height: 1024
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -134,42 +134,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 465de6154343de24dae65e217e784724
-      internalID: 1989388494
+      spriteID: b0e99536ec297af499fccab89721e36d
+      internalID: -43246147
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Atlas_BatFurry_1
+      name: BatFurry_n_
       rect:
         serializedVersion: 2
-        x: 1421
+        x: 1674
         y: 0
-        width: 1422
-        height: 1729
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 4, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: cb5b3633fe7c7334aa393bdf438f08b2
-      internalID: 318608637
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Atlas_BatFurry_4
-      rect:
-        serializedVersion: 2
-        x: 5651
-        y: 0
-        width: 1422
-        height: 1729
+        width: 837
+        height: 1024
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -178,20 +156,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 3865123efe0b5e04ea17654494ef7d47
-      internalID: -2135576697
+      spriteID: 5888ebe8620e14348b7740d4392cd7aa
+      internalID: 1889977396
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Atlas_BatFurry_3
+      name: BatFurry_n_3
       rect:
         serializedVersion: 2
-        x: 4267
+        x: 2511
         y: 0
-        width: 1382
-        height: 1729
+        width: 837
+        height: 1024
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -200,8 +178,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 866c30005130b75439dbc88d124b23e8
-      internalID: 1109946499
+      spriteID: c8fa3dad0622b56429d1196ffe210b49
+      internalID: -375364183
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BatFurry_n_4
+      rect:
+        serializedVersion: 2
+        x: 3348
+        y: 0
+        width: 837
+        height: 1024
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1228e83a6640c2044bdc54e336588881
+      internalID: 1728945244
       vertices: []
       indices: 
       edges: []
@@ -210,7 +210,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 98412246237c3aa4da910d9c0648af71
+    spriteID: 846b94cfc4fc88f4fa1998048a20fd5c
     internalID: 0
     vertices: []
     indices: 
@@ -220,13 +220,13 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":5.0,"y":1.0},"gridSpriteSize":{"x":1414.0,"y":1729.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":5.0,"y":1.0},"gridSpriteSize":{"x":837.0,"y":1024.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Atlas_BatFurry_0: -405447547
-      Atlas_BatFurry_1: 318608637
-      Atlas_BatFurry_2: 1989388494
-      Atlas_BatFurry_3: 1109946499
-      Atlas_BatFurry_4: -2135576697
+      BatFurry_n_: 1889977396
+      BatFurry_n_0: 1608739796
+      BatFurry_n_2: -43246147
+      BatFurry_n_3: -375364183
+      BatFurry_n_4: 1728945244
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

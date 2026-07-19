@@ -129,8 +129,6 @@ namespace SolarHarmony.DynamicWounds2D
                     {
                         Debug.LogWarning("[WoundsComponent] Grid generation returned null.", this);
                     }
-
-                    BakeBodyPartVertexColors();
                 }
             }
 
@@ -194,61 +192,17 @@ namespace SolarHarmony.DynamicWounds2D
                             ? new Vector4(deltas[6].x, deltas[6].y, n > 7 ? deltas[7].x : 0f, n > 7 ? deltas[7].y : 0f)
                             : Vector4.zero);
                     }
+
+                    if (_atlasData.NormalMap != null)
+                        _mpb.SetTexture("_NormalMap", _atlasData.NormalMap);
+                    if (_atlasData.SmoothnessMap != null)
+                        _mpb.SetTexture("_SmoothnessMap", _atlasData.SmoothnessMap);
+                    if (_atlasData.GlowMap != null)
+                        _mpb.SetTexture("_GlowMap", _atlasData.GlowMap);
                 }
 
                 _renderer.SetPropertyBlock(_mpb);
             }
-        }
-
-        private void BakeBodyPartVertexColors()
-        {
-            if (_atlasData == null || _atlasData.BodyPartsMask == null) return;
-            if (_atlasData.BodyPartMappings == null || _atlasData.BodyPartMappings.Count == 0) return;
-            if (_meshFilter == null || _meshFilter.sharedMesh == null) return;
-
-            var mesh = _meshFilter.sharedMesh;
-            var charUVs = new List<Vector2>();
-            mesh.GetUVs(1, charUVs);
-
-            if (charUVs.Count == 0) return;
-
-            var maskTex = _atlasData.BodyPartsMask;
-            var mappings = _atlasData.BodyPartMappings;
-            var colors = new Color[charUVs.Count];
-
-            for (int i = 0; i < charUVs.Count; i++)
-            {
-                Vector2 uv = charUVs[i];
-                Color maskColor = maskTex.GetPixelBilinear(uv.x, uv.y);
-
-                if (maskColor.maxColorComponent < 0.01f)
-                {
-                    colors[i] = new Color(0f, 0f, 0f, 1f);
-                    continue;
-                }
-
-                float minDist = float.MaxValue;
-                int bestIndex = -1;
-                for (int j = 0; j < mappings.Count; j++)
-                {
-                    var mapping = mappings[j];
-                    float d = (mapping.Color.r - maskColor.r) * (mapping.Color.r - maskColor.r)
-                            + (mapping.Color.g - maskColor.g) * (mapping.Color.g - maskColor.g)
-                            + (mapping.Color.b - maskColor.b) * (mapping.Color.b - maskColor.b);
-                    if (d < minDist)
-                    {
-                        minDist = d;
-                        bestIndex = j;
-                    }
-                }
-
-                float encoded = (bestIndex >= 0 && minDist < 0.05f)
-                    ? (bestIndex + 1f) / 256f
-                    : 0f;
-                colors[i] = new Color(encoded, 0f, 0f, 1f);
-            }
-
-            mesh.SetColors(colors);
         }
 
         private void ApplyAtlasTexture()
@@ -268,6 +222,12 @@ namespace SolarHarmony.DynamicWounds2D
             _mpb.SetFloat("_EnableBillboard", 0f);
             _mpb.SetTexture("_MainTex", _atlasData.SourceTexture);
             _mpb.SetInt("_LayerCount", _atlasData.LayerCount);
+            if (_atlasData.NormalMap != null)
+                _mpb.SetTexture("_NormalMap", _atlasData.NormalMap);
+            if (_atlasData.SmoothnessMap != null)
+                _mpb.SetTexture("_SmoothnessMap", _atlasData.SmoothnessMap);
+            if (_atlasData.GlowMap != null)
+                _mpb.SetTexture("_GlowMap", _atlasData.GlowMap);
 
             var deltas = _atlasData.GetLayerUVDeltas();
             if (deltas != null)
@@ -387,7 +347,7 @@ namespace SolarHarmony.DynamicWounds2D
             }
         }
 
-        private IEnumerator HitReactionRoutine(Vector2 hitUV, Vector3 impactNormal, int bodyPartIndex)
+        private IEnumerator HitReactionRoutine(Vector2 hitUV, Vector3 impactNormal, float uvFalloffRadius)
         {
             if (_renderer == null) yield break;
 
@@ -412,7 +372,7 @@ namespace SolarHarmony.DynamicWounds2D
 
                 _renderer.GetPropertyBlock(_mpb);
                 _mpb.SetVector("_HitImpulse", new Vector4(hitX, hitY, strength, 0f));
-                _mpb.SetFloat("_HitBodyPartIndex", bodyPartIndex);
+                _mpb.SetVector("_HitMaskParams", new Vector4(hitUV.x, hitUV.y, uvFalloffRadius, 0f));
                 _renderer.SetPropertyBlock(_mpb);
 
                 yield return null;
@@ -420,7 +380,7 @@ namespace SolarHarmony.DynamicWounds2D
 
             _renderer.GetPropertyBlock(_mpb);
             _mpb.SetVector("_HitImpulse", Vector4.zero);
-            _mpb.SetFloat("_HitBodyPartIndex", -1f);
+            _mpb.SetVector("_HitMaskParams", Vector4.zero);
             _renderer.SetPropertyBlock(_mpb);
 
             _hitReactionCoroutine = null;
@@ -989,44 +949,7 @@ namespace SolarHarmony.DynamicWounds2D
             damage = wound.Penetration;
 
             Vector2 uv = wound.Position;
-
-            var maskTex = _atlasData != null ? _atlasData.BodyPartsMask : null;
-            var mappings = _atlasData != null ? _atlasData.BodyPartMappings : null;
-            if (maskTex != null && mappings != null && mappings.Count > 0)
-            {
-                Color hitColor = maskTex.GetPixelBilinear(uv.x, uv.y);
-                float minDist = float.MaxValue;
-                BodyPartMapping? bestMatch = null;
-                int bestIndex = -1;
-                for (int i = 0; i < mappings.Count; i++)
-                {
-                    var mapping = mappings[i];
-                    float d = (mapping.Color.r - hitColor.r) * (mapping.Color.r - hitColor.r) +
-                              (mapping.Color.g - hitColor.g) * (mapping.Color.g - hitColor.g) +
-                              (mapping.Color.b - hitColor.b) * (mapping.Color.b - hitColor.b);
-                    if (d < minDist)
-                    {
-                        minDist = d;
-                        bestMatch = mapping;
-                        bestIndex = i;
-                    }
-                }
-
-                if (bestMatch.HasValue && minDist < 0.05f)
-                {
-                    isEssentialHit = bestMatch.Value.IsEssential;
-                    _lastHitBodyPartIndex = bestIndex;
-                }
-                else
-                {
-                    _lastHitBodyPartIndex = -1;
-                }
-            }
-            else
-            {
-                isEssentialHit = true;
-                _lastHitBodyPartIndex = -1;
-            }
+            TryMatchBodyPart(uv, out _, out isEssentialHit);
 
             float oldDepth = 0f;
             for (int i = 0; i < _wounds.Count; i++)
@@ -1045,39 +968,89 @@ namespace SolarHarmony.DynamicWounds2D
 
             wound.Penetration = damage;
 
-            if (_wounds.Count >= MaxWounds)
-                _wounds.RemoveAt(0);
-
-            _wounds.Add(wound);
-
-            if (damage > _maxWoundPenetration)
-                _maxWoundPenetration = damage;
-
             float newDepth = oldDepth + damage;
 
-            PlayWoundImpactVFX(wound.LocalPoint, wound.Position, hitNormal, oldDepth);
-
-            float ratio = 0f;
-            if (newDepth >= _bloodVFXDepthThreshold)
+            // Wounds with zero effective penetration contribute nothing.
+            if (damage > 0f)
             {
-                ratio = Mathf.Clamp01(newDepth / 3.0f);
-                PlayBloodVFX(wound.LocalPoint, hitNormal, default, ratio);
-                _woundAnimationTime = 0f;
-                isBleeding = true;
-            }
+                wound.Penetration = damage;
 
-            if (_sliceIndex >= 0 && _woundManager != null && _meshFilter != null &&
-                _meshFilter.sharedMesh != null)
-            {
-                var localBounds = _meshFilter.sharedMesh.bounds;
-                var quadSize = new Vector2(
-                    localBounds.size.x * _renderer.transform.lossyScale.x,
-                    localBounds.size.y * _renderer.transform.lossyScale.y);
-                _woundManager.AddWoundSplat(_sliceIndex, uv, wound.Radius, wound.Penetration,
-                    quadSize, ratio > 0f ? 1f : 0f);
-            }
+                // Merge with a nearby existing wound instead of creating a
+                // separate entry.  Sustained attacks on the same spot then
+                // occupy one slot forever instead of filling the list and
+                // forcing eviction of high-penetration wounds.
+                int mergeIndex = -1;
+                float mergeThreshold = wound.Radius * 0.5f;
+                float bestDist = mergeThreshold;
+                for (int i = 0; i < _wounds.Count; i++)
+                {
+                    float dist = Vector2.Distance(_wounds[i].Position, wound.Position);
+                    if (dist < bestDist)
+                    {
+                        mergeIndex = i;
+                        bestDist = dist;
+                    }
+                }
 
-            CheckAndProcessSeveredLimbs(uv, wound.Radius, newDepth, hitNormal);
+                if (mergeIndex >= 0)
+                {
+                    var existing = _wounds[mergeIndex];
+                    float totalPen = existing.Penetration + damage;
+                    existing.Position = (existing.Position * existing.Penetration
+                                        + wound.Position * damage) / totalPen;
+                    existing.Penetration = totalPen;
+                    existing.Radius = Mathf.Max(existing.Radius, wound.Radius);
+                    existing.LocalPoint = Vector3.Lerp(existing.LocalPoint, wound.LocalPoint,
+                        damage / totalPen);
+                    _wounds[mergeIndex] = existing;
+                }
+                else
+                {
+                    if (_wounds.Count >= MaxWounds)
+                    {
+                        int worstIndex = 0;
+                        float worstPen = float.MaxValue;
+                        for (int i = 0; i < _wounds.Count; i++)
+                        {
+                            if (_wounds[i].Penetration < worstPen)
+                            {
+                                worstPen = _wounds[i].Penetration;
+                                worstIndex = i;
+                            }
+                        }
+                        _wounds.RemoveAt(worstIndex);
+                    }
+
+                    _wounds.Add(wound);
+                }
+
+                if (damage > _maxWoundPenetration)
+                    _maxWoundPenetration = damage;
+
+                PlayWoundImpactVFX(wound.LocalPoint, wound.Position, hitNormal, oldDepth);
+
+                float ratio = 0f;
+                if (newDepth >= _bloodVFXDepthThreshold)
+                {
+                    ratio = Mathf.Clamp01(newDepth / 3.0f);
+                    PlayBloodVFX(wound.LocalPoint, hitNormal, default, ratio);
+                    _woundAnimationTime = 0f;
+                    isBleeding = true;
+                }
+
+                if (_sliceIndex >= 0 && _woundManager != null && _meshFilter != null &&
+                    _meshFilter.sharedMesh != null)
+                {
+                    var localBounds = _meshFilter.sharedMesh.bounds;
+                    var quadSize = new Vector2(
+                        localBounds.size.x * _renderer.transform.lossyScale.x,
+                        localBounds.size.y * _renderer.transform.lossyScale.y);
+                    _woundManager.AddWoundSplat(_sliceIndex, uv, wound.Radius, wound.Penetration,
+                        quadSize, ratio > 0f ? 1f : 0f);
+                }
+
+                CheckAndProcessSeveredLimbs(uv, wound.Radius, newDepth, hitNormal);
+            }
 
             if (_hitReactionCoroutine != null)
             {
@@ -1086,12 +1059,22 @@ namespace SolarHarmony.DynamicWounds2D
                 {
                     _renderer.GetPropertyBlock(_mpb);
                     _mpb.SetVector("_HitImpulse", Vector4.zero);
-                    _mpb.SetFloat("_HitBodyPartIndex", -1f);
+                    _mpb.SetVector("_HitMaskParams", Vector4.zero);
                 _mpb.SetColor("_BloodColor", _bloodColor);
                 _mpb.SetFloat("_WoundTime", 0f);
 
                 if (_atlasData != null && _atlasData.SourceTexture != null)
                     _mpb.SetTexture("_MainTex", _atlasData.SourceTexture);
+
+                if (_atlasData != null)
+                {
+                    if (_atlasData.NormalMap != null)
+                        _mpb.SetTexture("_NormalMap", _atlasData.NormalMap);
+                    if (_atlasData.SmoothnessMap != null)
+                        _mpb.SetTexture("_SmoothnessMap", _atlasData.SmoothnessMap);
+                    if (_atlasData.GlowMap != null)
+                        _mpb.SetTexture("_GlowMap", _atlasData.GlowMap);
+                }
 
                 _renderer.SetPropertyBlock(_mpb);
                 }
@@ -1099,7 +1082,19 @@ namespace SolarHarmony.DynamicWounds2D
 
             if (_renderer != null && gameObject.activeInHierarchy && _host != null && !_host.IsDead)
             {
-                _hitReactionCoroutine = StartCoroutine(HitReactionRoutine(uv, hitNormal, _lastHitBodyPartIndex));
+                float uvFalloffRadius = 0.4f;
+                if (_meshFilter != null && _meshFilter.sharedMesh != null)
+                {
+                    var localBounds = _meshFilter.sharedMesh.bounds;
+                    var quadSize = new Vector2(
+                        Mathf.Abs(localBounds.size.x * _renderer.transform.lossyScale.x),
+                        Mathf.Abs(localBounds.size.y * _renderer.transform.lossyScale.y));
+                    float maxSize = Mathf.Max(quadSize.x, quadSize.y);
+                    if (maxSize > 0.001f)
+                        uvFalloffRadius = Mathf.Max(0.4f, wound.Radius / maxSize * 8f);
+                }
+
+                _hitReactionCoroutine = StartCoroutine(HitReactionRoutine(uv, hitNormal, uvFalloffRadius));
             }
 
             return newDepth;
@@ -1215,6 +1210,60 @@ namespace SolarHarmony.DynamicWounds2D
 
             return AddWound(wound, hitNormal, out isEssentialHit, out isBleeding,
                 out resistancePercent, out damage);
+        }
+
+        public bool TryMatchBodyPart(Vector2 uv, out int bodyPartIndex, out bool isEssential)
+        {
+            bodyPartIndex = -1;
+            isEssential = false;
+
+            var maskTex = _atlasData != null ? _atlasData.BodyPartsMask : null;
+            var mappings = _atlasData != null ? _atlasData.BodyPartMappings : null;
+
+            if (maskTex != null && mappings != null && mappings.Count > 0)
+            {
+                Color hitColor = maskTex.GetPixelBilinear(uv.x, uv.y);
+                float minDist = float.MaxValue;
+                BodyPartMapping? bestMatch = null;
+                int bestIndex = -1;
+
+                for (int i = 0; i < mappings.Count; i++)
+                {
+                    var mapping = mappings[i];
+                    float d = (mapping.Color.r - hitColor.r) * (mapping.Color.r - hitColor.r) +
+                              (mapping.Color.g - hitColor.g) * (mapping.Color.g - hitColor.g) +
+                              (mapping.Color.b - hitColor.b) * (mapping.Color.b - hitColor.b);
+                    if (d < minDist)
+                    {
+                        minDist = d;
+                        bestMatch = mapping;
+                        bestIndex = i;
+                    }
+                }
+
+                if (bestMatch.HasValue && minDist < 0.05f)
+                {
+                    bodyPartIndex = bestIndex;
+                    isEssential = bestMatch.Value.IsEssential;
+                    _lastHitBodyPartIndex = bestIndex;
+                    return true;
+                }
+
+                _lastHitBodyPartIndex = -1;
+                return false;
+            }
+
+            // No mask or empty mappings: treat whole character as a single essential part
+            isEssential = true;
+            _lastHitBodyPartIndex = 0;
+            bodyPartIndex = 0;
+            return true;
+        }
+
+        public bool TryMatchBodyPartAtWorld(Vector3 worldPoint, out int bodyPartIndex, out bool isEssential)
+        {
+            GetWoundProjection(worldPoint, out _, out Vector2 uv);
+            return TryMatchBodyPart(uv, out bodyPartIndex, out isEssential);
         }
 
         public bool IsSolidAtWorldPoint(Vector3 worldPoint)

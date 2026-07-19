@@ -102,6 +102,25 @@ namespace SolarHarmony.DynamicWounds2D.Editor
                     EditorUtility.SetDirty(data);
                 }
             }
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("PBR Texture Atlases", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "These atlases must have the same sprite layout as the Source Texture. "
+                + "Leave unassigned to use procedural normals and default surface values.",
+                MessageType.Info);
+
+            serializedObject.Update();
+            EditorGUILayout.PropertyField(
+                serializedObject.FindProperty("NormalMap"),
+                new GUIContent("Normal Map"));
+            EditorGUILayout.PropertyField(
+                serializedObject.FindProperty("SmoothnessMap"),
+                new GUIContent("Smoothness Map"));
+            EditorGUILayout.PropertyField(
+                serializedObject.FindProperty("GlowMap"),
+                new GUIContent("Glow Map"));
+            serializedObject.ApplyModifiedProperties();
         }
     }
 }

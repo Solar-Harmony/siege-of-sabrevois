@@ -17,3 +17,6 @@ MonoBehaviour:
   - {fileID: 544641745, guid: 18543132406cf1e4b91b009c3f449361, type: 3}
   BodyPartsMask: {fileID: 0}
   BodyPartMappings: []
+  NormalMap: {fileID: 0}
+  SmoothnessMap: {fileID: 0}
+  GlowMap: {fileID: 0}

@@ -1,4 +1,5 @@
-﻿using SolarHarmony.DynamicWounds2D;
+﻿using System;
+using SolarHarmony.DynamicWounds2D;
 using Sabrevois.Gameplay.Tree;
 using Sabrevois.Level.Water;
 using UnityEngine;
@@ -7,11 +8,16 @@ namespace Sabrevois.Gameplay.AI.Actions
 {
     public class AttackService
     {
+        public static event Action<Vector3> OnMiss;
+
         public void Attack(Transform attacker, Ray ray, float attackRange, float woundRadius, float woundPenetration)
         {
             // Use QueryTriggerInteraction.Collide so the raycast can hit the water plane trigger
             RaycastHit[] hits = Physics.RaycastAll(ray, attackRange, ~0, QueryTriggerInteraction.Collide);
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+            bool hadEffect = false;
+            Vector3 missPoint = ray.origin + ray.direction * attackRange;
 
             foreach (var hit in hits)
             {
@@ -19,11 +25,14 @@ namespace Sabrevois.Gameplay.AI.Actions
                 if (hit.collider.gameObject.CompareTag("Water") || hit.collider.gameObject.layer == LayerMask.NameToLayer("Water"))
                 {
                     WaterRipplesInteraction.AddDisturbance(new Vector2(hit.point.x, hit.point.z), 0.2f, 1f);
+                    hadEffect = true;
                     break;
                 }
 
                 // Ignore other triggers so bullets don't get blocked by invisible enemy aggro ranges or event triggers
                 if (hit.collider.isTrigger && hit.collider.GetComponentInParent<WoundsComponent>() == null) continue;
+
+                missPoint = hit.point;
 
                 var health = hit.collider.GetComponentInParent<Health>();
 
@@ -72,6 +81,14 @@ namespace Sabrevois.Gameplay.AI.Actions
                 }
                 else if (health != null)
                 {
+                    // No solid WoundsComponent at hit point (grid cells dead / limb severed).
+                    // Still try to identify the body part for correct resistance and essential detection.
+                    foreach (var wc in allWounds)
+                    {
+                        if (wc.TryMatchBodyPartAtWorld(hit.point, out _, out isEssential))
+                            break;
+                    }
+
                     resistance = health.GetResistanceAtDepth(0f);
                     damage = weaponPenetration * (1f - resistance / 100f);
                     woundDepth = damage;
@@ -80,8 +97,6 @@ namespace Sabrevois.Gameplay.AI.Actions
                 if (health != null)
                 {
                     health.TakeDamage(woundDepth, ray.direction, isEssential);
-
-                    Debug.Log($"Target: {health.name} | Weapon Pen: {weaponPenetration} | Resistance: {resistance}% | Damage: {damage:F2} | Wound Depth: {woundDepth:F2} | Essential: {isEssential} | Bleeding: {isBleeding}");
 
                     var targetOpponent = health.GetComponent<OpponentComponent>();
                     if (targetOpponent != null)
@@ -97,15 +112,26 @@ namespace Sabrevois.Gameplay.AI.Actions
                             attackerOpponent.CurrentOpponent = health.transform;
                         }
                     }
+
+                    hadEffect = true;
                 }
 
                 var tree = hit.collider.GetComponentInParent<FellableTree>();
                 if (tree != null)
                 {
                     tree.Fell(ray.direction);
+                    hadEffect = true;
                 }
 
+                if (wounds != null)
+                    hadEffect = true;
+
                 break;
+            }
+
+            if (!hadEffect)
+            {
+                OnMiss?.Invoke(missPoint);
             }
         }
     }
