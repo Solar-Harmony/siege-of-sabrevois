@@ -46,6 +46,7 @@ namespace SolarHarmony.DynamicWounds2D
         [SerializeField] private MeshRenderer _renderer;
         [SerializeField] private GameObject _severeWoundVFX;
         [SerializeField] private ParticleSystem _bloodVFX;
+        [SerializeField] private GameObject _woundImpactVFX;
         [SerializeField] private GameObject _bloodPoolPrefab;
         [SerializeField] private float _bloodPoolGrowthDuration = 5f;
         [SerializeField] private float _bloodPoolMinSize = 0.8f;
@@ -128,6 +129,8 @@ namespace SolarHarmony.DynamicWounds2D
                     {
                         Debug.LogWarning("[WoundsComponent] Grid generation returned null.", this);
                     }
+
+                    BakeBodyPartVertexColors();
                 }
             }
 
@@ -195,6 +198,57 @@ namespace SolarHarmony.DynamicWounds2D
 
                 _renderer.SetPropertyBlock(_mpb);
             }
+        }
+
+        private void BakeBodyPartVertexColors()
+        {
+            if (_atlasData == null || _atlasData.BodyPartsMask == null) return;
+            if (_atlasData.BodyPartMappings == null || _atlasData.BodyPartMappings.Count == 0) return;
+            if (_meshFilter == null || _meshFilter.sharedMesh == null) return;
+
+            var mesh = _meshFilter.sharedMesh;
+            var charUVs = new List<Vector2>();
+            mesh.GetUVs(1, charUVs);
+
+            if (charUVs.Count == 0) return;
+
+            var maskTex = _atlasData.BodyPartsMask;
+            var mappings = _atlasData.BodyPartMappings;
+            var colors = new Color[charUVs.Count];
+
+            for (int i = 0; i < charUVs.Count; i++)
+            {
+                Vector2 uv = charUVs[i];
+                Color maskColor = maskTex.GetPixelBilinear(uv.x, uv.y);
+
+                if (maskColor.maxColorComponent < 0.01f)
+                {
+                    colors[i] = new Color(0f, 0f, 0f, 1f);
+                    continue;
+                }
+
+                float minDist = float.MaxValue;
+                int bestIndex = -1;
+                for (int j = 0; j < mappings.Count; j++)
+                {
+                    var mapping = mappings[j];
+                    float d = (mapping.Color.r - maskColor.r) * (mapping.Color.r - maskColor.r)
+                            + (mapping.Color.g - maskColor.g) * (mapping.Color.g - maskColor.g)
+                            + (mapping.Color.b - maskColor.b) * (mapping.Color.b - maskColor.b);
+                    if (d < minDist)
+                    {
+                        minDist = d;
+                        bestIndex = j;
+                    }
+                }
+
+                float encoded = (bestIndex >= 0 && minDist < 0.05f)
+                    ? (bestIndex + 1f) / 256f
+                    : 0f;
+                colors[i] = new Color(encoded, 0f, 0f, 1f);
+            }
+
+            mesh.SetColors(colors);
         }
 
         private void ApplyAtlasTexture()
@@ -333,7 +387,7 @@ namespace SolarHarmony.DynamicWounds2D
             }
         }
 
-        private IEnumerator HitReactionRoutine(Vector2 hitUV, Vector3 impactNormal)
+        private IEnumerator HitReactionRoutine(Vector2 hitUV, Vector3 impactNormal, int bodyPartIndex)
         {
             if (_renderer == null) yield break;
 
@@ -358,6 +412,7 @@ namespace SolarHarmony.DynamicWounds2D
 
                 _renderer.GetPropertyBlock(_mpb);
                 _mpb.SetVector("_HitImpulse", new Vector4(hitX, hitY, strength, 0f));
+                _mpb.SetFloat("_HitBodyPartIndex", bodyPartIndex);
                 _renderer.SetPropertyBlock(_mpb);
 
                 yield return null;
@@ -365,6 +420,7 @@ namespace SolarHarmony.DynamicWounds2D
 
             _renderer.GetPropertyBlock(_mpb);
             _mpb.SetVector("_HitImpulse", Vector4.zero);
+            _mpb.SetFloat("_HitBodyPartIndex", -1f);
             _renderer.SetPropertyBlock(_mpb);
 
             _hitReactionCoroutine = null;
@@ -492,6 +548,23 @@ namespace SolarHarmony.DynamicWounds2D
             instance.Play(true);
 
             StartCoroutine(StopBleedingRoutine(instance, duration));
+        }
+
+        private void PlayWoundImpactVFX(Vector3 localPoint, Vector2 hitUV, Vector3 worldNormal,
+            float layerDepth)
+        {
+            if (_woundImpactVFX == null || _renderer == null) return;
+
+            var instance = Instantiate(_woundImpactVFX, _renderer.transform);
+            instance.transform.position = GetBillboardWorldPosition(localPoint);
+
+            var tracker = instance.AddComponent<WoundVFXTracker>();
+            tracker.Source = this;
+            tracker.LocalPoint = localPoint;
+
+            var impact = instance.GetComponent<WoundImpact>();
+            if (impact != null)
+                impact.Initialize(hitUV, _atlasData, layerDepth, worldNormal);
         }
 
         private void ApplyBloodColorToPool(GameObject pool)
@@ -952,7 +1025,7 @@ namespace SolarHarmony.DynamicWounds2D
             else
             {
                 isEssentialHit = true;
-                _lastHitBodyPartIndex = 0;
+                _lastHitBodyPartIndex = -1;
             }
 
             float oldDepth = 0f;
@@ -981,6 +1054,8 @@ namespace SolarHarmony.DynamicWounds2D
                 _maxWoundPenetration = damage;
 
             float newDepth = oldDepth + damage;
+
+            PlayWoundImpactVFX(wound.LocalPoint, wound.Position, hitNormal, oldDepth);
 
             float ratio = 0f;
             if (newDepth >= _bloodVFXDepthThreshold)
@@ -1011,6 +1086,7 @@ namespace SolarHarmony.DynamicWounds2D
                 {
                     _renderer.GetPropertyBlock(_mpb);
                     _mpb.SetVector("_HitImpulse", Vector4.zero);
+                    _mpb.SetFloat("_HitBodyPartIndex", -1f);
                 _mpb.SetColor("_BloodColor", _bloodColor);
                 _mpb.SetFloat("_WoundTime", 0f);
 
@@ -1023,7 +1099,7 @@ namespace SolarHarmony.DynamicWounds2D
 
             if (_renderer != null && gameObject.activeInHierarchy && _host != null && !_host.IsDead)
             {
-                _hitReactionCoroutine = StartCoroutine(HitReactionRoutine(uv, hitNormal));
+                _hitReactionCoroutine = StartCoroutine(HitReactionRoutine(uv, hitNormal, _lastHitBodyPartIndex));
             }
 
             return newDepth;

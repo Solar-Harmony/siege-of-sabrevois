@@ -251,6 +251,7 @@ MonoBehaviour:
   _renderer: {fileID: 546179638534640709}
   _severeWoundVFX: {fileID: 9104211161659438896, guid: a35d114cb5c8cfe42b660eb47fc583b5, type: 3}
   _bloodVFX: {fileID: 8771800446612668594}
+  _woundImpactVFX: {fileID: 9104211161659438896, guid: 29cdcd012eea1454787844cb044affea, type: 3}
   _bloodPoolPrefab: {fileID: 7078304527254770000, guid: a61dc7b4cbd80e64a80e35dda5b38176, type: 3}
   _bloodPoolGrowthDuration: 10
   _bloodPoolMinSize: 0.6

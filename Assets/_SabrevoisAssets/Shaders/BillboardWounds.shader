@@ -54,6 +54,7 @@
         float2 uv           : TEXCOORD0;
         float2 charUV       : TEXCOORD1;
         float3 normalOS     : NORMAL;
+        float4 color        : COLOR;
         UNITY_VERTEX_INPUT_INSTANCE_ID
     };
 
@@ -108,6 +109,7 @@
     UNITY_INSTANCING_BUFFER_START(Props)
         UNITY_DEFINE_INSTANCED_PROP(int, _WoundSliceIndex)
         UNITY_DEFINE_INSTANCED_PROP(float4, _HitImpulse)
+        UNITY_DEFINE_INSTANCED_PROP(float, _HitBodyPartIndex)
     UNITY_INSTANCING_BUFFER_END(Props)
 
     Varyings vertCommon(Attributes input)
@@ -119,8 +121,14 @@
         float3 positionOS = input.positionOS.xyz;
 
         float4 hitImpulse = UNITY_ACCESS_INSTANCED_PROP(Props, _HitImpulse);
-        float push = ((input.uv.x - 0.5) * 2.0 * hitImpulse.x + (input.uv.y - 0.5) * 2.0 * hitImpulse.y) * hitImpulse.z;
-        positionOS.z += push;
+        float hitBodyPartIndex = UNITY_ACCESS_INSTANCED_PROP(Props, _HitBodyPartIndex);
+        int vertexBodyPart = round(input.color.r * 256.0 - 1.0);
+
+        if (hitBodyPartIndex < 0.0 || (float)vertexBodyPart == hitBodyPartIndex)
+        {
+            float push = ((input.charUV.x - 0.5) * 2.0 * hitImpulse.x + (input.charUV.y - 0.5) * 2.0 * hitImpulse.y) * hitImpulse.z;
+            positionOS.z += push;
+        }
 
         if (_EnableBillboard > 0.5)
         {

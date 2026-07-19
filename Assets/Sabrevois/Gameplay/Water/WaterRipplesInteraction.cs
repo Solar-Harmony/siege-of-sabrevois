@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.InputSystem;
 using System.Collections.Generic;
 
 namespace Sabrevois.Level.Water
@@ -46,8 +45,8 @@ namespace Sabrevois.Level.Water
                 strength = strength
             });
         }
-        
-        void Update()
+
+        private void Update()
         {
             _activeInteractors.RemoveWhere(i => i == null);
 
