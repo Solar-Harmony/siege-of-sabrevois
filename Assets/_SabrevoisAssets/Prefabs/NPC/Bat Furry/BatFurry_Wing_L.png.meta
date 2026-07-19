@@ -1,0 +1,173 @@
+fileFormatVersion: 2
+guid: 4811313487c38d1499672ac18938af3a
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 1227, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: 0
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: BatFurry_Wing_L_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 2380
+        height: 1792
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 38366dea62517f44bad932a1890e3750
+      internalID: 1208513090
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline:
+    - - {x: -152.23633, y: 39.51232}
+      - {x: -111.5625, y: 287.04538}
+      - {x: -111.5625, y: 460.20233}
+      - {x: -507.8418, y: 610.1167}
+      - {x: -633.3496, y: 610.1167}
+      - {x: -980.8203, y: 475.30997}
+      - {x: -1173.7305, y: 199.88585}
+      - {x: -1173.7305, y: 81.34889}
+      - {x: -703.0762, y: -80.18677}
+      - {x: -524.1113, y: -80.18677}
+    - - {x: -302.14844, y: 80.18677}
+      - {x: -300.98633, y: 81.34889}
+      - {x: -300.98633, y: 84.83527}
+      - {x: -299.82422, y: 88.321655}
+      - {x: -299.82422, y: 76.700386}
+      - {x: -301.51114, y: 74.4511}
+    customData: 
+    physicsShape:
+    - - {x: -618.2422, y: -75.53826}
+      - {x: -334.6875, y: -22.080414}
+      - {x: -155.72266, y: 38.350193}
+      - {x: -113.88672, y: 305.63943}
+      - {x: -113.88672, y: 460.20233}
+      - {x: -403.25195, y: 607.7925}
+      - {x: -808.8281, y: 607.7925}
+      - {x: -1171.4062, y: 259.15433}
+      - {x: -1171.4062, y: 124.347595}
+      - {x: -1167.9199, y: 128.99611}
+      - {x: -958.74023, y: -11.621271}
+      - {x: -660.0781, y: -77.86251}
+      - {x: -618.2422, y: -77.86251}
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 1537655665
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceOnImport
+        value: False
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":2380.0,"y":1792.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      BatFurry_Wing_L_0: 1208513090
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

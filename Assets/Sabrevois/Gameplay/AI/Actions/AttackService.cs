@@ -25,6 +25,30 @@ namespace Sabrevois.Gameplay.AI.Actions
                 // Ignore other triggers so bullets don't get blocked by invisible enemy aggro ranges or event triggers
                 if (hit.collider.isTrigger && hit.collider.GetComponentInParent<WoundsComponent>() == null) continue;
 
+                var health = hit.collider.GetComponentInParent<Health>();
+
+                // Resolve which WoundsComponent sprite was actually hit
+                // Collect all WoundsComponents under the root, sorted front-to-back by sibling index,
+                // and pick the frontmost one with a solid pixel at the hit point.
+                // This lets transparent areas on a front sprite pass through to sprites behind it
+                // (e.g. wings behind body, or holes in clothing).
+                var root = hit.collider.transform.root;
+                var allWounds = root.GetComponentsInChildren<WoundsComponent>();
+                if (allWounds.Length > 1)
+                    System.Array.Sort(allWounds, (a, b) =>
+                        a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex()));
+
+                WoundsComponent wounds = null;
+                var trueHitNormal = (Camera.main.transform.position - hit.point).normalized;
+                foreach (var wc in allWounds)
+                {
+                    if (wc.IsSolidAtWorldPoint(hit.point))
+                    {
+                        wounds = wc;
+                        break;
+                    }
+                }
+
                 float weaponPenetration = woundPenetration;
                 bool isEssential = true;
                 bool isBleeding = false;
@@ -33,12 +57,8 @@ namespace Sabrevois.Gameplay.AI.Actions
                 float resistance = 0f;
                 float damage = weaponPenetration;
 
-                var wounds = hit.collider.GetComponentInParent<WoundsComponent>();
-                var health = hit.collider.GetComponentInParent<Health>();
-
                 if (wounds != null)
                 {
-                    var trueHitNormal = (Camera.main.transform.position - hit.point).normalized;
                     Vector3 hitVelocity = ray.direction * 5f;
 
                     if (health != null && health.IsDead)

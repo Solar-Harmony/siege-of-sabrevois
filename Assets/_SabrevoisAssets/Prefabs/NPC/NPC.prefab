@@ -39,8 +39,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 5, y: 5, z: 5}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 3111610345475271165}
   - {fileID: 2361451745855598781}
@@ -155,7 +155,7 @@ MonoBehaviour:
   LayerRules:
   - PenetrationRequired: 3
     InstantDeathChancePercent: 0
-    PenetrationResistancePercent: 60
+    PenetrationResistancePercent: 99.3
   - PenetrationRequired: 4
     InstantDeathChancePercent: 0
     PenetrationResistancePercent: 30
@@ -259,6 +259,7 @@ MonoBehaviour:
   _minBleedDuration: 0.2
   _maxBleedDuration: 1
   _hitImpulseStrength: 0.2
+  _bloodColor: {r: 0.9838275, g: 0.951381, b: 0.5131283, a: 1}
   _atlasData: {fileID: 11400000, guid: b03c3844e9fc25843b8a7a126ddb91d0, type: 2}
   _groundLayerMask:
     serializedVersion: 2
@@ -904,7 +905,7 @@ Transform:
   m_GameObject: {fileID: 5471503676665790772}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.01, y: 0.774, z: 0}
+  m_LocalPosition: {x: 0.01, y: 0.57, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

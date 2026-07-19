@@ -32,6 +32,13 @@
         _BloodColor ("Blood Color", Color) = (0.5, 0, 0, 1)
         _BloodAmountMultiplier ("Blood Prominence", Range(1.0, 10.0)) = 1.0
 
+        [Header(Blood Drip)]
+        _BloodDripStrength ("Drip Strength", Range(0, 1)) = 0.6
+        _BloodDripLength ("Drip Length (UV)", Range(0.01, 0.3)) = 0.12
+        _BloodDripDuration ("Drip Duration (seconds)", Float) = 3.0
+        _BloodDripNoiseScale ("Drip Noise Scale", Float) = 4.0
+        _BloodDripDarken ("Dried Blood Darken", Range(0.1, 1.0)) = 0.35
+
         [Header(Lighting)]
         _VolumeDepth ("Volume Depth (Capsule)", Range(0.0, 2.0)) = 1.0
         _BaseBumpScale ("Base Procedural Normal Scale", Range(0.0, 20.0)) = 2.0
@@ -90,6 +97,12 @@
         float _WoundBumpScale;
         half4 _BloodColor;
         float _BloodAmountMultiplier;
+        float _BloodDripStrength;
+        float _BloodDripLength;
+        float _BloodDripDuration;
+        float _BloodDripNoiseScale;
+        float _BloodDripDarken;
+        float _WoundTime;
     CBUFFER_END
 
     UNITY_INSTANCING_BUFFER_START(Props)
@@ -118,7 +131,7 @@
             if (len > 0.001) viewDir /= len; else viewDir = float3(0,0,-1);
 
             float3 upWS = float3(0, 1, 0);
-            float3 rightWS = cross(upWS, viewDir);
+            float3 rightWS = cross(viewDir, upWS);
             float3 forwardWS = -viewDir;
 
             float scaleX = length(float3(UNITY_MATRIX_M[0].x, UNITY_MATRIX_M[1].x, UNITY_MATRIX_M[2].x));
@@ -240,6 +253,26 @@
             rimTargetColor = lerp(rimTargetColor, bloodColor, bloodAmount * 0.95);
             finalColor.rgb = lerp(finalColor.rgb, rimTargetColor, rimBlend);
         }
+
+        float2 dripStep = float2(0, 0.008);
+        float bloodAboveNear = saturate(SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, charUVF + dripStep, sliceIndex).g);
+        float bloodAboveFar = saturate(SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, charUVF + dripStep * 3, sliceIndex).g);
+        float splatAboveNear = SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, charUVF + dripStep, sliceIndex).r;
+        float splatAboveFar = SAMPLE_TEXTURE2D_ARRAY(_GlobalWoundSplatmap, sampler_GlobalWoundSplatmap, charUVF + dripStep * 3, sliceIndex).r;
+
+        float bloodAbove = max(bloodAboveNear * saturate(splatAboveNear * 2.0), bloodAboveFar * saturate(splatAboveFar) * 0.4);
+        float noBloodHere = 1.0 - saturate(hasBlood * 3.0);
+
+        float dripProgress = saturate(_WoundTime / max(0.01, _BloodDripDuration));
+        float dripReach = dripProgress * _BloodDripLength;
+
+        float dripAmount = bloodAbove * noBloodHere * dripReach;
+
+        float dripNoise = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, charUVF * float2(1.8, _BloodDripNoiseScale)).r;
+        float dripPattern = saturate((dripNoise - (1.0 - dripAmount * 2.5)) * 6.0);
+
+        half3 dripColor = _BloodColor.rgb * _BloodDripDarken;
+        finalColor.rgb = lerp(finalColor.rgb, dripColor, dripPattern * _BloodDripStrength);
 
         half4 cleanBase = SampleLayerAtlas(atlasUV, 0);
         float woundEdge = smoothstep(0.0, 0.25, surfaceDepth);
