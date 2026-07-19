@@ -224,7 +224,7 @@
             int rimShallowLayer = (int)rimBoundary - 1;
             float2 rimParaUV = input.uv - viewDirUV * (rimShallowLayer * _ParallaxStrength);
             float2 rimUV = rimParaUV + (noise - 0.5) * _NoiseUVOffset;
-            half4 rimTexColor = SampleLayerRaw(rimUV, rimShallowLayer + _RimLayerOffset);
+            half4 rimTexColor = SampleLayerRaw(rimUV, (int)rimBoundary + _RimLayerOffset);
             
             half3 darkenedRim = rimTexColor.rgb * (1.0 - _RimDarken);
             half3 darkenedFinal = finalColor.rgb * (1.0 - _RimDarken);
