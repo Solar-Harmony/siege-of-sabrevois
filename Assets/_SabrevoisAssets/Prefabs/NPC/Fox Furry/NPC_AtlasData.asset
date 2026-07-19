@@ -23,25 +23,4 @@ MonoBehaviour:
   - {fileID: 1567036966, guid: e8199d6bf94ba7f44bc396f90b9034b1, type: 3}
   - {fileID: 19836887, guid: e8199d6bf94ba7f44bc396f90b9034b1, type: 3}
   BodyPartsMask: {fileID: 2800000, guid: 2909705b61f79984694323b0d4105059, type: 3}
-  BodyPartMappings:
-  - Color: {r: 1, g: 0, b: 0, a: 1}
-    PartName: ArmR
-    IsEssential: 0
-  - Color: {r: 0, g: 0, b: 1, a: 1}
-    PartName: ArmL
-    IsEssential: 0
-  - Color: {r: 0, g: 0.5019608, b: 0, a: 1}
-    PartName: LegR
-    IsEssential: 0
-  - Color: {r: 0, g: 0, b: 0.5019608, a: 1}
-    PartName: LegL
-    IsEssential: 0
-  - Color: {r: 0.5019608, g: 0, b: 0, a: 1}
-    PartName: Head
-    IsEssential: 1
-  - Color: {r: 0, g: 1, b: 0, a: 1}
-    PartName: Torso
-    IsEssential: 1
-  - Color: {r: 0, g: 0.5019608, b: 0.5019608, a: 1}
-    PartName: Tail
-    IsEssential: 0
+  BodyPartMappings: []

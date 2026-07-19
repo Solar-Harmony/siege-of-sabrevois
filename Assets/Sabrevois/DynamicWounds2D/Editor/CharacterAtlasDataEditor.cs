@@ -6,6 +6,8 @@ namespace SolarHarmony.DynamicWounds2D.Editor
     [CustomEditor(typeof(CharacterAtlasData))]
     public class CharacterAtlasDataEditor : UnityEditor.Editor
     {
+        private bool _isAnalyzing;
+
         public override void OnInspectorGUI()
         {
             var data = (CharacterAtlasData)target;
@@ -46,10 +48,55 @@ namespace SolarHarmony.DynamicWounds2D.Editor
             EditorGUI.indentLevel--;
 
             EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Body Parts Mask", EditorStyles.boldLabel);
+            if (data.BodyPartsMask != null)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.ObjectField("Mask Texture", data.BodyPartsMask, typeof(Texture2D), false);
+                EditorGUILayout.LabelField(
+                    $"Detected Parts: {(data.BodyPartMappings != null ? data.BodyPartMappings.Count : 0)} / {CharacterAtlasData.MaxBodyPartCount}");
+                EditorGUI.indentLevel--;
+            }
+
+            EditorGUI.BeginDisabledGroup(_isAnalyzing);
+            if (GUILayout.Button(_isAnalyzing ? "Analyzing..." : "Analyze Body Parts Mask"))
+            {
+                Undo.RecordObject(data, "Analyze Body Parts Mask");
+                _isAnalyzing = true;
+                data.AnalyzeBodyPartsMaskAsync(
+                    progress =>
+                    {
+                        if (EditorUtility.DisplayCancelableProgressBar(
+                            "Analyzing Body Parts Mask",
+                            $"Scanning pixels... {Mathf.RoundToInt(progress * 100)}%",
+                            progress))
+                        {
+                            _isAnalyzing = false;
+                            EditorUtility.ClearProgressBar();
+                        }
+                    },
+                    () =>
+                    {
+                        _isAnalyzing = false;
+                        EditorUtility.ClearProgressBar();
+                        EditorUtility.SetDirty(data);
+                        Repaint();
+                    });
+            }
+            EditorGUI.EndDisabledGroup();
+
+            EditorGUILayout.Space();
             serializedObject.Update();
             DrawPropertiesExcluding(serializedObject,
-                "m_Script", "_sourceTexture", "LayerSprites");
+                "m_Script", "_sourceTexture", "LayerSprites", "BodyPartsMask", "BodyPartMappings");
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void OnDisable()
+        {
+            if (_isAnalyzing)
+                EditorUtility.ClearProgressBar();
+            _isAnalyzing = false;
         }
     }
 }

@@ -63,7 +63,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: e8199d6bf94ba7f44bc396f90b9034b1, type: 3}
+        m_Texture: {fileID: 2800000, guid: 98f0afdac295e0048a9602f17eca78c5, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -159,6 +159,8 @@ Material:
     - _HitImpulse: {r: 0, g: 0, b: 0, a: 0}
     - _LayerUV00_01: {r: 0, g: 0, b: 0, a: 0}
     - _LayerUV02_03: {r: 0, g: 0, b: 0, a: 0}
+    - _LayerUV04_05: {r: 0, g: 0, b: 0, a: 0}
+    - _LayerUV06_07: {r: 0, g: 0, b: 0, a: 0}
     - _RimColor: {r: 0.19999996, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []

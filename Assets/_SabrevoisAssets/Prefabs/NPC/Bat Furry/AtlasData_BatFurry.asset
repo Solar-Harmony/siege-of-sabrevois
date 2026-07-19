@@ -20,4 +20,91 @@ MonoBehaviour:
   - {fileID: -2135576697, guid: 98f0afdac295e0048a9602f17eca78c5, type: 3}
   - {fileID: 1109946499, guid: 98f0afdac295e0048a9602f17eca78c5, type: 3}
   BodyPartsMask: {fileID: 2800000, guid: 7876470d0fadac640b9c482313002324, type: 3}
-  BodyPartMappings: []
+  BodyPartMappings:
+  - Color: {r: 0, g: 1, b: 0.5, a: 1}
+    PartName: Part_R0.00_G1.00_B0.50
+    IsEssential: 0
+  - Color: {r: 0, g: 0.75, b: 0.5, a: 1}
+    PartName: Part_R0.00_G0.75_B0.50
+    IsEssential: 0
+  - Color: {r: 1, g: 0, b: 1, a: 1}
+    PartName: Part_R1.00_G0.00_B1.00
+    IsEssential: 0
+  - Color: {r: 0.75, g: 0, b: 0.75, a: 1}
+    PartName: Part_R0.75_G0.00_B0.75
+    IsEssential: 0
+  - Color: {r: 0.5, g: 0, b: 0.5, a: 1}
+    PartName: Part_R0.50_G0.00_B0.50
+    IsEssential: 0
+  - Color: {r: 0, g: 0.75, b: 0.75, a: 1}
+    PartName: Part_R0.00_G0.75_B0.75
+    IsEssential: 0
+  - Color: {r: 0, g: 0.5, b: 1, a: 1}
+    PartName: Part_R0.00_G0.50_B1.00
+    IsEssential: 0
+  - Color: {r: 0, g: 1, b: 0.75, a: 1}
+    PartName: Part_R0.00_G1.00_B0.75
+    IsEssential: 0
+  - Color: {r: 0, g: 0.5, b: 0.75, a: 1}
+    PartName: Part_R0.00_G0.50_B0.75
+    IsEssential: 0
+  - Color: {r: 0, g: 0.5, b: 0.5, a: 1}
+    PartName: Part_R0.00_G0.50_B0.50
+    IsEssential: 0
+  - Color: {r: 0.5, g: 0.75, b: 0, a: 1}
+    PartName: Part_R0.50_G0.75_B0.00
+    IsEssential: 0
+  - Color: {r: 0.5, g: 1, b: 0, a: 1}
+    PartName: Part_R0.50_G1.00_B0.00
+    IsEssential: 0
+  - Color: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    PartName: Part_R0.50_G0.50_B0.50
+    IsEssential: 0
+  - Color: {r: 0, g: 0.75, b: 0, a: 1}
+    PartName: Part_R0.00_G0.75_B0.00
+    IsEssential: 0
+  - Color: {r: 0, g: 1, b: 0, a: 1}
+    PartName: Part_R0.00_G1.00_B0.00
+    IsEssential: 0
+  - Color: {r: 0, g: 0.5, b: 0, a: 1}
+    PartName: Part_R0.00_G0.50_B0.00
+    IsEssential: 0
+  - Color: {r: 0.5, g: 0.5, b: 0, a: 1}
+    PartName: Part_R0.50_G0.50_B0.00
+    IsEssential: 0
+  - Color: {r: 0, g: 0, b: 0.5, a: 1}
+    PartName: Part_R0.00_G0.00_B0.50
+    IsEssential: 0
+  - Color: {r: 1, g: 0.5, b: 0, a: 1}
+    PartName: Part_R1.00_G0.50_B0.00
+    IsEssential: 0
+  - Color: {r: 0.75, g: 0.5, b: 0, a: 1}
+    PartName: Part_R0.75_G0.50_B0.00
+    IsEssential: 0
+  - Color: {r: 1, g: 0.75, b: 0, a: 1}
+    PartName: Part_R1.00_G0.75_B0.00
+    IsEssential: 0
+  - Color: {r: 0.75, g: 0.75, b: 0, a: 1}
+    PartName: Part_R0.75_G0.75_B0.00
+    IsEssential: 0
+  - Color: {r: 1, g: 1, b: 0, a: 1}
+    PartName: Part_R1.00_G1.00_B0.00
+    IsEssential: 0
+  - Color: {r: 0, g: 0, b: 0.75, a: 1}
+    PartName: Part_R0.00_G0.00_B0.75
+    IsEssential: 0
+  - Color: {r: 0, g: 0, b: 1, a: 1}
+    PartName: Part_R0.00_G0.00_B1.00
+    IsEssential: 0
+  - Color: {r: 0.75, g: 0, b: 0, a: 1}
+    PartName: Part_R0.75_G0.00_B0.00
+    IsEssential: 0
+  - Color: {r: 0.5, g: 0, b: 0, a: 1}
+    PartName: Part_R0.50_G0.00_B0.00
+    IsEssential: 0
+  - Color: {r: 1, g: 0, b: 0, a: 1}
+    PartName: Part_R1.00_G0.00_B0.00
+    IsEssential: 0
+  - Color: {r: 0.5, g: 0.75, b: 0.5, a: 1}
+    PartName: Part_R0.50_G0.75_B0.50
+    IsEssential: 0

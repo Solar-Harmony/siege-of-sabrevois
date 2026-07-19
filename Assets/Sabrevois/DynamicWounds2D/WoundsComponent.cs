@@ -126,6 +126,8 @@ namespace SolarHarmony.DynamicWounds2D
                 }
             }
 
+            ApplyAtlasTexture();
+
             if (_renderer != null)
             {
                 if (_meshFilter == null)
@@ -187,6 +189,32 @@ namespace SolarHarmony.DynamicWounds2D
                 _renderer.SetPropertyBlock(_mpb);
             }
         }
+
+        private void ApplyAtlasTexture()
+        {
+            if (_atlasData == null || _atlasData.SourceTexture == null) return;
+            if (_renderer == null) return;
+            if (_renderer.sharedMaterial == null) return;
+
+            _renderer.sharedMaterial.mainTexture = _atlasData.SourceTexture;
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (_renderer == null || _atlasData == null || _atlasData.SourceTexture == null) return;
+            if (_renderer.sharedMaterial == null) return;
+
+            if (_renderer.sharedMaterial.mainTexture != _atlasData.SourceTexture)
+            {
+                UnityEditor.EditorApplication.delayCall += () =>
+                {
+                    if (this != null && _renderer != null && _renderer.sharedMaterial != null && _atlasData != null)
+                        _renderer.sharedMaterial.mainTexture = _atlasData.SourceTexture;
+                };
+            }
+        }
+#endif
 
         private void OnDestroy()
         {
