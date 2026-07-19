@@ -73,6 +73,7 @@ namespace SolarHarmony.DynamicWounds2D
         private float _visibleHeightFraction = 1f;
         private int _visibleMinY;
         private int _visibleMaxY;
+        private int _lastHitBodyPartIndex = -1;
 
         private static WoundsComponent s_lookedAt;
         private static int s_lastLookFrame;
@@ -81,6 +82,8 @@ namespace SolarHarmony.DynamicWounds2D
         public float VisibleBottomFraction => _graphHeight > 0 ? (float)_visibleMinY / _graphHeight : 0f;
         public Bounds InitialLocalBounds => _initialLocalBounds;
         public MeshRenderer Renderer => _renderer;
+        public CharacterAtlasData AtlasData => _atlasData;
+        public int LastHitBodyPartIndex => _lastHitBodyPartIndex;
 
         private void Awake()
         {
@@ -870,8 +873,10 @@ namespace SolarHarmony.DynamicWounds2D
                 Color hitColor = maskTex.GetPixelBilinear(uv.x, uv.y);
                 float minDist = float.MaxValue;
                 BodyPartMapping? bestMatch = null;
-                foreach (var mapping in mappings)
+                int bestIndex = -1;
+                for (int i = 0; i < mappings.Count; i++)
                 {
+                    var mapping = mappings[i];
                     float d = (mapping.Color.r - hitColor.r) * (mapping.Color.r - hitColor.r) +
                               (mapping.Color.g - hitColor.g) * (mapping.Color.g - hitColor.g) +
                               (mapping.Color.b - hitColor.b) * (mapping.Color.b - hitColor.b);
@@ -879,13 +884,23 @@ namespace SolarHarmony.DynamicWounds2D
                     {
                         minDist = d;
                         bestMatch = mapping;
+                        bestIndex = i;
                     }
                 }
 
                 if (bestMatch.HasValue && minDist < 0.05f)
                 {
                     isEssentialHit = bestMatch.Value.IsEssential;
+                    _lastHitBodyPartIndex = bestIndex;
                 }
+                else
+                {
+                    _lastHitBodyPartIndex = -1;
+                }
+            }
+            else
+            {
+                _lastHitBodyPartIndex = -1;
             }
 
             float oldDepth = 0f;

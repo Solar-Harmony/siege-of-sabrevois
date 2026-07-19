@@ -6,8 +6,6 @@ namespace SolarHarmony.DynamicWounds2D.Editor
     [CustomEditor(typeof(CharacterAtlasData))]
     public class CharacterAtlasDataEditor : UnityEditor.Editor
     {
-        private bool _isAnalyzing;
-
         public override void OnInspectorGUI()
         {
             var data = (CharacterAtlasData)target;
@@ -22,7 +20,7 @@ namespace SolarHarmony.DynamicWounds2D.Editor
             }
 
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Sync Sprites from Texture"))
+            if (GUILayout.Button("Sync Sprites"))
                 data.SyncSpritesFromTexture();
             if (GUILayout.Button("Sort by Name"))
             {
@@ -34,69 +32,76 @@ namespace SolarHarmony.DynamicWounds2D.Editor
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField(
-                $"Layer Sprites ({data.LayerSprites.Count}):",
-                EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"Layer Sprites ({data.LayerSprites.Count}):", EditorStyles.boldLabel);
 
             EditorGUI.indentLevel++;
             for (int i = 0; i < data.LayerSprites.Count; i++)
             {
                 var s = data.LayerSprites[i];
-                EditorGUILayout.LabelField(
-                    $"{i}:", s != null ? s.name : "(null)");
+                EditorGUILayout.LabelField($"{i}:", s != null ? s.name : "(null)");
             }
             EditorGUI.indentLevel--;
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Body Parts Mask", EditorStyles.boldLabel);
-            if (data.BodyPartsMask != null)
-            {
-                EditorGUI.indentLevel++;
-                EditorGUILayout.ObjectField("Mask Texture", data.BodyPartsMask, typeof(Texture2D), false);
-                EditorGUILayout.LabelField(
-                    $"Detected Parts: {(data.BodyPartMappings != null ? data.BodyPartMappings.Count : 0)} / {CharacterAtlasData.MaxBodyPartCount}");
-                EditorGUI.indentLevel--;
-            }
 
-            EditorGUI.BeginDisabledGroup(_isAnalyzing);
-            if (GUILayout.Button(_isAnalyzing ? "Analyzing..." : "Analyze Body Parts Mask"))
-            {
-                Undo.RecordObject(data, "Analyze Body Parts Mask");
-                _isAnalyzing = true;
-                data.AnalyzeBodyPartsMaskAsync(
-                    progress =>
-                    {
-                        if (EditorUtility.DisplayCancelableProgressBar(
-                            "Analyzing Body Parts Mask",
-                            $"Scanning pixels... {Mathf.RoundToInt(progress * 100)}%",
-                            progress))
-                        {
-                            _isAnalyzing = false;
-                            EditorUtility.ClearProgressBar();
-                        }
-                    },
-                    () =>
-                    {
-                        _isAnalyzing = false;
-                        EditorUtility.ClearProgressBar();
-                        EditorUtility.SetDirty(data);
-                        Repaint();
-                    });
-            }
-            EditorGUI.EndDisabledGroup();
-
-            EditorGUILayout.Space();
             serializedObject.Update();
-            DrawPropertiesExcluding(serializedObject,
-                "m_Script", "_sourceTexture", "LayerSprites", "BodyPartsMask", "BodyPartMappings");
+            EditorGUILayout.PropertyField(
+                serializedObject.FindProperty("BodyPartsMask"),
+                new GUIContent("Mask Texture"));
             serializedObject.ApplyModifiedProperties();
-        }
 
-        private void OnDisable()
-        {
-            if (_isAnalyzing)
-                EditorUtility.ClearProgressBar();
-            _isAnalyzing = false;
+            if (data.BodyPartsMask != null && GUILayout.Button("Detect Parts from Mask"))
+            {
+                Undo.RecordObject(data, "Detect Body Parts");
+                data.AnalyzeBodyPartsMask();
+                EditorUtility.SetDirty(data);
+            }
+
+            var mappings = data.BodyPartMappings;
+            if (mappings != null && mappings.Count > 0)
+            {
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField(
+                    $"Detected Parts ({mappings.Count}):",
+                    EditorStyles.boldLabel);
+
+                EditorGUI.indentLevel++;
+                for (int i = 0; i < mappings.Count; i++)
+                {
+                    var m = mappings[i];
+
+                    EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                    EditorGUILayout.BeginHorizontal();
+
+                    var colorRect = GUILayoutUtility.GetRect(18, 18,
+                        GUILayout.ExpandWidth(false));
+                    EditorGUI.DrawRect(colorRect, m.Color);
+
+                    string rgb = $"({m.Color.r:F1}, {m.Color.g:F1}, {m.Color.b:F1})";
+                    EditorGUILayout.LabelField(rgb);
+
+                    m.IsEssential = EditorGUILayout.ToggleLeft(
+                        "Essential", m.IsEssential, GUILayout.Width(65));
+
+                    EditorGUILayout.EndHorizontal();
+
+                    m.ArmourPercent = EditorGUILayout.Slider(
+                        "Armour", m.ArmourPercent, 0f, 100f);
+
+                    EditorGUILayout.EndVertical();
+
+                    mappings[i] = m;
+                }
+                EditorGUI.indentLevel--;
+
+                if (GUILayout.Button("Clear Parts"))
+                {
+                    Undo.RecordObject(data, "Clear Body Parts");
+                    mappings.Clear();
+                    EditorUtility.SetDirty(data);
+                }
+            }
         }
     }
 }

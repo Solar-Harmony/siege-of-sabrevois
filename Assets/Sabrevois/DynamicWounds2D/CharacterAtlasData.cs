@@ -10,220 +10,22 @@ namespace SolarHarmony.DynamicWounds2D
         [HideInInspector] public Color Color;
         public string PartName;
         public bool IsEssential;
+        [Range(0f, 100f)]
+        public float ArmourPercent;
     }
 
     [CreateAssetMenu(fileName = "NewCharacterAtlasData", menuName = "Sabrevois/Character Atlas Data")]
     public class CharacterAtlasData : ScriptableObject
     {
-        private static readonly float[] PresetValues = { 0.0f, 0.5f, 0.75f, 1.0f };
-        private static readonly Color FillerColor = Color.black;
-        private const float ColorMatchTolerance = 0.1f;
-        private const int ChunkSize = 4096;
-
         [SerializeField] private Texture2D _sourceTexture;
         public List<Sprite> LayerSprites = new List<Sprite>();
         public Texture2D BodyPartsMask;
         public List<BodyPartMapping> BodyPartMappings = new List<BodyPartMapping>();
 
-        public static IReadOnlyList<float> BodyPartPresetValues => PresetValues;
-        public static int MaxBodyPartCount => PresetValues.Length * PresetValues.Length * PresetValues.Length;
-
-        public void AnalyzeBodyPartsMask()
+        public float GetBodyPartArmour(int bodyPartIndex)
         {
-            if (BodyPartsMask == null) return;
-
-#if UNITY_EDITOR
-            EnsureTextureReadableAndLinear();
-#endif
-
-            var pixels = BodyPartsMask.GetPixels();
-            var mappings = BuildMappingsFromPixels(pixels);
-            ApplyPreservedMappings(mappings);
-        }
-
-#if UNITY_EDITOR
-        public void AnalyzeBodyPartsMaskAsync(Action<float> onProgress, Action onComplete)
-        {
-            if (BodyPartsMask == null)
-            {
-                onComplete?.Invoke();
-                return;
-            }
-
-            EnsureTextureReadableAndLinear();
-
-            var pixels = BodyPartsMask.GetPixels();
-            var foundSet = new HashSet<Color>(new ColorEqualityComparer());
-            var mappings = new List<BodyPartMapping>();
-            int total = pixels.Length;
-            int processed = 0;
-            bool finished = false;
-
-            UnityEditor.EditorApplication.CallbackFunction step = null;
-            step = () =>
-            {
-                int end = Mathf.Min(processed + ChunkSize, total);
-                for (int i = processed; i < end; i++)
-                {
-                    if (TryMatchPresetColor(pixels[i], out var matched))
-                        foundSet.Add(matched);
-                }
-                processed = end;
-
-                float progress = (float)processed / total;
-                onProgress?.Invoke(progress);
-
-                if (processed >= total && !finished)
-                {
-                    finished = true;
-                    UnityEditor.EditorApplication.update -= step;
-                    mappings = CreateMappingsFromColors(foundSet);
-                    ApplyPreservedMappings(mappings);
-                    onComplete?.Invoke();
-                }
-            };
-
-            UnityEditor.EditorApplication.update += step;
-        }
-
-        private void EnsureTextureReadableAndLinear()
-        {
-            var path = UnityEditor.AssetDatabase.GetAssetPath(BodyPartsMask);
-            var importer = UnityEditor.AssetImporter.GetAtPath(path) as UnityEditor.TextureImporter;
-            if (importer == null) return;
-
-            bool dirty = false;
-            if (!importer.isReadable)
-            {
-                importer.isReadable = true;
-                dirty = true;
-            }
-            if (importer.sRGBTexture)
-            {
-                importer.sRGBTexture = false;
-                dirty = true;
-            }
-            if (dirty)
-                importer.SaveAndReimport();
-        }
-#endif
-
-        private static bool TryMatchPresetColor(Color pixel, out Color matched)
-        {
-            if (ColorsMatch(pixel, FillerColor))
-            {
-                matched = default;
-                return false;
-            }
-
-            float r = SnapToNearestPreset(pixel.r);
-            float g = SnapToNearestPreset(pixel.g);
-            float b = SnapToNearestPreset(pixel.b);
-
-            if (Mathf.Abs(r - pixel.r) <= ColorMatchTolerance &&
-                Mathf.Abs(g - pixel.g) <= ColorMatchTolerance &&
-                Mathf.Abs(b - pixel.b) <= ColorMatchTolerance)
-            {
-                matched = new Color(r, g, b, 1f);
-                return true;
-            }
-
-            matched = default;
-            return false;
-        }
-
-        private static bool ColorsMatch(Color a, Color b)
-        {
-            return Mathf.Abs(a.r - b.r) <= ColorMatchTolerance
-                && Mathf.Abs(a.g - b.g) <= ColorMatchTolerance
-                && Mathf.Abs(a.b - b.b) <= ColorMatchTolerance;
-        }
-
-        private static float SnapToNearestPreset(float value)
-        {
-            float best = PresetValues[0];
-            float bestDist = Mathf.Abs(value - best);
-            for (int i = 1; i < PresetValues.Length; i++)
-            {
-                float dist = Mathf.Abs(value - PresetValues[i]);
-                if (dist < bestDist)
-                {
-                    bestDist = dist;
-                    best = PresetValues[i];
-                }
-            }
-            return best;
-        }
-
-        private List<BodyPartMapping> BuildMappingsFromPixels(Color[] pixels)
-        {
-            var foundSet = new HashSet<Color>(new ColorEqualityComparer());
-            for (int i = 0; i < pixels.Length; i++)
-            {
-                if (TryMatchPresetColor(pixels[i], out var matched))
-                    foundSet.Add(matched);
-            }
-            return CreateMappingsFromColors(foundSet);
-        }
-
-        private List<BodyPartMapping> CreateMappingsFromColors(HashSet<Color> foundColors)
-        {
-            var existingByKey = new Dictionary<string, BodyPartMapping>();
-            foreach (var m in BodyPartMappings)
-            {
-                var key = ColorToKey(m.Color);
-                if (!string.IsNullOrEmpty(key) && !existingByKey.ContainsKey(key))
-                    existingByKey[key] = m;
-            }
-
-            var newMappings = new List<BodyPartMapping>();
-            foreach (var color in foundColors)
-            {
-                var colorKey = ColorToKey(color);
-                if (existingByKey.TryGetValue(colorKey, out var existing))
-                {
-                    existing.Color = color;
-                    newMappings.Add(existing);
-                }
-                else
-                {
-                    newMappings.Add(new BodyPartMapping
-                    {
-                        Color = color,
-                        PartName = $"Part_{colorKey}",
-                        IsEssential = false
-                    });
-                }
-            }
-            return newMappings;
-        }
-
-        private void ApplyPreservedMappings(List<BodyPartMapping> mappings)
-        {
-            BodyPartMappings = mappings;
-#if UNITY_EDITOR
-            UnityEditor.EditorUtility.SetDirty(this);
-#endif
-        }
-
-        private static string ColorToKey(Color c)
-        {
-            return $"R{c.r:F2}_G{c.g:F2}_B{c.b:F2}";
-        }
-
-        private class ColorEqualityComparer : IEqualityComparer<Color>
-        {
-            public bool Equals(Color a, Color b)
-            {
-                return Mathf.Abs(a.r - b.r) < 0.001f
-                    && Mathf.Abs(a.g - b.g) < 0.001f
-                    && Mathf.Abs(a.b - b.b) < 0.001f;
-            }
-
-            public int GetHashCode(Color c)
-            {
-                return ((int)(c.r * 1000)) ^ ((int)(c.g * 1000) << 10) ^ ((int)(c.b * 1000) << 20);
-            }
+            if (bodyPartIndex < 0 || bodyPartIndex >= BodyPartMappings.Count) return 0f;
+            return BodyPartMappings[bodyPartIndex].ArmourPercent;
         }
 
         public Texture2D SourceTexture
@@ -295,6 +97,143 @@ namespace SolarHarmony.DynamicWounds2D
                     LayerSprites.Add(s);
             }
             UnityEditor.EditorUtility.SetDirty(this);
+        }
+
+        public void AnalyzeBodyPartsMask()
+        {
+            if (BodyPartsMask == null) return;
+            EnsureTextureReadableAndLinear();
+
+            var presets = new float[] { 0f, 0.5f, 0.75f, 1f };
+            var foundSet = new HashSet<Color>(new ColorEqualityComparer());
+            int res = 64;
+
+            for (int gy = 0; gy < res; gy++)
+            {
+                for (int gx = 0; gx < res; gx++)
+                {
+                    float u = (gx + 0.5f) / res;
+                    float v = (gy + 0.5f) / res;
+                    Color c = BodyPartsMask.GetPixelBilinear(u, v);
+
+                    c.r = SnapToPreset(c.r, presets);
+                    c.g = SnapToPreset(c.g, presets);
+                    c.b = SnapToPreset(c.b, presets);
+
+                    if (c.r < 0.01f && c.g < 0.01f && c.b < 0.01f) continue;
+
+                    foundSet.Add(new Color(c.r, c.g, c.b, 1f));
+                }
+            }
+
+            var validated = new List<Color>();
+            foreach (var preset in foundSet)
+            {
+                if (HasRawPixelMatch(preset, 0.1f))
+                    validated.Add(preset);
+            }
+
+            CreateMappingsFromColors(new HashSet<Color>(validated, new ColorEqualityComparer()));
+        }
+
+        private bool HasRawPixelMatch(Color target, float tolerance)
+        {
+            var pixels = BodyPartsMask.GetPixels();
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                if (Mathf.Abs(pixels[i].r - target.r) <= tolerance &&
+                    Mathf.Abs(pixels[i].g - target.g) <= tolerance &&
+                    Mathf.Abs(pixels[i].b - target.b) <= tolerance)
+                    return true;
+            }
+            return false;
+        }
+
+        private static float SnapToPreset(float value, float[] presets)
+        {
+            float best = presets[0];
+            float bestDist = Mathf.Abs(value - best);
+            for (int i = 1; i < presets.Length; i++)
+            {
+                float dist = Mathf.Abs(value - presets[i]);
+                if (dist < bestDist) { bestDist = dist; best = presets[i]; }
+            }
+            return best;
+        }
+
+        private void EnsureTextureReadableAndLinear()
+        {
+            var path = UnityEditor.AssetDatabase.GetAssetPath(BodyPartsMask);
+            var importer = UnityEditor.AssetImporter.GetAtPath(path) as UnityEditor.TextureImporter;
+            if (importer == null) return;
+
+            bool dirty = false;
+            if (!importer.isReadable)
+            {
+                importer.isReadable = true;
+                dirty = true;
+            }
+            if (importer.sRGBTexture)
+            {
+                importer.sRGBTexture = false;
+                dirty = true;
+            }
+            if (dirty)
+                importer.SaveAndReimport();
+        }
+
+        private void CreateMappingsFromColors(HashSet<Color> foundColors)
+        {
+            var existingByKey = new Dictionary<string, BodyPartMapping>();
+            foreach (var m in BodyPartMappings)
+            {
+                var key = ColorToKey(m.Color);
+                if (!string.IsNullOrEmpty(key) && !existingByKey.ContainsKey(key))
+                    existingByKey[key] = m;
+            }
+
+            var newMappings = new List<BodyPartMapping>();
+            foreach (var color in foundColors)
+            {
+                var colorKey = ColorToKey(color);
+                if (existingByKey.TryGetValue(colorKey, out var existing))
+                {
+                    existing.Color = color;
+                    newMappings.Add(existing);
+                }
+                else
+                {
+                    newMappings.Add(new BodyPartMapping
+                    {
+                        Color = color,
+                        PartName = "Part_" + newMappings.Count,
+                        IsEssential = false,
+                        ArmourPercent = 0f
+                    });
+                }
+            }
+            BodyPartMappings = newMappings;
+            UnityEditor.EditorUtility.SetDirty(this);
+        }
+
+        private static string ColorToKey(Color c)
+        {
+            return $"{c.r:F3}_{c.g:F3}_{c.b:F3}";
+        }
+
+        private class ColorEqualityComparer : IEqualityComparer<Color>
+        {
+            public bool Equals(Color a, Color b)
+            {
+                return Mathf.Abs(a.r - b.r) < 0.02f
+                    && Mathf.Abs(a.g - b.g) < 0.02f
+                    && Mathf.Abs(a.b - b.b) < 0.02f;
+            }
+
+            public int GetHashCode(Color c)
+            {
+                return ((int)(c.r * 50)) ^ ((int)(c.g * 50) << 10) ^ ((int)(c.b * 50) << 20);
+            }
         }
 #endif
     }

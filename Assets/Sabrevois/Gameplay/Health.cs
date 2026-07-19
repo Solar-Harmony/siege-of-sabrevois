@@ -63,19 +63,23 @@ namespace Sabrevois.Gameplay
 
         public float GetResistanceAtDepth(float depth)
         {
-            float currentResistance = 0f;
-            float maxPenetrationMet = -1f;
+            float resistance = 0f;
+            float maxMet = -1f;
 
             foreach (var rule in LayerRules)
             {
-                if (depth >= rule.PenetrationRequired && rule.PenetrationRequired > maxPenetrationMet)
+                if (depth >= rule.PenetrationRequired && rule.PenetrationRequired > maxMet)
                 {
-                    currentResistance = rule.PenetrationResistancePercent;
-                    maxPenetrationMet = rule.PenetrationRequired;
+                    resistance = rule.PenetrationResistancePercent;
+                    maxMet = rule.PenetrationRequired;
                 }
             }
 
-            return currentResistance;
+            var atlas = _woundsComponent?.AtlasData;
+            if (atlas != null)
+                resistance += atlas.GetBodyPartArmour(_woundsComponent.LastHitBodyPartIndex);
+
+            return Mathf.Min(resistance, 100f);
         }
 
         public Transform Transform => transform;
