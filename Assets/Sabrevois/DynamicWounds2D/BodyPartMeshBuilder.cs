@@ -119,5 +119,34 @@ namespace SolarHarmony.DynamicWounds2D
 
             return grid;
         }
+
+        public static bool[] GenerateConnectivityGridFromAlpha(
+            Texture2D sourceTex, Sprite sprite, int gridResolution)
+        {
+            if (sourceTex == null || !sourceTex.isReadable || gridResolution <= 0)
+                return null;
+
+            bool[] grid = new bool[gridResolution * gridResolution];
+            float texW = sourceTex.width;
+            float texH = sourceTex.height;
+            Rect r = sprite != null ? sprite.rect : new Rect(0, 0, texW, texH);
+
+            for (int gy = 0; gy < gridResolution; gy++)
+            {
+                for (int gx = 0; gx < gridResolution; gx++)
+                {
+                    float u = (gx + 0.5f) / gridResolution;
+                    float v = (gy + 0.5f) / gridResolution;
+
+                    float texU = (r.x + u * r.width) / texW;
+                    float texV = (r.y + v * r.height) / texH;
+
+                    Color c = sourceTex.GetPixelBilinear(texU, texV);
+                    grid[gy * gridResolution + gx] = c.a >= 0.01f;
+                }
+            }
+
+            return grid;
+        }
     }
 }

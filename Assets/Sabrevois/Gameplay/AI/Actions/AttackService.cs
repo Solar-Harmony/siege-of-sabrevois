@@ -49,12 +49,18 @@ namespace Sabrevois.Gameplay.AI.Actions
 
                 WoundsComponent wounds = null;
                 var trueHitNormal = (Camera.main.transform.position - hit.point).normalized;
+
+                float bestDepth = float.MaxValue;
                 foreach (var wc in allWounds)
                 {
                     if (wc.IsSolidAtWorldPoint(hit.point))
                     {
-                        wounds = wc;
-                        break;
+                        float d = wc.GetPlaneDepthAt(hit.point);
+                        if (d < bestDepth)
+                        {
+                            bestDepth = d;
+                            wounds = wc;
+                        }
                     }
                 }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Sabrevois.Utils;
 using UnityEngine;
 using Zenject;
 
@@ -26,6 +27,7 @@ namespace SolarHarmony.DynamicWounds2D
         public float Radius;
         public float Penetration;
         public float Intensity;
+        public float Gravity;
         public GameObject VFX;
     }
 
@@ -37,6 +39,9 @@ namespace SolarHarmony.DynamicWounds2D
         public event Action<Wound, RaycastHit> OnWoundCreated;
         public event Action OnVisibilityChanged;
         public event Action<GameObject, Vector3> OnLimbSevered;
+
+        public static event Action<WoundsComponent, Wound, RaycastHit> OnAnyWoundCreated;
+        public static event Action<WoundsComponent, GameObject, Vector3> OnAnyLimbSevered;
 
         [Inject] private GlobalWoundManager _woundManager;
 
@@ -118,9 +123,14 @@ namespace SolarHarmony.DynamicWounds2D
                     _meshFilter = _renderer.GetComponent<MeshFilter>();
                     if (_meshFilter != null && layer0Sprite != null)
                     {
-                        var mesh = BodyPartMeshBuilder.BuildFromLayer0Sprite(layer0Sprite, _meshFilter.mesh);
-                        if (mesh != null)
-                            _meshFilter.mesh = mesh;
+                        bool needsCustomMesh = _atlasData.BodyPartsMask != null
+                            || _atlasData.LayerSprites.Count > 1;
+                        if (needsCustomMesh)
+                        {
+                            var mesh = BodyPartMeshBuilder.BuildFromLayer0Sprite(layer0Sprite, _meshFilter.mesh);
+                            if (mesh != null)
+                                _meshFilter.mesh = mesh;
+                        }
                     }
                 }
 
@@ -128,21 +138,27 @@ namespace SolarHarmony.DynamicWounds2D
                 {
                     _liveGraph = BodyPartMeshBuilder.GenerateConnectivityGrid(
                         _atlasData.BodyPartsMask, GridResolution);
+                }
+                else if (layer0Sprite != null)
+                {
+                    _liveGraph = BodyPartMeshBuilder.GenerateConnectivityGridFromAlpha(
+                        _atlasData.SourceTexture, layer0Sprite, GridResolution);
+                }
+
+                if (_liveGraph != null)
+                {
                     _graphWidth = GridResolution;
                     _graphHeight = GridResolution;
                     _visibleMaxY = _graphHeight - 1;
 
-                    if (_liveGraph != null)
-                    {
-                        int solid = 0;
-                        for (int i = 0; i < _liveGraph.Length; i++)
-                            if (_liveGraph[i]) solid++;
-                        Debug.Log($"[WoundsComponent] Grid: {solid}/{_liveGraph.Length} cells solid.", this);
-                    }
-                    else
-                    {
-                        Debug.LogWarning("[WoundsComponent] Grid generation returned null.", this);
-                    }
+                    int solid = 0;
+                    for (int i = 0; i < _liveGraph.Length; i++)
+                        if (_liveGraph[i]) solid++;
+                    Debug.Log($"[WoundsComponent] Grid: {solid}/{_liveGraph.Length} cells solid.", this);
+                }
+                else
+                {
+                    Debug.LogWarning("[WoundsComponent] Grid generation returned null.", this);
                 }
             }
 
@@ -334,7 +350,7 @@ namespace SolarHarmony.DynamicWounds2D
                 Wound w = _wounds[i];
                 if (w.Penetration < _maxWoundPenetration - 0.05f) continue;
                 if (w.VFX != null) continue;
-                if (_severeWoundVFX == null || _renderer == null) continue;
+                if (VFXService.Instance == null || _renderer == null) continue;
 
                 bool tooClose = false;
                 for (int j = 0; j < _wounds.Count; j++)
@@ -349,12 +365,21 @@ namespace SolarHarmony.DynamicWounds2D
 
                 if (!tooClose)
                 {
-                    w.VFX = Instantiate(_severeWoundVFX, _renderer.transform);
-                    w.VFX.transform.localPosition = w.LocalPoint;
+                    w.VFX = VFXService.Instance.Spawn(VFXType.Smoke);
+                    if (w.VFX != null)
+                    {
+                        w.VFX.transform.SetParent(_renderer.transform);
+                        w.VFX.transform.localPosition = w.LocalPoint;
+                        VFXService.SetShapeRadius(w.VFX, w.Radius);
 
-                    Vector3 localNormal = _renderer.transform.InverseTransformDirection(w.Normal);
-                    if (localNormal.sqrMagnitude > 0.001f)
-                        w.VFX.transform.localRotation = Quaternion.LookRotation(localNormal);
+                        Vector3 localNormal = _renderer.transform.InverseTransformDirection(w.Normal);
+                        if (localNormal.sqrMagnitude > 0.001f)
+                            w.VFX.transform.localRotation = Quaternion.LookRotation(localNormal);
+
+                        var severePS = w.VFX.GetComponent<ParticleSystem>();
+                        if (severePS != null) severePS.Play(true);
+                        VFXService.AttachAutoReturn(w.VFX, VFXService.Instance, VFXType.Smoke);
+                    }
                 }
 
                 _wounds[i] = w;
@@ -489,15 +514,26 @@ namespace SolarHarmony.DynamicWounds2D
         }
 
         public void PlayBloodVFX(Vector3 localPoint, Vector3 worldNormal,
-            Vector3 hitVelocity = default, float penetrationRatio = 0.5f)
+            Vector3 hitVelocity = default, float penetrationRatio = 0.5f,
+            float woundRadius = 0f)
         {
-            if (_bloodPrefab == null || _renderer == null) return;
+            if (VFXService.Instance == null || _renderer == null) return;
             if (_host != null && _host.IsDead) return;
 
-            var go = Instantiate(_bloodPrefab, _renderer.transform);
+            var go = VFXService.Instance.Spawn(VFXType.Blood);
+            if (go == null) return;
+
+            foreach (var oldTracker in go.GetComponents<WoundVFXTracker>())
+                Destroy(oldTracker);
+
             var instance = go.GetComponent<ParticleSystem>();
-            if (instance == null) return;
-            instance.transform.position = GetBillboardWorldPosition(localPoint);
+            if (instance == null) { VFXService.Instance.Despawn(go, VFXType.Blood); return; }
+
+            VFXService.SetShapeRadius(go, woundRadius);
+
+            var goTransform = instance.transform;
+            goTransform.position = GetBillboardWorldPosition(localPoint);
+            goTransform.SetParent(null);
 
             var tracker = instance.gameObject.AddComponent<WoundVFXTracker>();
             tracker.Source = this;
@@ -528,12 +564,19 @@ namespace SolarHarmony.DynamicWounds2D
         }
 
         private void PlayWoundImpactVFX(Vector3 localPoint, Vector2 hitUV, Vector3 worldNormal,
-            float layerDepth)
+            float layerDepth, float woundRadius = 0f)
         {
-            if (_woundImpactVFX == null || _renderer == null) return;
+            if (VFXService.Instance == null || _renderer == null) return;
 
-            var instance = Instantiate(_woundImpactVFX, _renderer.transform);
+            var instance = VFXService.Instance.Spawn(VFXType.WoundImpact);
+            if (instance == null) return;
+
+            foreach (var oldTracker in instance.GetComponents<WoundVFXTracker>())
+                Destroy(oldTracker);
+
             instance.transform.position = GetBillboardWorldPosition(localPoint);
+            instance.transform.SetParent(null);
+            VFXService.SetShapeRadius(instance, woundRadius);
 
             var tracker = instance.AddComponent<WoundVFXTracker>();
             tracker.Source = this;
@@ -541,7 +584,12 @@ namespace SolarHarmony.DynamicWounds2D
 
             var impact = instance.GetComponent<WoundImpact>();
             if (impact != null)
+            {
+                impact.ResetForPool();
                 impact.Initialize(hitUV, _atlasData, layerDepth, worldNormal);
+            }
+
+            VFXService.AttachAutoReturn(instance, VFXService.Instance, VFXType.WoundImpact);
         }
 
         private void ApplyBloodColorToPool(GameObject pool)
@@ -577,7 +625,10 @@ namespace SolarHarmony.DynamicWounds2D
             {
                 var em = vfx.emission;
                 em.enabled = false;
-                Destroy(vfx.gameObject, vfx.main.startLifetime.constantMax + 1f);
+                if (VFXService.Instance != null)
+                    VFXService.Instance.Despawn(vfx.gameObject, VFXType.Blood);
+                else
+                    Destroy(vfx.gameObject, vfx.main.startLifetime.constantMax + 1f);
             }
         }
 
@@ -812,27 +863,36 @@ namespace SolarHarmony.DynamicWounds2D
                             _initialLocalBounds.min.y + v * _initialLocalBounds.size.y,
                             0f);
 
-                        // Blood VFX on the main body (severed stump)
-                        PlayBloodVFX(centroid, hitDirection, default, 1.0f);
-
-                        // Blood VFX on the severed part (flies off with it)
-                        if (_bloodPrefab != null)
+                        if (VFXService.Instance != null)
                         {
-                            var bloodGO = Instantiate(_bloodPrefab, severedPart.transform);
-                            var ps = bloodGO.GetComponent<ParticleSystem>();
-                            if (ps != null)
+                            var bloodGO = VFXService.Instance.Spawn(VFXType.Blood);
+                            if (bloodGO != null)
                             {
-                                ps.transform.localPosition = centroid;
-                                var main = ps.main;
-                                main.simulationSpace = ParticleSystemSimulationSpace.Local;
-                                main.startColor = new ParticleSystem.MinMaxGradient(_bloodColor);
-                                main.loop = true;
-                                ps.Play(true);
-                                StartCoroutine(StopBleedingRoutine(ps, _maxBleedDuration));
+                                bloodGO.transform.SetParent(severedPart.transform);
+                                bloodGO.transform.localPosition = centroid;
+
+                                float severedRadius = Mathf.Sqrt(severedNodes.Count / Mathf.PI)
+                                    * Mathf.Max(_initialLocalBounds.size.x, _initialLocalBounds.size.y) / _graphWidth;
+                                VFXService.SetShapeRadius(bloodGO, severedRadius);
+
+                                foreach (var oldTracker in bloodGO.GetComponents<WoundVFXTracker>())
+                                    Destroy(oldTracker);
+
+                                var ps = bloodGO.GetComponent<ParticleSystem>();
+                                if (ps != null)
+                                {
+                                    var main = ps.main;
+                                    main.simulationSpace = ParticleSystemSimulationSpace.Local;
+                                    main.startColor = new ParticleSystem.MinMaxGradient(_bloodColor);
+                                    main.loop = true;
+                                    ps.Play(true);
+                                    StartCoroutine(StopBleedingRoutine(ps, _maxBleedDuration));
+                                }
                             }
                         }
 
                         OnLimbSevered?.Invoke(severedPart, hitDirection);
+                        OnAnyLimbSevered?.Invoke(this, severedPart, hitDirection);
                     }
                 }
 
@@ -1083,13 +1143,13 @@ namespace SolarHarmony.DynamicWounds2D
                 if (damage > _maxWoundPenetration)
                     _maxWoundPenetration = damage;
 
-                PlayWoundImpactVFX(wound.LocalPoint, wound.Position, hitNormal, oldDepth);
+                PlayWoundImpactVFX(wound.LocalPoint, wound.Position, hitNormal, oldDepth, wound.Radius);
 
                 float ratio = 0f;
                 if (newDepth >= _bloodVFXDepthThreshold)
                 {
                     ratio = Mathf.Clamp01(newDepth / 3.0f);
-                    PlayBloodVFX(wound.LocalPoint, hitNormal, default, ratio);
+                    PlayBloodVFX(wound.LocalPoint, hitNormal, default, ratio, wound.Radius);
                     _woundAnimationTime = 0f;
                     isBleeding = true;
                 }
@@ -1238,6 +1298,7 @@ namespace SolarHarmony.DynamicWounds2D
                 out resistancePercent, out damage);
 
             OnWoundCreated?.Invoke(wound, hit);
+            OnAnyWoundCreated?.Invoke(this, wound, hit);
             return newDepth;
         }
 
@@ -1332,14 +1393,72 @@ namespace SolarHarmony.DynamicWounds2D
             return IsSolidAtUV(uv);
         }
 
+        public float GetPlaneDepthAt(Vector3 worldPoint)
+        {
+            if (_renderer == null || _mainCamera == null) return float.MaxValue;
+
+            Vector3 cameraPos = _mainCamera.transform.position;
+            Vector3 rayDir = (worldPoint - cameraPos).normalized;
+
+            Vector3 toCamera = cameraPos - _renderer.transform.position;
+            toCamera.y = 0;
+            if (toCamera.sqrMagnitude < 0.001f) return float.MaxValue;
+
+            Vector3 planeNormal = -toCamera.normalized;
+            Plane quadPlane = new Plane(planeNormal, _renderer.transform.position);
+
+            if (quadPlane.Raycast(new Ray(cameraPos, rayDir), out float enter))
+                return enter;
+
+            return float.MaxValue;
+        }
+
         private bool IsSolidAtUV(Vector2 uv)
         {
-            if (_liveGraph == null) return true;
+            const float uvMargin = 0.002f;
+            if (uv.x < -uvMargin || uv.x > 1f + uvMargin || uv.y < -uvMargin || uv.y > 1f + uvMargin)
+                return false;
+
+            if (_liveGraph == null)
+                return IsSpriteOpaqueAtUV(uv);
+
             int x = Mathf.FloorToInt(uv.x * _graphWidth);
             int y = Mathf.FloorToInt(uv.y * _graphHeight);
             x = Mathf.Clamp(x, 0, _graphWidth - 1);
             y = Mathf.Clamp(y, 0, _graphHeight - 1);
-            return _liveGraph[y * _graphWidth + x];
+            if (!_liveGraph[y * _graphWidth + x]) return false;
+            return IsSpriteOpaqueAtUV(uv);
+        }
+
+        private bool IsSpriteOpaqueAtUV(Vector2 uv)
+        {
+            if (_atlasData == null) return true;
+            var sourceTex = _atlasData.SourceTexture;
+            if (sourceTex == null || !sourceTex.isReadable) return true;
+
+            var layerSprites = _atlasData.LayerSprites;
+            if (layerSprites != null && layerSprites.Count > 0)
+            {
+                Sprite baseSprite = layerSprites[0];
+                if (baseSprite != null)
+                {
+                    float texW = sourceTex.width;
+                    float texH = sourceTex.height;
+
+                    float baseU = baseSprite.rect.x / texW;
+                    float baseV = baseSprite.rect.y / texH;
+                    float baseWidth = baseSprite.rect.width / texW;
+                    float baseHeight = baseSprite.rect.height / texH;
+
+                    float texU = Mathf.Clamp01(baseU + uv.x * baseWidth);
+                    float texV = Mathf.Clamp01(baseV + uv.y * baseHeight);
+
+                    Color c = sourceTex.GetPixelBilinear(texU, texV);
+                    return c.a >= 0.01f;
+                }
+            }
+
+            return sourceTex.GetPixelBilinear(uv.x, uv.y).a >= 0.01f;
         }
     }
 }

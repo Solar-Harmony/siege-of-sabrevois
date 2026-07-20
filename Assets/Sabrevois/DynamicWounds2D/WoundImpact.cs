@@ -33,8 +33,11 @@ namespace SolarHarmony.DynamicWounds2D
                 transform.rotation = Quaternion.LookRotation(worldNormal);
 
             _particles.Play(true);
-            float lifetime = _particles.main.duration + _particles.main.startLifetime.constantMax + 0.1f;
-            Destroy(gameObject, lifetime);
+        }
+
+        public void ResetForPool()
+        {
+            _initialized = false;
         }
 
         private Color[] SampleLayerColors(Vector2 uv, CharacterAtlasData atlasData, float depth)

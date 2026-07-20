@@ -50,16 +50,27 @@ namespace Sabrevois.Gameplay
         public event Action<float> OnDamageTaken;
         public static event Action<Health, float> OnAnyDamageTaken;
         public event Action OnDeathComplete;
+        public static event Action<Health> OnAnyDeath;
 
         [Header("Hitbox")]
         [SerializeField] private Collider _woundHitbox;
         [SerializeField] private WoundsComponent _woundsComponent;
         [SerializeField] private GameObject _dismemberVFXPrefab;
 
+        [Header("Barks")]
+        [SerializeField] private BarkPersonality _barkPersonality;
+        public BarkPersonality BarkPersonality => _barkPersonality;
+
         private Camera _mainCamera;
         private Vector3 _lastHitboxToCameraDir;
         private CapsuleCollider _cachedCapsule;
         private float _previousVisibleHeightFraction = 1f;
+
+        private float _fallTargetY;
+        private float _fallStartY;
+        private float _fallElapsed;
+        private const float FallDuration = 0.35f;
+        private bool _isFalling;
 
         public float GetResistanceAtDepth(float depth, CharacterAtlasData atlas = null, int bodyPartIndex = -1)
         {
@@ -108,6 +119,7 @@ namespace Sabrevois.Gameplay
         private void Awake()
         {
             _mainCamera = Camera.main;
+            _fallTargetY = float.MaxValue;
             if (_woundsComponent == null)
                 _woundsComponent = GetComponentInChildren<WoundsComponent>();
             if (_woundsComponent != null)
@@ -127,11 +139,6 @@ namespace Sabrevois.Gameplay
 
         private void HandleLimbSevered(GameObject severedPart, Vector3 hitDirection)
         {
-            if (_dismemberVFXPrefab == null || severedPart == null) return;
-
-            var vfx = Instantiate(_dismemberVFXPrefab, severedPart.transform);
-            vfx.transform.localPosition = Vector3.zero;
-            Destroy(vfx, 10f);
         }
 
         private void Update()
@@ -150,6 +157,27 @@ namespace Sabrevois.Gameplay
                     _woundHitbox.transform.rotation = Quaternion.LookRotation(-dir);
                     _lastHitboxToCameraDir = dir;
                 }
+            }
+
+            if (!_isFalling) return;
+
+            _fallElapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(_fallElapsed / FallDuration);
+            float eased = 1f - (1f - t) * (1f - t);
+
+            float currentY = Mathf.Lerp(_fallStartY, _fallTargetY, eased);
+            transform.position = new Vector3(
+                transform.position.x,
+                currentY,
+                transform.position.z);
+
+            if (t >= 1f)
+            {
+                transform.position = new Vector3(
+                    transform.position.x,
+                    _fallTargetY,
+                    transform.position.z);
+                _isFalling = false;
             }
         }
 
@@ -297,12 +325,19 @@ namespace Sabrevois.Gameplay
 
             float spriteHeight = _woundsComponent.InitialLocalBounds.size.y * woundsRenderer.transform.lossyScale.y;
             float heightLost = spriteHeight * (1f - newFraction);
-            Vector3 drop = Vector3.down * heightLost;
+            float desiredY = rootT.position.y - heightLost;
 
             if (hasGround)
-                drop.y = Mathf.Max(groundY - rootT.position.y, -heightLost);
+                desiredY = Mathf.Max(groundY, rootT.position.y - heightLost);
 
-            rootT.position += drop;
+            _fallTargetY = Mathf.Min(desiredY, _fallTargetY);
+
+            if (!_isFalling)
+            {
+                _isFalling = true;
+                _fallStartY = rootT.position.y;
+                _fallElapsed = 0f;
+            }
 
             if (hasGround && woundsRenderer != null)
             {
@@ -358,6 +393,7 @@ namespace Sabrevois.Gameplay
             gameObject.transform.position = endPos;
 
             OnDeathComplete?.Invoke();
+            OnAnyDeath?.Invoke(this);
         }
     }
 }

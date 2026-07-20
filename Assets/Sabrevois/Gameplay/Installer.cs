@@ -10,6 +10,7 @@ namespace Sabrevois.Gameplay
         {
             Container.Bind<ConversationService>().AsSingle();
             Container.Bind<AttackService>().AsSingle();
+            Container.Bind<NPCBarkService>().AsSingle().NonLazy();
         }
     }
 }

@@ -22,7 +22,7 @@ namespace SolarHarmony.DynamicWounds2D
             Vector3 viewDir;
             if (Camera.main != null)
             {
-                viewDir = Camera.main.transform.position - sourceRenderer.transform.position;
+                viewDir = sourceRenderer.transform.position - Camera.main.transform.position;
                 viewDir.y = 0;
                 if (viewDir.sqrMagnitude > 0.001f) viewDir.Normalize();
                 else viewDir = new Vector3(0, 0, -1);
