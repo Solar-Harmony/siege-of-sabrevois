@@ -1,0 +1,19 @@
+{
+    "name": "DynamicWounds2D.Editor",
+    "references": [
+        "GUID:4fe3291d6f764b73a5a75672318eb3d7",
+        "GUID:bb2b36e553b3dcb4f83b3babae58fa1a",
+        "GUID:5fd66a224615de3478ea1a23e7e87a2b"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

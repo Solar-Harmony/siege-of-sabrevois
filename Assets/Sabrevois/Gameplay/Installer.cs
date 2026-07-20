@@ -1,4 +1,5 @@
-﻿using Sabrevois.Gameplay.AI.Actions;
+﻿using Piper;
+using Sabrevois.Gameplay.AI.Actions;
 using Sabrevois.Gameplay.Dialogue;
 using Zenject;
 
@@ -10,7 +11,8 @@ namespace Sabrevois.Gameplay
         {
             Container.Bind<ConversationService>().AsSingle();
             Container.Bind<AttackService>().AsSingle();
-            Container.Bind<NPCBarkService>().AsSingle().NonLazy();
+            Container.BindInterfacesTo<NPCBarkService>().AsSingle();
+            Container.Bind<PiperManager>().FromComponentInHierarchy().AsSingle();
         }
     }
 }

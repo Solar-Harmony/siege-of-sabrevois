@@ -20,4 +20,4 @@ MonoBehaviour:
     - rid: 9013098580815118408
       type: {class: AIGameConfig, ns: Sabrevois.AI, asm: AI}
       data:
-        DisableAllAgents: 1
+        DisableAllAgents: 0

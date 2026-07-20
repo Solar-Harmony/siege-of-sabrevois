@@ -21,80 +21,68 @@ MonoBehaviour:
   - {fileID: 1109946499, guid: 98f0afdac295e0048a9602f17eca78c5, type: 3}
   BodyPartsMask: {fileID: 2800000, guid: 7876470d0fadac640b9c482313002324, type: 3}
   BodyPartMappings:
-  - Color: {r: 0, g: 0.5, b: 0, a: 1}
-    PartName: Part_R0.00_G0.50_B0.00
-    IsEssential: 1
-    ArmourPercent: 0
-  - Color: {r: 0.5, g: 0, b: 0, a: 1}
-    PartName: Part_1
+  - Color: {r: 0, g: 0.25490198, b: 0.003921569, a: 1}
+    Name: left foot
     IsEssential: 0
     ArmourPercent: 0
-  - Color: {r: 0, g: 1, b: 0.5, a: 1}
-    PartName: Part_2
+  - Color: {r: 0.22352943, g: 0, b: 0, a: 1}
+    Name: right foot
     IsEssential: 0
     ArmourPercent: 0
-  - Color: {r: 0.5, g: 0, b: 0.5, a: 1}
-    PartName: Part_R0.50_G0.00_B0.50
+  - Color: {r: 0, g: 1, b: 0.49803925, a: 1}
+    Name: right thigh
     IsEssential: 0
     ArmourPercent: 0
-  - Color: {r: 1, g: 0, b: 1, a: 1}
-    PartName: Part_4
+  - Color: {r: 1, g: 0, b: 0.9960785, a: 1}
+    Name: left thigh
     IsEssential: 0
     ArmourPercent: 0
-  - Color: {r: 0, g: 0.5, b: 1, a: 1}
-    PartName: Part_R0.00_G0.50_B1.00
+  - Color: {r: 0, g: 0.5058824, b: 0.9960785, a: 1}
+    Name: right hip
     IsEssential: 0
     ArmourPercent: 0
-  - Color: {r: 0, g: 0.75, b: 0.75, a: 1}
-    PartName: Part_6
+  - Color: {r: 0.49411768, g: 0, b: 0.49411768, a: 1}
+    Name: left hip
     IsEssential: 0
     ArmourPercent: 0
-  - Color: {r: 0, g: 0, b: 0.5, a: 1}
-    PartName: Part_7
+  - Color: {r: 0.5019608, g: 1, b: 0, a: 1}
+    Name: 'torso '
     IsEssential: 0
     ArmourPercent: 0
-  - Color: {r: 0.5, g: 1, b: 0, a: 1}
-    PartName: Part_R0.50_G1.00_B0.00
+  - Color: {r: 0, g: 1, b: 0.003921569, a: 1}
+    Name: right upper arm
     IsEssential: 0
     ArmourPercent: 0
-  - Color: {r: 0, g: 1, b: 0, a: 1}
-    PartName: Part_9
+  - Color: {r: 0.49803925, g: 0.5019608, b: 0, a: 1}
+    Name: left upperarm
     IsEssential: 0
     ArmourPercent: 0
-  - Color: {r: 0, g: 0.5, b: 0.5, a: 1}
-    PartName: Part_10
+  - Color: {r: 0, g: 0, b: 0.49411768, a: 1}
+    Name: right forearm
     IsEssential: 0
     ArmourPercent: 0
-  - Color: {r: 0.5, g: 0.5, b: 0, a: 1}
-    PartName: Part_11
+  - Color: {r: 1, g: 0.49803925, b: 0, a: 1}
+    Name: left forearm
     IsEssential: 0
     ArmourPercent: 0
-  - Color: {r: 1, g: 0.5, b: 0, a: 1}
-    PartName: Part_12
-    IsEssential: 0
-    ArmourPercent: 0
-  - Color: {r: 0.75, g: 0.5, b: 0, a: 1}
-    PartName: Part_13
-    IsEssential: 0
-    ArmourPercent: 0
-  - Color: {r: 0, g: 0, b: 1, a: 1}
-    PartName: Part_R0.00_G0.00_B1.00
+  - Color: {r: 0, g: 0, b: 0.9960785, a: 1}
+    Name: right hand
     IsEssential: 0
     ArmourPercent: 0
   - Color: {r: 1, g: 1, b: 0, a: 1}
-    PartName: Part_R1.00_G1.00_B0.00
+    Name: left hand
     IsEssential: 0
     ArmourPercent: 0
-  - Color: {r: 0, g: 0.75, b: 0, a: 1}
-    PartName: Part_16
+  - Color: {r: 0.003921569, g: 0.49803925, b: 0.003921569, a: 1}
+    Name: head/face
+    IsEssential: 1
+    ArmourPercent: 0
+  - Color: {r: 0.9921569, g: 0, b: 0, a: 1}
+    Name: left ear
     IsEssential: 0
     ArmourPercent: 0
-  - Color: {r: 1, g: 0, b: 0, a: 1}
-    PartName: Part_R1.00_G0.00_B0.00
-    IsEssential: 0
-    ArmourPercent: 0
-  - Color: {r: 0.75, g: 0, b: 0, a: 1}
-    PartName: Part_18
+  - Color: {r: 0.4901961, g: 0, b: 0.003921569, a: 1}
+    Name: right ear
     IsEssential: 0
     ArmourPercent: 0
   NormalMap: {fileID: 2800000, guid: bd5d90ca3f90ef84d82987bd6f50fb5f, type: 3}

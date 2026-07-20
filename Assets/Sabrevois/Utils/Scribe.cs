@@ -42,12 +42,15 @@ namespace Sabrevois.Utils
                 string className = FindCallerClass(stackTrace);
 
                 string color = GetUniqueColor(className);
-                string output = $"<b><color={color}>[{className}]</color></b> {string.Format(format, args)}";
+                string message = args != null && args.Length > 0
+                    ? string.Format(format, args)
+                    : format;
+                string output = $"<b><color={color}>[{className}]</color></b> {message}";
 
                 if (!output.EndsWith(".") && !output.EndsWith("!") && !output.EndsWith("?") && !output.EndsWith("\n"))
                     output += ".";
 
-                _original.LogFormat(logType, context, output);
+                _original.LogFormat(logType, context, EscapeBraces(output));
             }
             finally
             {
@@ -114,6 +117,12 @@ namespace Sabrevois.Utils
             }
 
             return name;
+        }
+
+        private static string EscapeBraces(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s;
+            return s.Replace("{", "{{").Replace("}", "}}");
         }
 
         private readonly Dictionary<string, string> _colorsCache = new();

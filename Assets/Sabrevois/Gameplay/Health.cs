@@ -71,6 +71,7 @@ namespace Sabrevois.Gameplay
         private float _fallElapsed;
         private const float FallDuration = 0.35f;
         private bool _isFalling;
+        private float _rendererTargetLocalY;
 
         public float GetResistanceAtDepth(float depth, CharacterAtlasData atlas = null, int bodyPartIndex = -1)
         {
@@ -171,12 +172,28 @@ namespace Sabrevois.Gameplay
                 currentY,
                 transform.position.z);
 
+            if (_woundsComponent != null)
+            {
+                var rend = _woundsComponent.Renderer;
+                if (rend != null)
+                {
+                    float rY = Mathf.Lerp(rend.transform.localPosition.y, _rendererTargetLocalY, eased);
+                    rend.transform.localPosition = new Vector3(
+                        rend.transform.localPosition.x, rY, rend.transform.localPosition.z);
+                }
+            }
+
             if (t >= 1f)
             {
                 transform.position = new Vector3(
                     transform.position.x,
                     _fallTargetY,
                     transform.position.z);
+                if (_woundsComponent != null && _woundsComponent.Renderer != null)
+                    _woundsComponent.Renderer.transform.localPosition = new Vector3(
+                        _woundsComponent.Renderer.transform.localPosition.x,
+                        _rendererTargetLocalY,
+                        _woundsComponent.Renderer.transform.localPosition.z);
                 _isFalling = false;
             }
         }
@@ -219,7 +236,7 @@ namespace Sabrevois.Gameplay
                     bodyPartIndex = _woundsComponent.LastHitBodyPartIndex;
                     var atlas = _woundsComponent.AtlasData;
                     if (atlas != null && bodyPartIndex >= 0 && bodyPartIndex < atlas.BodyPartMappings.Count)
-                        bodyPartName = atlas.BodyPartMappings[bodyPartIndex].PartName;
+                        bodyPartName = atlas.BodyPartMappings[bodyPartIndex].Name;
                 }
 
                 Debug.Log($"[Health] {name} died. Body part: {bodyPartName} (idx:{bodyPartIndex}, essential:{isEssential}). Depth: {newWoundDepth:F2}. DeathChance: {highestDeathChance}%");
@@ -311,7 +328,7 @@ namespace Sabrevois.Gameplay
                         meshOffsetDown = Mathf.Max(0, rendererWorldY - groundY);
                 }
 
-                woundsRenderer.transform.localPosition += Vector3.down * meshOffsetDown;
+                _rendererTargetLocalY = woundsRenderer.transform.localPosition.y - meshOffsetDown;
             }
 
             if (_cachedCapsule != null)

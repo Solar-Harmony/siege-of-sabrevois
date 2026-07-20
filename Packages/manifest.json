@@ -2,7 +2,9 @@
   "dependencies": {
     "com.abzorba.artificetoolkit": "https://github.com/AbZorbaGames/artificetoolkit.git",
     "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
+    "com.github-glitchenzo.nugetforunity": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
     "com.unity.2d.sprite": "1.0.0",
+    "com.unity.ai.inference": "2.6.1",
     "com.unity.ai.navigation": "2.0.9",
     "com.unity.cinemachine": "3.1.6",
     "com.unity.ide.rider": "3.0.39",

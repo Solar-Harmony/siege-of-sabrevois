@@ -83,7 +83,7 @@ namespace SolarHarmony.DynamicWounds2D
         private int _visibleMaxY;
         private int _lastHitBodyPartIndex = -1;
 
-        private static WoundsComponent s_lookedAt;
+        private static readonly HashSet<WoundsComponent> s_lookedAtComponents = new HashSet<WoundsComponent>();
         private static int s_lastLookFrame;
 
         public float VisibleHeightFraction => _visibleHeightFraction;
@@ -93,19 +93,20 @@ namespace SolarHarmony.DynamicWounds2D
         public CharacterAtlasData AtlasData => _atlasData;
         public int LastHitBodyPartIndex => _lastHitBodyPartIndex;
 
-        public static WoundsComponent LookedAtWoundsComponent => s_lookedAt;
+        public static WoundsComponent LookedAtWoundsComponent =>
+            s_lookedAtComponents.Count > 0 ? new List<WoundsComponent>(s_lookedAtComponents)[0] : null;
 
-        internal List<Wound> WoundList => _wounds;
-        internal float MaxWoundPenetration => _maxWoundPenetration;
-        internal bool IsBleeding =>
+        public List<Wound> WoundList => _wounds;
+        public float MaxWoundPenetration => _maxWoundPenetration;
+        public bool IsBleeding =>
             _maxWoundPenetration >= _bloodVFXDepthThreshold && _host is { IsDead: false };
-        internal bool IsHostDead => _host is { IsDead: true };
-        internal IWoundHost WoundHost => _host;
-        internal bool[] LiveGraph => _liveGraph;
-        internal int GraphWidth => _graphWidth;
-        internal int GraphHeight => _graphHeight;
-        internal int VisibleMinY => _visibleMinY;
-        internal int VisibleMaxY => _visibleMaxY;
+        public bool IsHostDead => _host is { IsDead: true };
+        public IWoundHost WoundHost => _host;
+        public bool[] LiveGraph => _liveGraph;
+        public int GraphWidth => _graphWidth;
+        public int GraphHeight => _graphHeight;
+        public int VisibleMinY => _visibleMinY;
+        public int VisibleMaxY => _visibleMaxY;
 
         private void Awake()
         {
@@ -150,11 +151,6 @@ namespace SolarHarmony.DynamicWounds2D
                     _graphWidth = GridResolution;
                     _graphHeight = GridResolution;
                     _visibleMaxY = _graphHeight - 1;
-
-                    int solid = 0;
-                    for (int i = 0; i < _liveGraph.Length; i++)
-                        if (_liveGraph[i]) solid++;
-                    Debug.Log($"[WoundsComponent] Grid: {solid}/{_liveGraph.Length} cells solid.", this);
                 }
                 else
                 {
@@ -335,11 +331,14 @@ namespace SolarHarmony.DynamicWounds2D
             if (s_lastLookFrame != Time.frameCount && Camera.main != null)
             {
                 s_lastLookFrame = Time.frameCount;
-                s_lookedAt = null;
+                s_lookedAtComponents.Clear();
                 Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
                 if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
-                    s_lookedAt = hit.collider.GetComponentInParent<WoundsComponent>()
-                        ?? hit.collider.transform.root.GetComponentInChildren<WoundsComponent>();
+                {
+                    var root = hit.collider.transform.root;
+                    foreach (var wc in root.GetComponentsInChildren<WoundsComponent>())
+                        s_lookedAtComponents.Add(wc);
+                }
             }
 
             if (_host == null || _host.IsDead) return;
@@ -674,7 +673,8 @@ namespace SolarHarmony.DynamicWounds2D
                         }
                     }
 
-                    if (nodeDepth >= layerCount)
+                    float threshold = layerCount > 1 ? layerCount : 0.01f;
+                    if (nodeDepth >= threshold)
                     {
                         _liveGraph[nodeIndex] = false;
                         depthKilledNodes.Add(nodeIndex);
@@ -1218,7 +1218,7 @@ namespace SolarHarmony.DynamicWounds2D
 
         private void OnDrawGizmos()
         {
-            if (this != s_lookedAt) return;
+            if (!s_lookedAtComponents.Contains(this)) return;
             bool[] graphToDraw = _liveGraph;
             int width = _graphWidth;
             int height = _graphHeight;

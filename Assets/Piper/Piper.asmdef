@@ -1,0 +1,7 @@
+{
+  "name": "Piper",
+  "allowUnsafeCode": true,
+  "references": [
+    "Microsoft.ML.OnnxRuntime"
+  ]
+}

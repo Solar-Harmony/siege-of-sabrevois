@@ -238,7 +238,7 @@ namespace SolarHarmony.DynamicWounds2D.Editor
             if (hitIdx >= 0 && _atlasData?.BodyPartMappings != null && hitIdx < _atlasData.BodyPartMappings.Count)
             {
                 var bp = _atlasData.BodyPartMappings[hitIdx];
-                _statsLastHit.text = $"Last Hit: {bp.PartName} (Essential: {bp.IsEssential})";
+                _statsLastHit.text = $"Last Hit: {bp.Name} (Essential: {bp.IsEssential})";
             }
             else _statsLastHit.text = "Last Hit: -";
 
@@ -266,6 +266,7 @@ namespace SolarHarmony.DynamicWounds2D.Editor
                     comp.Add(new Vector2Int(x, y));
                     void T(int nx, int ny) { if (nx < 0 || nx >= gw || ny < 0 || ny >= gh) return; int ni = ny * gw + nx; if (!graph[ni] || visited[ni]) return; visited[ni] = true; stack.Push(ni); }
                     T(x + 1, y); T(x - 1, y); T(x, y + 1); T(x, y - 1);
+                    T(x + 1, y + 1); T(x + 1, y - 1); T(x - 1, y + 1); T(x - 1, y - 1);
                 }
                 if (comp.Count == 0) continue;
                 int minY = int.MaxValue; foreach (var c in comp) if (c.y < minY) minY = c.y;
