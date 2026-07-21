@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Piper;
 using UnityEngine;
 
@@ -9,11 +12,26 @@ namespace Sabrevois.Gameplay
 
         private PiperManager _piperManager;
         private DemonicRobotFilter _robotFilter;
+        private AudioClip _currentClip;
+        private CancellationTokenSource _cts;
 
         private void Awake()
         {
             _robotFilter = GetComponent<DemonicRobotFilter>();
             ConfigureSpatialAudio();
+        }
+
+        private void OnDestroy()
+        {
+            _cts?.Cancel();
+            _cts?.Dispose();
+            _cts = null;
+
+            if (_currentClip != null)
+            {
+                _piperManager?.ReleaseClip(_currentClip);
+                _currentClip = null;
+            }
         }
 
         private void ConfigureSpatialAudio()
@@ -33,19 +51,44 @@ namespace Sabrevois.Gameplay
             _piperManager = manager;
         }
 
-        public async void Speak(string text, float volume)
+        public async Task SpeakAsync(string text, float volume)
         {
             if (_piperManager == null || string.IsNullOrWhiteSpace(text))
                 return;
 
-            AudioClip clip = await _piperManager.TextToSpeechAsync(text);
-            if (clip != null && _audioSource != null)
+            _cts?.Cancel();
+            _cts?.Dispose();
+            _cts = new CancellationTokenSource();
+            var ct = _cts.Token;
+
+            try
             {
+                var clip = await _piperManager.TextToSpeechAsync(text, ct);
+
+                if (this == null || _audioSource == null)
+                    return;
+
+                if (_currentClip != null)
+                    _piperManager.ReleaseClip(_currentClip);
+
                 _audioSource.volume = Mathf.Clamp(volume, 0f, 1f);
                 _audioSource.Stop();
                 _audioSource.clip = clip;
                 _audioSource.Play();
+                _currentClip = clip;
             }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[BarkDisplay] Speak failed for {name}: {e}", this);
+            }
+        }
+
+        public void Speak(string text, float volume)
+        {
+            _ = SpeakAsync(text, volume);
         }
     }
 }

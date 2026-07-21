@@ -2,14 +2,37 @@
 {
     public class ConversationService
     {
+        private int _lastGetTextIndex = -1;
+        private int _lastReactionHurtIndex = -1;
+
         public string GetText()
         {
-            return _strings[UnityEngine.Random.Range(0, _strings.Length)];
+            if (_strings.Length == 0) return string.Empty;
+            if (_strings.Length == 1) return _strings[0];
+
+            int index;
+            do
+            {
+                index = UnityEngine.Random.Range(0, _strings.Length);
+            } while (index == _lastGetTextIndex);
+
+            _lastGetTextIndex = index;
+            return _strings[index];
         }
         
         public string GetReactionHurt()
         {
-            return _onHurt[UnityEngine.Random.Range(0, _onHurt.Length)];
+            if (_onHurt.Length == 0) return string.Empty;
+            if (_onHurt.Length == 1) return _onHurt[0];
+
+            int index;
+            do
+            {
+                index = UnityEngine.Random.Range(0, _onHurt.Length);
+            } while (index == _lastReactionHurtIndex);
+
+            _lastReactionHurtIndex = index;
+            return _onHurt[index];
         }
         
         private readonly string[] _strings = {

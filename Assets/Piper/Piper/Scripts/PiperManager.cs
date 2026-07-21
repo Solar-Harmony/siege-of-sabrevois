@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
@@ -29,17 +31,17 @@ namespace Piper
         private InferenceSession _session;
         private string _modelPath;
         private Task _initTask;
-        private System.Threading.SemaphoreSlim _semaphore = new(1, 1);
+        private SemaphoreSlim _semaphore = new(1, 1);
+
+        private readonly Queue<AudioClip> _clipPool = new();
+        private const int MaxPoolSize = 8;
+        private const int MaxPoolSampleCount = 22050 * 10;
 
         public bool IsReady { get; private set; }
 
         private void Awake()
         {
             _modelPath = Path.Combine(Application.streamingAssetsPath, modelOnnxRelativePath);
-        }
-
-        private void Start()
-        {
             _initTask = InitializeAsync();
         }
 
@@ -47,16 +49,46 @@ namespace Piper
         {
             var sw = Stopwatch.StartNew();
 
-            string espeakPath = Path.Combine(Application.streamingAssetsPath, espeakNgRelativePath);
-            await Task.Run(() => PiperWrapper.InitPiper(espeakPath));
+            try
+            {
+                string espeakPath = ResolveEspeakPath(espeakNgRelativePath);
+                bool initOk = await Task.Run(() => PiperWrapper.InitPiper(espeakPath));
+                if (!initOk)
+                    throw new InvalidOperationException(
+                        $"Piper native init failed. espeak-ng data path: '{espeakPath}'");
 
-            _session = await Task.Run(() => CreateSession(_modelPath));
+                _session = await Task.Run(() => CreateSession(_modelPath));
 
-            sw.Stop();
-            Debug.Log(
-                $"[PiperManager] Initialisation took {sw.Elapsed.TotalSeconds:F2}s " +
-                $"(provider={provider}, model={modelOnnxRelativePath}).");
-            IsReady = true;
+                sw.Stop();
+                Debug.Log(
+                    $"[PiperManager] Initialisation took {sw.Elapsed.TotalSeconds:F2}s " +
+                    $"(provider={provider}, model={modelOnnxRelativePath}).");
+                IsReady = true;
+            }
+            catch (Exception e)
+            {
+                sw.Stop();
+                Debug.LogError(
+                    $"[PiperManager] Initialisation failed after {sw.Elapsed.TotalSeconds:F2}s: {e.Message}");
+                throw;
+            }
+        }
+
+        private static string ResolveEspeakPath(string relativePath)
+        {
+            string path = Path.Combine(Application.streamingAssetsPath, relativePath);
+
+            if (Directory.Exists(path))
+                return path;
+
+            if (Application.platform is RuntimePlatform.Android or RuntimePlatform.WebGLPlayer)
+                throw new InvalidOperationException(
+                    $"espeak-ng data path '{path}' is not directly accessible on {Application.platform}. " +
+                    "Copy the espeak-ng-data folder to Application.persistentDataPath before calling InitPiper.");
+
+            throw new InvalidOperationException(
+                $"espeak-ng data not found at '{path}'. " +
+                $"Ensure '{relativePath}' exists under StreamingAssets.");
         }
 
         private InferenceSession CreateSession(string path)
@@ -92,10 +124,29 @@ namespace Piper
             return session;
         }
 
-        public async Task<AudioClip> TextToSpeechAsync(string text)
+        public void ReleaseClip(AudioClip clip)
+        {
+            if (clip == null) return;
+
+            if (_clipPool.Count < MaxPoolSize)
+            {
+                _clipPool.Enqueue(clip);
+            }
+            else
+            {
+                Destroy(clip);
+            }
+        }
+
+        public async Task<AudioClip> TextToSpeechAsync(string text, CancellationToken ct = default)
         {
             await _initTask;
-            await _semaphore.WaitAsync();
+
+            if (_session == null)
+                throw new InvalidOperationException(
+                    "PiperManager is not initialized. ONNX session is null.");
+
+            await _semaphore.WaitAsync(ct);
             try
             {
                 var totalSw = Stopwatch.StartNew();
@@ -109,10 +160,16 @@ namespace Piper
                     phSw.Stop();
                     phonemeMs = (float)phSw.Elapsed.TotalMilliseconds;
 
+                    if (phonemeResult == null)
+                        throw new InvalidOperationException(
+                            $"Piper phonemisation failed for text: \"{Truncate(text, 40)}\"");
+
                     var allSamples = new List<float>();
 
                     for (int s = 0; s < phonemeResult.Sentences.Length; s++)
                     {
+                        ct.ThrowIfCancellationRequested();
+
                         var sentence = phonemeResult.Sentences[s];
                         int[] phonemeIds = sentence.PhonemesIds;
                         int c = phonemeIds.Length;
@@ -139,9 +196,9 @@ namespace Piper
                     }
 
                     return allSamples;
-                });
+                }, ct);
 
-                var clip = AudioClip.Create("PiperTTS", samples.Count, 1, sampleRate, false);
+                var clip = GetPooledClip(samples.Count);
                 clip.SetData(samples.ToArray(), 0);
 
                 totalSw.Stop();
@@ -159,29 +216,26 @@ namespace Piper
             }
         }
 
+        private AudioClip GetPooledClip(int sampleCount)
+        {
+            while (_clipPool.Count > 0)
+            {
+                var clip = _clipPool.Dequeue();
+                if (clip != null && clip.samples >= sampleCount)
+                    return clip;
+                if (clip != null)
+                    Destroy(clip);
+            }
+
+            int size = Mathf.NextPowerOfTwo(Mathf.Max(sampleCount, MaxPoolSampleCount));
+            return AudioClip.Create("PiperTTS", size, 1, sampleRate, false);
+        }
+
         private static long[] ToLong(int[] arr)
         {
             var r = new long[arr.Length];
             for (int i = 0; i < arr.Length; i++) r[i] = arr[i];
             return r;
-        }
-
-        private static DenseTensor<T> DenseTensorFromArray<T>(int[] source, params int[] dims)
-            where T : unmanaged
-        {
-            if (typeof(T) == typeof(long))
-            {
-                long[] data = new long[source.Length];
-                for (int i = 0; i < source.Length; i++) data[i] = source[i];
-                return new DenseTensor<long>(data, dims) as DenseTensor<T>;
-            }
-            if (typeof(T) == typeof(float))
-            {
-                float[] data = new float[source.Length];
-                for (int i = 0; i < source.Length; i++) data[i] = source[i];
-                return new DenseTensor<float>(data, dims) as DenseTensor<T>;
-            }
-            throw new System.NotSupportedException($"Tensor type {typeof(T)} not supported");
         }
 
         private static string Truncate(string s, int maxLen)
@@ -194,6 +248,13 @@ namespace Piper
         {
             PiperWrapper.FreePiper();
             _session?.Dispose();
+
+            while (_clipPool.Count > 0)
+            {
+                var clip = _clipPool.Dequeue();
+                if (clip != null)
+                    Destroy(clip);
+            }
         }
     }
 }

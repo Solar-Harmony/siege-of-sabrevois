@@ -45,6 +45,31 @@ namespace Sabrevois.Gameplay
         {
             if (_config != null)
                 Rebuild();
+            else
+                _rng = new System.Random();
+        }
+
+        private void OnEnable()
+        {
+            if (_config != null)
+                Rebuild();
+        }
+
+        private void OnDisable()
+        {
+            _inGlitch = false;
+            _glitchCooldownSamples = 0;
+            _glitchRepCount = 0;
+            _glitchReadPos = 0f;
+            _glitchAnchorPos = 0;
+            _ringWritePos = 0;
+
+            _ringPhase = 0f;
+            _vibratoPhase = 0f;
+            _clarityLpState = 0f;
+
+            if (_ringBuffer != null)
+                System.Array.Clear(_ringBuffer, 0, _ringBuffer.Length);
         }
 
         private void Rebuild()
@@ -72,13 +97,23 @@ namespace Sabrevois.Gameplay
 
             _channels = channels;
 
-            float ringOmega = 2f * Mathf.PI * _config.RingModFrequency / _outputSampleRate;
-            float vibratoOmega = 2f * Mathf.PI * _config.VibratoRate / _outputSampleRate;
+            float ringModFreq = _config.RingModFrequency;
+            float ringModMix = _config.RingModMix;
+            float vibratoRate = _config.VibratoRate;
+            float vibratoDepth = _config.VibratoDepth;
+            float saturation = _config.Saturation;
+            float clarity = _config.Clarity;
+            bool glitchEnabled = _config.GlitchEnabled;
 
-            float clarityAmount = _config.Clarity;
-            float shelfHz = 2200f + clarityAmount * 3000f;
+            float ringOmega = 2f * Mathf.PI * ringModFreq / _outputSampleRate;
+            float vibratoOmega = 2f * Mathf.PI * vibratoRate / _outputSampleRate;
+
+            float shelfHz = 2200f + clarity * 3000f;
             float shelfAlpha = Mathf.Exp(-2f * Mathf.PI * shelfHz / _outputSampleRate);
-            float shelfBoost = 1f + clarityAmount * 5f;
+            float shelfBoost = 1f + clarity * 5f;
+
+            float satDrive = saturation > 0.001f ? 1f + saturation * 6f : 0f;
+            float satDry = saturation > 0.001f ? 1f / (1f + saturation * 5f) : 1f;
 
             for (int i = 0; i < data.Length; i += channels)
             {
@@ -91,7 +126,7 @@ namespace Sabrevois.Gameplay
                     }
                 }
 
-                if (_config.GlitchEnabled)
+                if (glitchEnabled)
                 {
                     if (_inGlitch)
                     {
@@ -116,20 +151,18 @@ namespace Sabrevois.Gameplay
                     _vibratoPhase -= Mathf.PI * 2f;
 
                 float carrier = Mathf.Sin(_ringPhase);
-                float vibrato = 1f + Mathf.Sin(_vibratoPhase) * _config.VibratoDepth;
+                float vibrato = 1f + Mathf.Sin(_vibratoPhase) * vibratoDepth;
 
-                sample = Mathf.Lerp(sample, sample * carrier, _config.RingModMix);
+                sample = Mathf.Lerp(sample, sample * carrier, ringModMix);
                 sample *= vibrato;
 
-                if (_config.Saturation > 0.001f)
+                if (saturation > 0.001f)
                 {
-                    float drive = 1f + _config.Saturation * 6f;
-                    float wet = Mathf.Clamp(sample * drive, -1f, 1f);
-                    float dryFrac = 1f / (1f + _config.Saturation * 5f);
-                    sample = sample * dryFrac + wet * (1f - dryFrac);
+                    float wet = Mathf.Clamp(sample * satDrive, -1f, 1f);
+                    sample = sample * satDry + wet * (1f - satDry);
                 }
 
-                if (clarityAmount > 0.001f)
+                if (clarity > 0.001f)
                 {
                     _clarityLpState += shelfAlpha * (sample - _clarityLpState);
                     float high = sample - _clarityLpState;

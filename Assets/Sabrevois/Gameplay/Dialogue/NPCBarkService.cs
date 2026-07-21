@@ -68,7 +68,7 @@ namespace Sabrevois.Gameplay
 
         public void Tick()
         {
-            _idleBarkTimer -= Time.deltaTime;
+            _idleBarkTimer -= Time.unscaledDeltaTime;
             if (_idleBarkTimer > 0f)
                 return;
 
@@ -87,7 +87,7 @@ namespace Sabrevois.Gameplay
                 .Select(go => go.GetComponent<Health>())
                 .Where(h => h != null && !h.IsDead)
                 .Where(h => !_lastDamageTimes.TryGetValue(h, out float t)
-                            || Time.time - t > IdleCooldownAfterDamage)
+                            || Time.unscaledTime - t > IdleCooldownAfterDamage)
                 .ToList();
 
             if (eligible.Count == 0)
@@ -128,7 +128,7 @@ namespace Sabrevois.Gameplay
                     return;
                 }
 
-                _lastDamageTimes[health] = Time.time;
+                _lastDamageTimes[health] = Time.unscaledTime;
 
                 string bodyPart = ResolveBodyPartName(wounds, wound.Position);
                 string severity = wound.Gravity > 0.7f ? "severe" :
@@ -265,14 +265,18 @@ namespace Sabrevois.Gameplay
             }
         }
 
-        private void FireAndForgetBark(Health health, string prompt)
+        private async void FireAndForgetBark(Health health, string prompt)
         {
-            RequestBarkAsync(health.name, health.BarkPersonality, prompt)
-                .ContinueWith(t =>
-                {
-                    if (t.IsCompletedSuccessfully && !string.IsNullOrWhiteSpace(t.Result.dialogue))
-                        DisplayBark(health, t.Result.dialogue, t.Result.volume);
-                }, TaskContinuationOptions.ExecuteSynchronously);
+            try
+            {
+                var (dialogue, volume) = await RequestBarkAsync(health.name, health.BarkPersonality, prompt);
+                if (!string.IsNullOrWhiteSpace(dialogue))
+                    DisplayBark(health, dialogue, volume);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[NPCBarkService] FireAndForgetBark exception: {e}");
+            }
         }
 
         private static bool HeadStillAlive(Health health)
@@ -302,11 +306,11 @@ namespace Sabrevois.Gameplay
         {
             if (_lastBarkTimes.TryGetValue(health, out float lastTime))
             {
-                if (Time.time - lastTime < CooldownSeconds)
+                if (Time.unscaledTime - lastTime < CooldownSeconds)
                     return false;
             }
 
-            _lastBarkTimes[health] = Time.time;
+            _lastBarkTimes[health] = Time.unscaledTime;
             return true;
         }
 
@@ -325,75 +329,8 @@ namespace Sabrevois.Gameplay
 
                 string json = BuildRequestBody(systemPrompt, prompt, MaxResponseTokens, 0.8f);
 
-                using var www = UnityWebRequest.Post(Endpoint, json, "application/json");
-                www.timeout = 5;
-
-                var tcs = new TaskCompletionSource<(string dialogue, float volume)>();
-                www.SendWebRequest().completed += _ =>
-                {
-                    try
-                    {
-                        if (www.result != UnityWebRequest.Result.Success)
-                        {
-                            sw.Stop();
-                            var reason = www.result == UnityWebRequest.Result.ConnectionError
-                                && www.error?.Contains("timed") == true
-                                ? "TIMEOUT" : www.error;
-                            Debug.LogWarning(
-                                $"[NPCBarkService] Request failed for {npcName} " +
-                                $"after {sw.Elapsed.TotalSeconds:F1}s ({www.result}): {reason}");
-                            tcs.TrySetResult((null, 0.7f));
-                            return;
-                        }
-
-                        Debug.Log(
-                            $"[NPCBarkService] Response received for {npcName} " +
-                            $"after {sw.Elapsed.TotalSeconds:F1}s.");
-
-                        string rawText = www.downloadHandler?.text ?? string.Empty;
-
-                        JObject root;
-                        try { root = JObject.Parse(rawText); }
-                        catch (Exception ex)
-                        {
-                            Debug.LogWarning(
-                                $"[NPCBarkService] JObject.Parse failed for {npcName}: {ex.Message}");
-                            tcs.TrySetResult((null, 0.7f));
-                            return;
-                        }
-
-                        string content = (string)root?["choices"]?[0]?["message"]?["content"];
-                        if (!string.IsNullOrWhiteSpace(content))
-                        {
-                            var (dialogue, volume) = ExtractDialogue(content);
-                            if (string.IsNullOrWhiteSpace(dialogue))
-                                dialogue = null;
-
-                            sw.Stop();
-                            Debug.Log(
-                                $"[NPCBarkService] {npcName} bark: \"{Truncate(dialogue, 80)}\" " +
-                                $"(vol={volume:F2}, {sw.Elapsed.TotalMilliseconds:F0}ms total).");
-                            tcs.TrySetResult((dialogue, volume));
-                        }
-                        else
-                        {
-                            sw.Stop();
-                            Debug.LogWarning(
-                                $"[NPCBarkService] {npcName} bark: no content field found " +
-                                $"after {sw.Elapsed.TotalSeconds:F1}s.");
-                            tcs.TrySetResult((null, 0.7f));
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        sw.Stop();
-                        Debug.LogError(
-                            $"[NPCBarkService] Exception in completed callback for {npcName}: {e}");
-                        tcs.TrySetResult((null, 0.7f));
-                    }
-                };
-
-                return await tcs.Task;
+                var result = await SendRequestAsync(npcName, json, sw);
+                return result ?? (null, 0.7f);
             }
             catch (Exception e)
             {
@@ -403,6 +340,87 @@ namespace Sabrevois.Gameplay
                     $"after {sw.Elapsed.TotalMilliseconds:F0}ms: {e}");
                 return (null, 0.7f);
             }
+        }
+
+        private static async Task<(string dialogue, float volume)?> SendRequestAsync(
+            string npcName, string json, Stopwatch sw)
+        {
+            var result = await SendSingleRequestAsync(npcName, json);
+            if (result != null)
+            {
+                sw.Stop();
+                Debug.Log(
+                    $"[NPCBarkService] {npcName} bark: \"{Truncate(result.Value.dialogue, 80)}\" " +
+                    $"(vol={result.Value.volume:F2}, {sw.Elapsed.TotalMilliseconds:F0}ms total).");
+                return result;
+            }
+
+            Debug.LogWarning(
+                $"[NPCBarkService] First attempt failed for {npcName}, retrying...");
+            sw = Stopwatch.StartNew();
+            return await SendSingleRequestAsync(npcName, json);
+        }
+
+        private static async Task<(string dialogue, float volume)?> SendSingleRequestAsync(
+            string npcName, string json)
+        {
+            using var www = UnityWebRequest.Post(Endpoint, json, "application/json");
+            www.timeout = 15;
+
+            var tcs = new TaskCompletionSource<(string dialogue, float volume)?>();
+            www.SendWebRequest().completed += _ =>
+            {
+                try
+                {
+                    if (www.result != UnityWebRequest.Result.Success)
+                    {
+                        var reason = www.result == UnityWebRequest.Result.ConnectionError
+                            && www.error?.Contains("timed") == true
+                            ? "TIMEOUT" : www.error;
+                        Debug.LogWarning(
+                            $"[NPCBarkService] Request failed for {npcName} " +
+                            $"({www.result}): {reason}");
+                        tcs.TrySetResult(null);
+                        return;
+                    }
+
+                    string rawText = www.downloadHandler?.text ?? string.Empty;
+
+                    JObject root;
+                    try { root = JObject.Parse(rawText); }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning(
+                            $"[NPCBarkService] JObject.Parse failed for {npcName}: {ex.Message}");
+                        tcs.TrySetResult(null);
+                        return;
+                    }
+
+                    string content = (string)root?["choices"]?[0]?["message"]?["content"];
+                    if (!string.IsNullOrWhiteSpace(content))
+                    {
+                        var (dialogue, volume) = ExtractDialogue(content);
+                        if (string.IsNullOrWhiteSpace(dialogue))
+                            dialogue = null;
+
+                        tcs.TrySetResult((dialogue, volume));
+                    }
+                    else
+                    {
+                        Debug.LogWarning(
+                            $"[NPCBarkService] {npcName} bark: no content field found.");
+                        tcs.TrySetResult(null);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(
+                        $"[NPCBarkService] Exception in completed callback for {npcName}: {e}");
+                    tcs.TrySetResult(null);
+                }
+            };
+
+            return await tcs.Task;
         }
 
         private void DisplayBark(Health health, string bark, float volume)
@@ -465,7 +483,7 @@ namespace Sabrevois.Gameplay
 
                 if (!_lastReactionTimes.TryGetValue(health, out float lastTime))
                     lastTime = 0f;
-                if (Time.time - lastTime < ReactionCooldownSeconds) continue;
+                if (Time.unscaledTime - lastTime < ReactionCooldownSeconds) continue;
 
                 var personality = health.BarkPersonality;
                 if (personality == null) continue;
@@ -474,7 +492,7 @@ namespace Sabrevois.Gameplay
                     * ((personality.Aggression + personality.Verbosity + personality.Cruelty) / 3f + 0.5f);
                 if (UnityEngine.Random.value > chance) continue;
 
-                _lastReactionTimes[health] = Time.time;
+                _lastReactionTimes[health] = Time.unscaledTime;
 
                 string prompt = $"You overheard someone nearby say: \"{bark}\". "
                     + "React in character. Keep it very short.";
