@@ -33,13 +33,13 @@ namespace Sabrevois.Gameplay.Input
             if (_input.AttackPressed)
             {
                 Ray ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-                _attackService.Attack(transform, ray, _attackRange, _woundRadius, _woundPenetration);
+                _attackService.Attack(transform, ray, _attackRange, _woundRadius, _woundPenetration, disturbWater: false);
             }
 
             if (_input.SlashHeld)
             {
                 Ray ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-                _attackService.Attack(transform, ray, _slashRange, _woundRadius, _slashDamage);
+                _attackService.Attack(transform, ray, _slashRange, _woundRadius, _slashDamage, disturbWater: false);
             }
         }
     }

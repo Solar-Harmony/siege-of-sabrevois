@@ -10,7 +10,7 @@ namespace Sabrevois.Gameplay.AI.Actions
     {
         public static event Action<Vector3> OnMiss;
 
-        public void Attack(Transform attacker, Ray ray, float attackRange, float woundRadius, float woundPenetration)
+        public void Attack(Transform attacker, Ray ray, float attackRange, float woundRadius, float woundPenetration, bool disturbWater = true)
         {
             // Use QueryTriggerInteraction.Collide so the raycast can hit the water plane trigger
             RaycastHit[] hits = Physics.RaycastAll(ray, attackRange, ~0, QueryTriggerInteraction.Collide);
@@ -22,7 +22,7 @@ namespace Sabrevois.Gameplay.AI.Actions
             foreach (var hit in hits)
             {
                 // Support for shooting the water directly
-                if (hit.collider.gameObject.CompareTag("Water") || hit.collider.gameObject.layer == LayerMask.NameToLayer("Water"))
+                if (disturbWater && (hit.collider.gameObject.CompareTag("Water") || hit.collider.gameObject.layer == LayerMask.NameToLayer("Water")))
                 {
                     WaterRipplesInteraction.AddDisturbance(new Vector2(hit.point.x, hit.point.z), 0.2f, 1f);
                     hadEffect = true;

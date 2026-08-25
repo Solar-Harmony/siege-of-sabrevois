@@ -20,6 +20,11 @@ MonoBehaviour:
     propagationSpeed: 0.1
     areaSize: 1000
     waterOrigin: {x: 0, y: 0}
+    windEnabled: 1
+    windStrength: 0.06
+    windWavelength: 40
+    windSpeed: 10
+    windDirection: {x: 1, y: 0}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -92,10 +97,15 @@ MonoBehaviour:
   settings:
     computeShader: {fileID: 7200000, guid: 1d0d99dbf6b1423791881c566ed95e66, type: 3}
     resolution: 4096
-    dampening: 0.9175
+    dampening: 0.9206
     propagationSpeed: 0.543
     areaSize: 500
     waterOrigin: {x: 0, y: 0}
+    windEnabled: 1
+    windStrength: 0.05
+    windWavelength: 30
+    windSpeed: 1
+    windDirection: {x: 0.3, y: 0.2}
 --- !u!114 &7833122117494664109
 MonoBehaviour:
   m_ObjectHideFlags: 0

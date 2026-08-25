@@ -44,7 +44,9 @@ namespace SolarHarmony.DynamicWounds2D
                 if (_sourceTexture != value)
                 {
                     _sourceTexture = value;
+#if UNITY_EDITOR
                     OnSourceTextureChanged();
+#endif
                 }
             }
         }

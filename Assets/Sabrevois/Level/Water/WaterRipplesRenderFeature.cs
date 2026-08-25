@@ -15,12 +15,24 @@ namespace Sabrevois.Level.Water
             public float propagationSpeed = 0.5f;
             public float areaSize = 50f;
             public Vector2 waterOrigin = Vector2.zero;
+
+            public bool windEnabled = true;
+            public float windStrength = 0.1f;
+            public float windWavelength = 40f;
+            public float windSpeed = 1.0f;
+            public Vector2 windDirection = new Vector2(1f, 0f);
             
             private RTHandle rt0;
             private RTHandle rt1;
             private RTHandle rt2;
             
             private int state = 0;
+
+            // The sim must advance exactly once per Unity frame. Cameras (scene view,
+            // reflection probes, stacked cameras) also render through this feature and
+            // would otherwise each step the shared simulation state, making the water
+            // surface skip/jump at a sub-frame rate.
+            private int lastSimFrame = -1;
 
             public CustomRenderPass()
             {
@@ -42,6 +54,8 @@ namespace Sabrevois.Level.Water
             public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
             {
                 if (computeShader == null || rt0 == null) return;
+                if (Time.frameCount == lastSimFrame) return;
+                lastSimFrame = Time.frameCount;
 
                 CommandBuffer cmd = CommandBufferPool.Get("WaterRipplesCompute");
 
@@ -102,6 +116,12 @@ namespace Sabrevois.Level.Water
                 cmd.SetComputeFloatParam(computeShader, "Dampening", dampening);
                 cmd.SetComputeFloatParam(computeShader, "PropagationSpeed", propagationSpeed);
                 cmd.SetComputeFloatParam(computeShader, "AreaSize", areaSize);
+                cmd.SetComputeVectorParam(computeShader, "WaterOrigin", new Vector4(waterOrigin.x, waterOrigin.y, 0, 0));
+                cmd.SetComputeFloatParam(computeShader, "SimTime", state);
+                cmd.SetComputeFloatParam(computeShader, "WindStrength", windEnabled ? windStrength : 0f);
+                cmd.SetComputeFloatParam(computeShader, "WindWavelength", windWavelength);
+                cmd.SetComputeFloatParam(computeShader, "WindSpeed", windSpeed);
+                cmd.SetComputeVectorParam(computeShader, "WindDirection", new Vector4(windDirection.x, windDirection.y, 0, 0));
                 
                 cmd.SetComputeTextureParam(computeShader, kernelMain, "PrevState", rts[prevStateIndex]);
                 cmd.SetComputeTextureParam(computeShader, kernelMain, "CurrentState", rts[currStateIndex]);
@@ -129,6 +149,11 @@ namespace Sabrevois.Level.Water
                 public int stateIndex;
                 public float areaSize;
                 public Vector2 waterOrigin;
+                public bool windEnabled;
+                public float windStrength;
+                public float windWavelength;
+                public float windSpeed;
+                public Vector2 windDirection;
                 public RTHandle r0;
                 public RTHandle r1;
                 public RTHandle r2;
@@ -137,6 +162,8 @@ namespace Sabrevois.Level.Water
             public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
             {
                 if (computeShader == null || rt0 == null) return;
+                if (Time.frameCount == lastSimFrame) return;
+                lastSimFrame = Time.frameCount;
 
                 using (var builder = renderGraph.AddUnsafePass<PassData>("WaterRipplesComputeGraph", out var passData))
                 {
@@ -147,6 +174,11 @@ namespace Sabrevois.Level.Water
                     passData.stateIndex = state;
                     passData.areaSize = areaSize;
                     passData.waterOrigin = waterOrigin;
+                    passData.windEnabled = windEnabled;
+                    passData.windStrength = windStrength;
+                    passData.windWavelength = windWavelength;
+                    passData.windSpeed = windSpeed;
+                    passData.windDirection = windDirection;
                     passData.r0 = rt0;
                     passData.r1 = rt1;
                     passData.r2 = rt2;
@@ -212,6 +244,12 @@ namespace Sabrevois.Level.Water
                         cmd.SetComputeFloatParam(data.compute, "Dampening", data.damp);
                         cmd.SetComputeFloatParam(data.compute, "PropagationSpeed", data.propSpeed);
                         cmd.SetComputeFloatParam(data.compute, "AreaSize", data.areaSize);
+                        cmd.SetComputeVectorParam(data.compute, "WaterOrigin", new Vector4(data.waterOrigin.x, data.waterOrigin.y, 0, 0));
+                        cmd.SetComputeFloatParam(data.compute, "SimTime", data.stateIndex);
+                        cmd.SetComputeFloatParam(data.compute, "WindStrength", data.windEnabled ? data.windStrength : 0f);
+                        cmd.SetComputeFloatParam(data.compute, "WindWavelength", data.windWavelength);
+                        cmd.SetComputeFloatParam(data.compute, "WindSpeed", data.windSpeed);
+                        cmd.SetComputeVectorParam(data.compute, "WindDirection", new Vector4(data.windDirection.x, data.windDirection.y, 0, 0));
                         
                         cmd.SetComputeTextureParam(data.compute, kernelMain, "PrevState", rts[prevStateIndex]);
                         cmd.SetComputeTextureParam(data.compute, kernelMain, "CurrentState", rts[currStateIndex]);
@@ -257,6 +295,25 @@ namespace Sabrevois.Level.Water
             
             [Tooltip("The World Space Center (X, Z) of your water plane. Helps shader map UVs correctly.")]
             public Vector2 waterOrigin = Vector2.zero;
+
+            [Header("Wind Emitter")]
+            [Tooltip("Injects a low directional swell into the simulation surface. Wind waves and ripples share the same heightfield and displace each other.")]
+            public bool windEnabled = true;
+
+            [Range(0.0f, 1.0f)]
+            [Tooltip("Height amplitude of the wind swells injected into the surface. Higher = rougher lake. 0.02 calm, 0.1 moderate, 0.2+ choppy.")]
+            public float windStrength = 0.1f;
+
+            [Range(1.0f, 200.0f)]
+            [Tooltip("World-space wavelength of the wind swells. Longer = broad, calm swells; shorter = choppy.")]
+            public float windWavelength = 40f;
+
+            [Range(0.1f, 3.0f)]
+            [Tooltip("Wind swell travel speed as a multiple of the simulation's natural wave speed. Keep at 1.0 so the forced swell stays locked to the solver.")]
+            public float windSpeed = 1.0f;
+
+            [Tooltip("World-space (X, Z) direction the wind ripples travel toward.")]
+            public Vector2 windDirection = new Vector2(1f, 0f);
         }
 
         public Settings settings = new Settings();
@@ -271,7 +328,12 @@ namespace Sabrevois.Level.Water
                 dampening = settings.dampening,
                 propagationSpeed = settings.propagationSpeed,
                 areaSize = settings.areaSize,
-                waterOrigin = settings.waterOrigin
+                waterOrigin = settings.waterOrigin,
+                windEnabled = settings.windEnabled,
+                windStrength = settings.windStrength,
+                windWavelength = settings.windWavelength,
+                windSpeed = settings.windSpeed,
+                windDirection = settings.windDirection
             };
         }
 
