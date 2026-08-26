@@ -57,10 +57,6 @@ namespace Sabrevois.Gameplay
         [SerializeField] private WoundsComponent _woundsComponent;
         [SerializeField] private GameObject _dismemberVFXPrefab;
 
-        [Header("Barks")]
-        [SerializeField] private BarkPersonality _barkPersonality;
-        public BarkPersonality BarkPersonality => _barkPersonality;
-
         private Camera _mainCamera;
         private Vector3 _lastHitboxToCameraDir;
         private CapsuleCollider _cachedCapsule;

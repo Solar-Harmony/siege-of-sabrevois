@@ -4153,7 +4153,6 @@ MonoBehaviour:
   _woundHitbox: {fileID: 0}
   _woundsComponent: {fileID: 0}
   _dismemberVFXPrefab: {fileID: 0}
-  _barkPersonality: {fileID: 0}
 --- !u!114 &412274269
 MonoBehaviour:
   m_ObjectHideFlags: 0

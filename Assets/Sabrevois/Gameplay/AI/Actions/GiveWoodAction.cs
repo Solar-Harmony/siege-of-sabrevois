@@ -1,5 +1,4 @@
 using Sabrevois.AI.Actions;
-using Sabrevois.Gameplay.Dialogue;
 using Sabrevois.Utils;
 using System;
 using System.Collections.Generic;
@@ -21,7 +20,7 @@ namespace Sabrevois.Gameplay.AI.Actions
         public GameObject chosenHouse;
     }
 
-    public record GiveWoodAction(ConversationService Conversation) : IAction<GiveWoodActionConfig, GiveWoodActionState>
+    public record GiveWoodAction : IAction<GiveWoodActionConfig, GiveWoodActionState>
     {
         public Interruptible Interruptible => Interruptible.ExceptSelf;
 

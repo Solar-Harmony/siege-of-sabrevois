@@ -1,5 +1,4 @@
 using Sabrevois.AI.Actions;
-using Sabrevois.Gameplay.Dialogue;
 using Sabrevois.Utils;
 using System;
 using System.Collections.Generic;
@@ -21,7 +20,7 @@ namespace Sabrevois.Gameplay.AI.Actions
         public float gatheringTimer;
     }
 
-    public record GetWoodAction(ConversationService Conversation) : IAction<GetWoodActionConfig, GetWoodActionState>
+    public record GetWoodAction : IAction<GetWoodActionConfig, GetWoodActionState>
     {
         public Interruptible Interruptible => Interruptible.ExceptSelf;
 
