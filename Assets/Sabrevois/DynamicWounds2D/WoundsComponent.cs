@@ -124,14 +124,11 @@ namespace SolarHarmony.DynamicWounds2D
                     _meshFilter = _renderer.GetComponent<MeshFilter>();
                     if (_meshFilter != null && layer0Sprite != null)
                     {
-                        bool needsCustomMesh = _atlasData.BodyPartsMask != null
-                            || _atlasData.LayerSprites.Count > 1;
-                        if (needsCustomMesh)
-                        {
-                            var mesh = BodyPartMeshBuilder.BuildFromLayer0Sprite(layer0Sprite, _meshFilter.mesh);
-                            if (mesh != null)
-                                _meshFilter.mesh = mesh;
-                        }
+                        // Always rebuild: the serialized mesh is only an authoring placeholder
+                        // (or a stale editor-preview mesh), never the final UV layout.
+                        var mesh = BodyPartMeshBuilder.BuildFromLayer0Sprite(layer0Sprite, _meshFilter.mesh);
+                        if (mesh != null)
+                            _meshFilter.sharedMesh = mesh;
                     }
                 }
 
@@ -180,7 +177,9 @@ namespace SolarHarmony.DynamicWounds2D
             if (_severedPartFactory == null)
                 _severedPartFactory = GetComponentInParent<ISeveredPartFactory>();
 
-            ApplyEditorPropertyBlock();
+            // Runtime sprites must billboard towards the camera in the vertex shader. The editor
+            // preview turns it off so the flat character quad stays visible in the scene view.
+            ApplyAtlasPropertyBlock(enableBillboard: true);
         }
 
         private void Start()
@@ -240,12 +239,12 @@ namespace SolarHarmony.DynamicWounds2D
             _renderer.sharedMaterial.mainTexture = _atlasData.SourceTexture;
         }
 
-        private void ApplyEditorPropertyBlock()
+        private void ApplyAtlasPropertyBlock(bool enableBillboard)
         {
             if (_renderer == null || _atlasData == null || _atlasData.SourceTexture == null)
                 return;
 
-            _mpb.SetFloat("_EnableBillboard", 0f);
+            _mpb.SetFloat("_EnableBillboard", enableBillboard ? 1f : 0f);
             _mpb.SetTexture("_MainTex", _atlasData.SourceTexture);
             _mpb.SetInt("_LayerCount", _atlasData.LayerCount);
             if (_atlasData.NormalMap != null)
@@ -277,16 +276,55 @@ namespace SolarHarmony.DynamicWounds2D
         }
 
 #if UNITY_EDITOR
+        private Mesh _editorPreviewMesh;
+
+        private void OnEnable()
+        {
+            if (Application.isPlaying) return;
+            RefreshEditorPreview();
+        }
+
         private void OnValidate()
         {
-            if (_renderer == null || _atlasData == null || _atlasData.SourceTexture == null)
-                return;
+            if (Application.isPlaying) return;
+            RefreshEditorPreview();
+        }
 
-            if (_mpb == null)
-                _mpb = new MaterialPropertyBlock();
+        /// <summary>
+        /// Edit-mode preview: the atlas mesh and the per-character shader data are normally built in
+        /// Awake (play mode only), so without this a prefab renders the raw atlas on its placeholder quad.
+        /// </summary>
+        private void RefreshEditorPreview()
+        {
+            if (_atlasData == null) return;
 
-            ApplyAtlasTexture();
-            ApplyEditorPropertyBlock();
+            if (_renderer == null) _renderer = GetComponent<MeshRenderer>();
+            if (_renderer == null) return;
+
+            if (_mpb == null) _mpb = new MaterialPropertyBlock();
+
+            var sprites = _atlasData.LayerSprites;
+            Sprite layer0Sprite = sprites != null && sprites.Count > 0 ? sprites[0] : null;
+
+            if (layer0Sprite != null)
+            {
+                if (_meshFilter == null) _meshFilter = _renderer.GetComponent<MeshFilter>();
+                if (_meshFilter != null)
+                {
+                    // Same build as Awake: the preview mesh must match play mode exactly.
+                    _editorPreviewMesh = BodyPartMeshBuilder.BuildFromLayer0Sprite(
+                        layer0Sprite, _editorPreviewMesh);
+
+                    if (_editorPreviewMesh != null)
+                    {
+                        _editorPreviewMesh.hideFlags = HideFlags.DontSave;
+                        if (_meshFilter.sharedMesh != _editorPreviewMesh)
+                            _meshFilter.sharedMesh = _editorPreviewMesh;
+                    }
+                }
+            }
+
+            ApplyAtlasPropertyBlock(enableBillboard: false);
         }
 #endif
 
@@ -829,6 +867,10 @@ namespace SolarHarmony.DynamicWounds2D
             for (int i = 0; i < components.Count; i++)
             {
                 if (i == largestIndex) continue;
+
+                // Ignore tiny disconnected islands (mask noise). Blanking them would
+                // punch a full-depth hole in the character without creating a limb.
+                if (components[i].Count < 5) continue;
 
                 List<Vector2Int> severedNodes = new List<Vector2Int>();
                 foreach (int nIndex in components[i])

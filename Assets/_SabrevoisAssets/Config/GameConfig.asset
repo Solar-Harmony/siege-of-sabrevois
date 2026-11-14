@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: GameConfig::SolarHarmony.Config.GameConfigInstaller
   Configs:
   - rid: 9013098580815118408
+  - rid: 7842119302773145001
   references:
     version: 2
     RefIds:
@@ -21,3 +22,29 @@ MonoBehaviour:
       type: {class: AIGameConfig, ns: Sabrevois.AI, asm: AI}
       data:
         DisableAllAgents: 0
+    - rid: 7842119302773145001
+      type: {class: LocalModelSettings, ns: Sabrevois.Gameplay, asm: Gameplay}
+      data:
+        AutoStartOnLoad: 1
+        Models:
+        - rid: 7842119302773145002
+        - rid: 7842119302773145003
+    - rid: 7842119302773145002
+      type: {class: JevModel, ns: Sabrevois.Gameplay, asm: Gameplay}
+      data:
+        AutoStart: 1
+        BaseUrl: http://127.0.0.1:8017
+        HealthUrl: http://127.0.0.1:8017/health
+        StartScriptPath: F:/Apps/Jev/start-server.cmd
+        WorkingDirectory: F:/Apps/Jev
+        StartupTimeoutSeconds: 60
+        ModelName: jevos-v4
+    - rid: 7842119302773145003
+      type: {class: RaonModel, ns: Sabrevois.Gameplay, asm: Gameplay}
+      data:
+        AutoStart: 1
+        BaseUrl: http://127.0.0.1:8000
+        HealthUrl: http://127.0.0.1:8000/health
+        StartScriptPath: F:/Apps/KraftonLlamaCpp/start-server.cmd
+        WorkingDirectory: F:/Apps/KraftonLlamaCpp
+        StartupTimeoutSeconds: 120

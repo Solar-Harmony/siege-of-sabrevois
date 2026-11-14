@@ -11,7 +11,10 @@ namespace Sabrevois.Gameplay
         {
             Container.Bind<ConversationService>().AsSingle();
             Container.Bind<AttackService>().AsSingle();
-            Container.BindInterfacesTo<NPCBarkService>().AsSingle();
+            Container.BindInterfacesAndSelfTo<BarkSpeechScheduler>().AsSingle();
+            Container.BindInterfacesAndSelfTo<NpcReasoningService>().AsSingle();
+            Container.BindInterfacesAndSelfTo<NPCBarkService>().AsSingle();
+            Container.BindInterfacesAndSelfTo<LocalModelLauncher>().AsSingle();
             Container.Bind<PiperManager>().FromComponentInHierarchy().AsSingle();
         }
     }

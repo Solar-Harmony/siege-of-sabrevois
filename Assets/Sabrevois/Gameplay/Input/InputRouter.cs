@@ -15,6 +15,15 @@ namespace Sabrevois.Level
         public bool SlashHeld => _isSlashing;
         public bool CrouchPressed => _actions.Player.Crouch.triggered;
 
+        /// <summary>Stops movement/attack input while a text field has focus.</summary>
+        public void SetGameplayEnabled(bool enabled)
+        {
+            if (_actions == null) return;
+
+            if (enabled) _actions.Player.Enable();
+            else _actions.Player.Disable();
+        }
+
         private void Awake()
         {
             _actions = new InputSystem_Actions();

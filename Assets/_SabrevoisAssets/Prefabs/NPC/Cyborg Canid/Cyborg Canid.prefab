@@ -564,8 +564,8 @@ Transform:
   m_GameObject: {fileID: 3220697546194307233}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.44, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_LocalPosition: {x: 0, y: 1.8055384, z: 0}
+  m_LocalScale: {x: 1.8, y: 3.6110768, z: 1.8}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2636589289179170710}
@@ -842,12 +842,12 @@ MonoBehaviour:
   LayerRules:
   - PenetrationRequired: 1
     InstantDeathChancePercent: 0
-    PenetrationResistancePercent: 20
+    PenetrationResistancePercent: 15
   - PenetrationRequired: 2
     InstantDeathChancePercent: 0
-    PenetrationResistancePercent: 50
+    PenetrationResistancePercent: 40
   - PenetrationRequired: 3
-    InstantDeathChancePercent: 25
+    InstantDeathChancePercent: 30
     PenetrationResistancePercent: 0
   _woundHitbox: {fileID: 8690715474044360322}
   _woundsComponent: {fileID: 8448730508129608674}
@@ -965,8 +965,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.7, y: 3.3, z: 0.04}
-  m_Center: {x: 0, y: 1.45, z: 0}
+  m_Size: {x: 1.8, y: 3.6, z: 0.04}
+  m_Center: {x: 0, y: 1.44, z: 0}
 --- !u!1 &5212461164981141516
 GameObject:
   m_ObjectHideFlags: 0
@@ -993,7 +993,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_LocalScale: {x: 1.8, y: 1.8, z: 1.8}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8851549510856448732}
@@ -1225,7 +1225,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8804848924334961403}
-  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 0}
 --- !u!23 &4924987677671181912
 MeshRenderer:
   m_ObjectHideFlags: 0

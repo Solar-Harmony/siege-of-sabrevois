@@ -33,10 +33,6 @@ namespace Piper
         private Task _initTask;
         private SemaphoreSlim _semaphore = new(1, 1);
 
-        private readonly Queue<AudioClip> _clipPool = new();
-        private const int MaxPoolSize = 8;
-        private const int MaxPoolSampleCount = 22050 * 10;
-
         public bool IsReady { get; private set; }
 
         private void Awake()
@@ -127,15 +123,7 @@ namespace Piper
         public void ReleaseClip(AudioClip clip)
         {
             if (clip == null) return;
-
-            if (_clipPool.Count < MaxPoolSize)
-            {
-                _clipPool.Enqueue(clip);
-            }
-            else
-            {
-                Destroy(clip);
-            }
+            Destroy(clip);
         }
 
         public async Task<AudioClip> TextToSpeechAsync(string text, CancellationToken ct = default)
@@ -198,7 +186,16 @@ namespace Piper
                     return allSamples;
                 }, ct);
 
-                var clip = GetPooledClip(samples.Count);
+                // Exact-length clip: the previous pooled implementation reused power-of-two
+                // sized buffers and only overwrote the first N samples, so the tail of the
+                // previous line was still audible at the end of the new one.
+                if (samples.Count == 0)
+                {
+                    Debug.LogWarning($"[PiperManager] No audio produced for \"{Truncate(text, 40)}\".");
+                    return null;
+                }
+
+                var clip = AudioClip.Create("PiperTTS", samples.Count, 1, sampleRate, false);
                 clip.SetData(samples.ToArray(), 0);
 
                 totalSw.Stop();
@@ -206,7 +203,7 @@ namespace Piper
                     $"[PiperManager] TTS \"{Truncate(text, 40)}\": " +
                     $"{totalSw.Elapsed.TotalMilliseconds:F0}ms total " +
                     $"(phonemisation {phonemeMs:F0}ms, inference {inferMs:F0}ms, " +
-                    $"{samples.Count / (float)sampleRate:F1}s audio).");
+                    $"{samples.Count / (float)sampleRate:F1}s audio, clip {clip.length:F1}s).");
 
                 return clip;
             }
@@ -214,21 +211,6 @@ namespace Piper
             {
                 _semaphore.Release();
             }
-        }
-
-        private AudioClip GetPooledClip(int sampleCount)
-        {
-            while (_clipPool.Count > 0)
-            {
-                var clip = _clipPool.Dequeue();
-                if (clip != null && clip.samples >= sampleCount)
-                    return clip;
-                if (clip != null)
-                    Destroy(clip);
-            }
-
-            int size = Mathf.NextPowerOfTwo(Mathf.Max(sampleCount, MaxPoolSampleCount));
-            return AudioClip.Create("PiperTTS", size, 1, sampleRate, false);
         }
 
         private static long[] ToLong(int[] arr)
@@ -248,13 +230,6 @@ namespace Piper
         {
             PiperWrapper.FreePiper();
             _session?.Dispose();
-
-            while (_clipPool.Count > 0)
-            {
-                var clip = _clipPool.Dequeue();
-                if (clip != null)
-                    Destroy(clip);
-            }
         }
     }
 }

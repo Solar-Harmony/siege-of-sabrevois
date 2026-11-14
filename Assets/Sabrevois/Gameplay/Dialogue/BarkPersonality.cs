@@ -61,6 +61,42 @@ namespace Sabrevois.Gameplay
         public string DesperateBargainPrompt => _desperateBargainPrompt;
         public string DeathBargainPrompt => _deathBargainPrompt;
 
+        [Header("Fallback Lines (used when the LLM backend is unavailable)")]
+        [Tooltip("Leave a list empty to use the built-in lines in BarkFallbackLines.")]
+        [SerializeField] private string[] _idleLines;
+        [SerializeField] private string[] _angryLines;
+        [SerializeField] private string[] _sightLines;
+        [SerializeField] private string[] _hurtLines;
+        [SerializeField] private string[] _desperateLines;
+        [SerializeField] private string[] _deathLines;
+        [SerializeField] private string[] _reactionLines;
+
+        /// <summary>
+        /// A line for this character in the given situation, or null when the list is empty
+        /// and the caller should fall back to <see cref="BarkFallbackLines"/>.
+        /// </summary>
+        public string GetFallbackLine(BarkSituation situation)
+        {
+            string[] lines = situation switch
+            {
+                BarkSituation.AngryIdle => _angryLines,
+                BarkSituation.Sight => _sightLines,
+                BarkSituation.HurtLight => _hurtLines,
+                BarkSituation.HurtModerate => _hurtLines,
+                BarkSituation.HurtHeavy => _hurtLines,
+                BarkSituation.Severed => _hurtLines,
+                BarkSituation.Desperate => _desperateLines,
+                BarkSituation.Death => _deathLines,
+                BarkSituation.Reaction => _reactionLines,
+                _ => _idleLines
+            };
+
+            if (lines == null || lines.Length == 0) return null;
+
+            string line = lines[Random.Range(0, lines.Length)];
+            return string.IsNullOrWhiteSpace(line) ? null : line;
+        }
+
         public string BuildSystemPrompt()
         {
             var sb = new StringBuilder();

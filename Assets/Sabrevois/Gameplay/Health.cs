@@ -61,6 +61,12 @@ namespace Sabrevois.Gameplay
         [SerializeField] private BarkPersonality _barkPersonality;
         public BarkPersonality BarkPersonality => _barkPersonality;
 
+        // Runtime mood, written by NPCBarkService and read by the utility AI through
+        // AngerDataSource / FearDataSource. Never serialized.
+        public float Anger { get; internal set; }
+        public float Fear { get; internal set; }
+        public NpcBarkState BarkMood { get; internal set; } = NpcBarkState.Calm;
+
         private Camera _mainCamera;
         private Vector3 _lastHitboxToCameraDir;
         private CapsuleCollider _cachedCapsule;
@@ -130,6 +136,13 @@ namespace Sabrevois.Gameplay
             if (_woundHitbox == null)
                 _woundHitbox = GetComponentInChildren<Collider>();
             _cachedCapsule = GetComponent<CapsuleCollider>();
+
+            // Health owns the root yaw: it keeps the billboarded sprite and the flat wound hitbox
+            // facing the camera. If the NavMeshAgent also rotates the root towards its velocity the
+            // two fight every frame and the billboard visibly jitters around Y while walking.
+            var navMeshAgent = GetComponent<UnityEngine.AI.NavMeshAgent>();
+            if (navMeshAgent != null)
+                navMeshAgent.updateRotation = false;
         }
 
         private void OnDestroy()
